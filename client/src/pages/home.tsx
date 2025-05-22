@@ -418,25 +418,25 @@ export default function Home() {
       </section>
       
       {/* Testimonials */}
-      <section className="py-16 md:py-24 bg-[#283618] text-white">
+      <section className="py-20 md:py-28 bg-[#283618] text-white">
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center mb-12 scroll-animation">
-            <h2 className="font-heading text-[#FEFAE0] text-3xl md:text-4xl font-bold mb-6">What Our Customers Say</h2>
+          <div className="max-w-3xl mx-auto text-center mb-14 scroll-animation">
+            <h2 className="font-heading text-[#FEFAE0] text-3xl md:text-4xl font-bold mb-4">What Our Customers Say</h2>
             <p className="text-white/80 text-lg">Discover why people across the country choose our farm-direct products.</p>
           </div>
           
-          <div className="relative scroll-animation">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="relative max-w-6xl mx-auto scroll-animation">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
               {testimonials.slice(0, 3).map((testimonial) => (
                 <Testimonial key={testimonial.id} testimonial={testimonial} />
               ))}
             </div>
             
-            <div className="flex justify-center mt-8 space-x-2">
-              <button className="w-3 h-3 rounded-full bg-white opacity-100"></button>
-              <button className="w-3 h-3 rounded-full bg-white opacity-50"></button>
-              <button className="w-3 h-3 rounded-full bg-white opacity-50"></button>
-              <button className="w-3 h-3 rounded-full bg-white opacity-50"></button>
+            <div className="flex justify-center mt-12 space-x-3">
+              <div className="w-3 h-3 rounded-full bg-white"></div>
+              <div className="w-3 h-3 rounded-full bg-white/40"></div>
+              <div className="w-3 h-3 rounded-full bg-white/40"></div>
+              <div className="w-3 h-3 rounded-full bg-white/40"></div>
             </div>
           </div>
         </div>

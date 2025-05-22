@@ -105,6 +105,11 @@
   .font-accent {
     @apply font-['Caveat',_cursive];
   }
+
+  /* Forest dark class for testimonials */
+  .bg-forest-dark {
+    @apply bg-[#1e2813];
+  }
   
   ::-webkit-scrollbar {
     @apply w-2;
