@@ -7,7 +7,8 @@ import {
   CartWithItems, 
   Testimonial, InsertTestimonial,
   NewsletterSubscription, InsertNewsletterSubscription,
-  products, farmers, carts, cartItems, testimonials, newsletterSubscriptions
+  ProductReview, InsertProductReview,
+  products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews
 } from '@shared/schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
@@ -332,6 +333,23 @@ export class MemStorage implements IStorage {
     this.newsletterSubscriptions.set(newSubscription.id, newSubscription);
     return newSubscription;
   }
+  
+  // Product Review methods
+  async getProductReviews(productId: number): Promise<ProductReview[]> {
+    return Array.from(this.productReviews.values())
+      .filter(review => review.productId === productId);
+  }
+  
+  async addProductReview(review: InsertProductReview): Promise<ProductReview> {
+    const newReview: ProductReview = {
+      id: this.currentProductReviewId++,
+      ...review,
+      createdAt: new Date()
+    };
+    
+    this.productReviews.set(newReview.id, newReview);
+    return newReview;
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -368,6 +386,21 @@ export class DatabaseStorage implements IStorage {
   async getFeaturedFarmers(): Promise<Farmer[]> {
     const featuredFarmers = await db.select().from(farmers).where(eq(farmers.featured, true));
     return featuredFarmers;
+  }
+  
+  async getProductReviews(productId: number): Promise<ProductReview[]> {
+    const reviews = await db.select()
+      .from(productReviews)
+      .where(eq(productReviews.productId, productId));
+    return reviews;
+  }
+  
+  async addProductReview(review: InsertProductReview): Promise<ProductReview> {
+    const [newReview] = await db
+      .insert(productReviews)
+      .values(review)
+      .returning();
+    return newReview;
   }
 
   async getCart(sessionId: string): Promise<CartWithItems> {

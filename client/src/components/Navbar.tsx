@@ -47,11 +47,11 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { href: "/#story", label: "Our Story" },
-    { href: "/#products", label: "Products" },
-    { href: "/#farmers", label: "Our Farmers" },
-    { href: "/#process", label: "Our Process" },
-    { href: "/#contact", label: "Contact" }
+    { href: "/our-story", label: "Our Story" },
+    { href: "/products", label: "Products" },
+    { href: "/farmers", label: "Our Farmers" },
+    { href: "/our-process", label: "Our Process" },
+    { href: "/contact", label: "Contact" }
   ];
 
   return (

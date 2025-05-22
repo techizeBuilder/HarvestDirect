@@ -7,6 +7,9 @@ import ProductDetail from "@/pages/product-detail";
 import Checkout from "@/pages/checkout";
 import AllProducts from "@/pages/all-products";
 import AllFarmers from "@/pages/all-farmers";
+import OurStory from "@/pages/our-story";
+import OurProcess from "@/pages/our-process";
+import Contact from "@/pages/contact";
 import Layout from "@/components/Layout";
 import { CartProvider } from "@/context/CartContext";
 
@@ -18,6 +21,9 @@ function Router() {
       <Route path="/products/:id" component={ProductDetail} />
       <Route path="/farmers" component={AllFarmers} />
       <Route path="/checkout" component={Checkout} />
+      <Route path="/our-story" component={OurStory} />
+      <Route path="/our-process" component={OurProcess} />
+      <Route path="/contact" component={Contact} />
       <Route component={NotFound} />
     </Switch>
   );
