@@ -14,12 +14,9 @@ export default function Navbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const cart = useCart();
+  const { cartItems, openCart } = useCart();
   const [location] = useLocation();
-
-  // Handle the case when cart context might not be fully initialized
-  const cartItems = cart?.cartItems || [];
-  const openCart = cart?.openCart || (() => {});
+  
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   // Navbar scroll effect

@@ -8,6 +8,7 @@ import Checkout from "@/pages/checkout";
 import AllProducts from "@/pages/all-products";
 import AllFarmers from "@/pages/all-farmers";
 import Layout from "@/components/Layout";
+import { CartProvider } from "@/context/CartContext";
 
 function Router() {
   return (
@@ -25,10 +26,12 @@ function Router() {
 function App() {
   return (
     <TooltipProvider>
-      <Layout>
-        <Router />
-      </Layout>
-      <Toaster />
+      <CartProvider>
+        <Layout>
+          <Router />
+        </Layout>
+        <Toaster />
+      </CartProvider>
     </TooltipProvider>
   );
 }

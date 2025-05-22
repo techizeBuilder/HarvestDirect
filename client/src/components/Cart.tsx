@@ -5,16 +5,17 @@ import { X, Plus, Minus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Cart() {
-  // Safely access cart context with fallbacks
-  const cart = useCart();
-  const isCartOpen = cart?.isCartOpen || false;
-  const closeCart = cart?.closeCart || (() => {});
-  const cartItems = cart?.cartItems || [];
-  const updateCartItem = cart?.updateCartItem || (async () => {});
-  const removeFromCart = cart?.removeFromCart || (async () => {});
-  const subtotal = cart?.subtotal || 0;
-  const shipping = cart?.shipping || 0;
-  const total = cart?.total || 0;
+  // Access cart context
+  const {
+    isCartOpen,
+    closeCart,
+    cartItems,
+    updateCartItem,
+    removeFromCart,
+    subtotal,
+    shipping,
+    total
+  } = useCart();
 
   return (
     <AnimatePresence>
