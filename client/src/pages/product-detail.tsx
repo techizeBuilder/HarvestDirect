@@ -1,0 +1,257 @@
+import { useEffect } from "react";
+import { useParams, Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { AddToCartButton } from "@/components/ui/add-to-cart-button";
+import { Separator } from "@/components/ui/separator";
+import { MapPin, Leaf, Shield, Award, ChevronLeft } from "lucide-react";
+import { motion } from "framer-motion";
+import { ParallaxSection } from "@/components/ui/parallax-section";
+import ProductCard from "@/components/ProductCard";
+import { useAnimations } from "@/hooks/use-animations";
+
+export default function ProductDetail() {
+  const { id } = useParams<{ id: string }>();
+  const productId = parseInt(id);
+  
+  // Animation controller
+  const { setupScrollAnimation } = useAnimations();
+  
+  // Set up scroll animations
+  useEffect(() => {
+    setupScrollAnimation();
+  }, []);
+
+  // Get product data
+  const { data: product, isLoading: isLoadingProduct } = useQuery({
+    queryKey: [`/api/products/${productId}`],
+    enabled: !isNaN(productId)
+  });
+
+  // Get farmer data based on product's farmerId
+  const { data: farmer, isLoading: isLoadingFarmer } = useQuery({
+    queryKey: [`/api/farmers/${product?.farmerId}`],
+    enabled: !!product?.farmerId
+  });
+
+  // Get related products (same category)
+  const { data: relatedProducts = [] } = useQuery({
+    queryKey: [`/api/products/category/${product?.category}`],
+    enabled: !!product?.category
+  });
+
+  // Filter out the current product from related products and limit to 4
+  const filteredRelatedProducts = relatedProducts
+    .filter(p => p.id !== productId)
+    .slice(0, 4);
+
+  if (isLoadingProduct || isLoadingFarmer) {
+    return (
+      <div className="container mx-auto px-4 py-16 flex justify-center items-center min-h-screen">
+        <div className="animate-pulse flex flex-col items-center space-y-4">
+          <div className="h-12 w-48 bg-muted rounded"></div>
+          <div className="h-64 w-full max-w-md bg-muted rounded"></div>
+          <div className="h-4 w-3/4 bg-muted rounded"></div>
+          <div className="h-4 w-1/2 bg-muted rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold text-foreground mb-4">Product Not Found</h1>
+        <p className="text-muted-foreground mb-8">The product you're looking for doesn't exist or has been removed.</p>
+        <Link href="/products">
+          <Button>View All Products</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Product Detail Section */}
+      <section className="pt-32 pb-16 bg-background">
+        <div className="container mx-auto px-4 lg:px-8">
+          <Link href="/products">
+            <Button variant="ghost" className="mb-6 flex items-center text-muted-foreground">
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back to Products
+            </Button>
+          </Link>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {/* Product Image */}
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              className="rounded-xl overflow-hidden shadow-lg"
+            >
+              <img
+                src={product.imageUrl}
+                alt={product.name}
+                className="w-full h-auto object-cover"
+              />
+            </motion.div>
+            
+            {/* Product Info */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <span className="bg-secondary/20 text-secondary-dark px-3 py-1 rounded-full text-sm font-semibold">
+                {product.category}
+              </span>
+              <h1 className="font-heading text-forest text-3xl md:text-4xl font-bold mt-3 mb-4">
+                {product.name}
+              </h1>
+              <p className="text-olive text-lg mb-6">
+                {product.description}
+              </p>
+              
+              <div className="flex items-center space-x-1 mb-6">
+                <div className="flex items-center text-sm text-olive">
+                  <Leaf className="text-primary mr-2 h-4 w-4" />
+                  <span>Naturally Grown</span>
+                </div>
+                <span className="text-olive mx-2">•</span>
+                <div className="flex items-center text-sm text-olive">
+                  <Shield className="text-primary mr-2 h-4 w-4" />
+                  <span>Chemical-Free</span>
+                </div>
+                <span className="text-olive mx-2">•</span>
+                <div className="flex items-center text-sm text-olive">
+                  <Award className="text-primary mr-2 h-4 w-4" />
+                  <span>Premium Quality</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-4 mb-8">
+                <span className="text-forest text-3xl font-bold">
+                  ${product.price.toFixed(2)}
+                </span>
+                <div className="text-sm text-olive bg-background/80 px-3 py-1 rounded">
+                  In Stock: {product.stockQuantity}
+                </div>
+              </div>
+              
+              <div className="mb-8">
+                <AddToCartButton product={product} showIcon={true} fullWidth />
+              </div>
+              
+              {farmer && (
+                <div className="bg-muted p-4 rounded-lg">
+                  <h3 className="font-heading text-forest text-lg font-bold mb-2">
+                    Grown by {farmer.name}
+                  </h3>
+                  <div className="flex items-center text-sm text-olive mb-3">
+                    <MapPin className="text-secondary mr-2 h-4 w-4" />
+                    <span>{farmer.location}</span>
+                  </div>
+                  <p className="text-olive text-sm italic">
+                    "{farmer.story.substring(0, 120)}..."
+                  </p>
+                  <Link href={`/farmers`}>
+                    <Button variant="link" className="p-0 h-auto text-primary mt-2">
+                      Learn more about our farmers
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Product Journey Section */}
+      <ParallaxSection 
+        backgroundUrl="https://images.unsplash.com/photo-1464226184884-fa280b87c399?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080"
+        className="py-20"
+      >
+        <div className="container mx-auto px-4 text-center">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="font-heading text-white text-3xl md:text-4xl font-bold mb-6 text-shadow"
+          >
+            The Journey Behind Each {product.name}
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-cream text-lg max-w-3xl mx-auto text-shadow"
+          >
+            Our {product.name} is meticulously grown using traditional methods that have been passed down through generations. 
+            Each {product.category.toLowerCase()} is carefully harvested at the peak of ripeness to ensure maximum flavor and nutrition.
+          </motion.p>
+        </div>
+      </ParallaxSection>
+      
+      {/* Product Benefits */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4 lg:px-8">
+          <h2 className="font-heading text-forest text-3xl font-bold mb-12 text-center">
+            Benefits & Features
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 scroll-animation">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Leaf className="text-secondary text-2xl" />
+              </div>
+              <h3 className="font-heading text-forest text-xl font-semibold mb-3">Naturally Grown</h3>
+              <p className="text-olive">
+                Cultivated without chemical pesticides or fertilizers, allowing for authentic flavor development and maximum nutrition.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Shield className="text-secondary text-2xl" />
+              </div>
+              <h3 className="font-heading text-forest text-xl font-semibold mb-3">Pure & Unprocessed</h3>
+              <p className="text-olive">
+                Minimally processed to preserve natural compounds and nutrients that industrial processing often strips away.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Award className="text-secondary text-2xl" />
+              </div>
+              <h3 className="font-heading text-forest text-xl font-semibold mb-3">Superior Quality</h3>
+              <p className="text-olive">
+                Carefully selected for size, color, and ripeness, ensuring you receive only the best from each harvest.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Related Products */}
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4 lg:px-8">
+          <h2 className="font-heading text-forest text-3xl font-bold mb-8 text-center">
+            You Might Also Like
+          </h2>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {filteredRelatedProducts.map((relatedProduct) => (
+              <div key={relatedProduct.id} className="scroll-animation">
+                <ProductCard product={relatedProduct} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
