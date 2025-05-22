@@ -39,6 +39,10 @@ export interface IStorage {
 
   // Newsletter
   addNewsletterSubscription(subscription: InsertNewsletterSubscription): Promise<NewsletterSubscription>;
+  
+  // Product Reviews
+  getProductReviews(productId: number): Promise<ProductReview[]>;
+  addProductReview(review: InsertProductReview): Promise<ProductReview>;
 }
 
 export class MemStorage implements IStorage {
@@ -48,9 +52,11 @@ export class MemStorage implements IStorage {
   private cartItems: Map<number, CartItem>;
   private testimonials: Map<number, Testimonial>;
   private newsletterSubscriptions: Map<number, NewsletterSubscription>;
+  private productReviews: Map<number, ProductReview>;
   
   private currentCartItemId: number;
   private currentNewsletterSubscriptionId: number;
+  private currentProductReviewId: number;
 
   constructor() {
     this.products = new Map();
@@ -59,9 +65,11 @@ export class MemStorage implements IStorage {
     this.cartItems = new Map();
     this.testimonials = new Map();
     this.newsletterSubscriptions = new Map();
+    this.productReviews = new Map();
     
     this.currentCartItemId = 1;
     this.currentNewsletterSubscriptionId = 1;
+    this.currentProductReviewId = 1;
     
     // Initialize with seed data
     this.initializeProducts();

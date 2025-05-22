@@ -126,12 +126,31 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
   id: true
 });
 
+// Product Reviews Schema
+export const productReviews = pgTable("product_reviews", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  customerName: text("customer_name").notNull(),
+  rating: doublePrecision("rating").notNull(),
+  reviewText: text("review_text").notNull(),
+  verified: boolean("verified").default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertProductReviewSchema = createInsertSchema(productReviews).omit({
+  id: true,
+  createdAt: true
+});
+
 // Export types
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = typeof products.$inferSelect;
 
 export type InsertFarmer = z.infer<typeof insertFarmerSchema>;
 export type Farmer = typeof farmers.$inferSelect;
+
+export type InsertProductReview = z.infer<typeof insertProductReviewSchema>;
+export type ProductReview = typeof productReviews.$inferSelect;
 
 export type InsertCart = z.infer<typeof insertCartSchema>;
 export type Cart = typeof carts.$inferSelect;
