@@ -76,7 +76,7 @@ export const testimonials = pgTable("testimonials", {
   name: text("name").notNull(),
   title: text("title").notNull(),
   content: text("content").notNull(),
-  rating: integer("rating").notNull(),
+  rating: doublePrecision("rating").notNull(),
   imageInitials: text("image_initials").notNull(),
 });
 
