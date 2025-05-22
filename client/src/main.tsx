@@ -5,6 +5,7 @@ import "./index.css";
 import { queryClient } from "./lib/queryClient";
 import { CartProvider } from "./context/CartContext";
 
+// Wrap the entire application with providers
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <CartProvider>
