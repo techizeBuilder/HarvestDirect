@@ -89,112 +89,268 @@ export default function Home() {
 
   return (
     <>
-      {/* Modern Video Hero Section */}
+      {/* Interactive Modern Hero Section */}
       <section className="relative min-h-screen flex items-center overflow-hidden">
-        {/* Background Video */}
+        {/* Background Video with Parallax Effect */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-black/50 z-10"></div>
-          <video 
-            autoPlay 
-            muted 
-            loop 
-            className="w-full h-full object-cover"
+          <div className="absolute inset-0 bg-black/60 z-10"></div>
+          <motion.div
+            initial={{ scale: 1.1 }}
+            animate={{ 
+              scale: 1.05,
+              transition: { 
+                duration: 40, 
+                repeat: Infinity, 
+                repeatType: "reverse" 
+              } 
+            }}
+            className="w-full h-full"
           >
-            <source src="https://player.vimeo.com/external/370467553.sd.mp4?s=3794e4edbbf3aa6a71f0e173895eb86c30ea5a73&profile_id=139&oauth2_token_id=57447761" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
+            <video 
+              autoPlay 
+              muted 
+              loop 
+              playsInline
+              className="w-full h-full object-cover"
+            >
+              <source src="https://player.vimeo.com/progressive_redirect/playback/689409901/rendition/720p/720p.mp4?loc=external&signature=d02cc4c39cc7af7bdfeb9ec47f9f0ef3f08aa4ab2aa67ebd0a910a7c397f4506" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </motion.div>
         </div>
         
-        {/* Diagonal Overlay Design */}
-        <div className="absolute inset-0 z-10 overflow-hidden">
-          <div className="absolute -right-1/4 top-0 bottom-0 w-1/2 bg-gradient-to-l from-cream/80 via-cream/40 to-transparent transform skew-x-12 z-10"></div>
+        {/* Animated Overlays */}
+        <div className="absolute inset-0 z-5">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.2 }}
+            transition={{ duration: 2 }}
+            className="absolute inset-0"
+            style={{
+              backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(76, 175, 80, 0.1) 0%, transparent 50%)'
+            }}
+          />
+          <motion.div 
+            initial={{ opacity: 0, x: "100%" }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1.5 }}
+            className="absolute -right-1/4 top-0 bottom-0 w-2/3 bg-gradient-to-l from-cream/60 via-cream/20 to-transparent transform skew-x-12 z-10"
+          />
         </div>
 
-        {/* Grid Pattern Overlay */}
-        <div className="absolute inset-0 z-10 opacity-10">
+        {/* Animated Grid Pattern */}
+        <motion.div 
+          className="absolute inset-0 z-10 opacity-10"
+          initial={{ opacity: 0, backgroundPosition: '0px 0px' }}
+          animate={{ 
+            opacity: 0.08, 
+            backgroundPosition: ['0px 0px', '20px 20px'],
+            transition: { 
+              backgroundPosition: {
+                duration: 20,
+                repeat: Infinity,
+                repeatType: "reverse",
+                ease: "linear"
+              },
+              opacity: { duration: 2 }
+            }
+          }}
+        >
           <div className="h-full w-full" style={{ 
             backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M1 0V20M0 1H20\' stroke=\'white\' stroke-width=\'0.5\'/%3E%3C/svg%3E")',
             backgroundSize: '30px 30px'
           }}></div>
-        </div>
+        </motion.div>
         
         <div className="container mx-auto px-4 lg:px-8 relative z-20">
-          <div className="grid grid-cols-1 md:grid-cols-2 items-center">
-            {/* Content - Left Side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            {/* Animated Content - Left Side */}
             <div className="text-left text-white py-12 md:py-0">
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1 }}
               >
-                <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold mb-4 leading-none">
-                  <span className="text-white">Harvest</span> <span className="text-secondary">Pure</span><br />
-                  <span className="text-white">Taste</span> <span className="text-secondary">Natural</span>
-                </h1>
+                <motion.h1 
+                  className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-none"
+                  initial={{ y: 50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.8 }}
+                >
+                  <motion.span 
+                    className="inline-block text-white"
+                    whileHover={{ 
+                      scale: 1.05, 
+                      color: "#e9e2d0",
+                      transition: { duration: 0.2 } 
+                    }}
+                  >
+                    Harvest
+                  </motion.span>{" "}
+                  <motion.span 
+                    className="inline-block text-secondary"
+                    whileHover={{ 
+                      scale: 1.05, 
+                      color: "#f0c36d",
+                      transition: { duration: 0.2 } 
+                    }}
+                  >
+                    Pure
+                  </motion.span>
+                  <br />
+                  <motion.span 
+                    className="inline-block text-white"
+                    whileHover={{ 
+                      scale: 1.05, 
+                      color: "#e9e2d0",
+                      transition: { duration: 0.2 } 
+                    }}
+                  >
+                    Taste
+                  </motion.span>{" "}
+                  <motion.span 
+                    className="inline-block text-secondary"
+                    whileHover={{ 
+                      scale: 1.05, 
+                      color: "#f0c36d",
+                      transition: { duration: 0.2 } 
+                    }}
+                  >
+                    Natural
+                  </motion.span>
+                </motion.h1>
                 
-                <p className="text-lg md:text-xl max-w-xl mb-8 text-cream/90">
-                  Experience authentic flavors from traditional farmers who preserve ancient growing methods, delivering pure, chemical-free products directly to your table.
-                </p>
+                <motion.p 
+                  className="text-lg md:text-xl max-w-xl mb-8 text-cream/90"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.8, delay: 0.3 }}
+                >
+                  Experience authentic flavors from traditional farmers who preserve ancient growing methods, 
+                  delivering pure, chemical-free products directly to your table.
+                </motion.p>
                 
-                <div className="flex flex-wrap gap-4 mb-10">
+                <motion.div 
+                  className="flex flex-wrap gap-4 mb-10"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.8, delay: 0.5 }}
+                >
                   <Link href="/products">
-                    <Button 
-                      size="lg" 
-                      className="bg-secondary hover:bg-secondary/90 text-white font-medium px-8 py-6 rounded-md"
-                    >
-                      Shop Products
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+                      <Button 
+                        size="lg" 
+                        className="bg-secondary hover:bg-secondary/90 text-white font-medium px-8 py-6 rounded-md"
+                      >
+                        Shop Products
+                      </Button>
+                    </motion.div>
                   </Link>
                   
                   <Link href="/farmers">
-                    <Button 
-                      size="lg" 
-                      variant="outline" 
-                      className="border-cream/60 text-cream hover:bg-white/10 font-medium px-8 py-6 rounded-md"
-                    >
-                      Meet Our Farmers
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+                      <Button 
+                        size="lg" 
+                        variant="outline" 
+                        className="border-cream/60 text-cream hover:bg-white/10 font-medium px-8 py-6 rounded-md"
+                      >
+                        Meet Our Farmers
+                      </Button>
+                    </motion.div>
                   </Link>
-                </div>
+                </motion.div>
                 
-                {/* Stats - Horizontal Bar */}
-                <div className="flex flex-wrap gap-6 md:gap-12 items-center text-center md:text-left mt-6">
-                  <div>
-                    <p className="text-secondary text-3xl font-bold">100%</p>
+                {/* Animated Stats */}
+                <motion.div 
+                  className="flex flex-wrap gap-6 md:gap-12 items-center text-center md:text-left mt-6"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.8, delay: 0.7 }}
+                >
+                  <motion.div whileHover={{ y: -5, transition: { duration: 0.2 } }}>
+                    <motion.p 
+                      className="text-secondary text-3xl font-bold"
+                      initial={{ value: 0 }}
+                      animate={{ value: 100 }}
+                      transition={{ duration: 2, delay: 1 }}
+                    >
+                      {100}%
+                    </motion.p>
                     <p className="text-cream/80 text-sm">Natural</p>
-                  </div>
+                  </motion.div>
+                  
                   <div className="h-12 w-px bg-cream/20 hidden md:block"></div>
-                  <div>
-                    <p className="text-secondary text-3xl font-bold">50+</p>
+                  
+                  <motion.div whileHover={{ y: -5, transition: { duration: 0.2 } }}>
+                    <motion.p 
+                      className="text-secondary text-3xl font-bold"
+                      initial={{ value: 0 }}
+                      animate={{ value: 50 }}
+                      transition={{ duration: 2, delay: 1.2 }}
+                    >
+                      {50}+
+                    </motion.p>
                     <p className="text-cream/80 text-sm">Farmer Families</p>
-                  </div>
+                  </motion.div>
+                  
                   <div className="h-12 w-px bg-cream/20 hidden md:block"></div>
-                  <div>
-                    <p className="text-secondary text-3xl font-bold">0</p>
+                  
+                  <motion.div whileHover={{ y: -5, transition: { duration: 0.2 } }}>
+                    <motion.p 
+                      className="text-secondary text-3xl font-bold"
+                      initial={{ value: 100 }}
+                      animate={{ value: 0 }}
+                      transition={{ duration: 2, delay: 1.4 }}
+                    >
+                      {0}
+                    </motion.p>
                     <p className="text-cream/80 text-sm">Preservatives</p>
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               </motion.div>
             </div>
             
-            {/* Floating Product Card - Right Side */}
+            {/* Interactive Product Card - Right Side */}
             <div className="md:block">
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.3 }}
-                className="bg-white/90 backdrop-blur-md rounded-lg shadow-2xl p-6 max-w-sm mx-auto md:ml-auto"
+                initial={{ opacity: 0, y: 50, rotateY: 0 }}
+                animate={{ opacity: 1, y: 0, rotateY: [0, 5, 0, -5, 0] }}
+                transition={{ 
+                  opacity: { duration: 1, delay: 0.8 },
+                  y: { duration: 1, delay: 0.8 },
+                  rotateY: { 
+                    duration: 8, 
+                    repeat: Infinity,
+                    repeatType: "mirror",
+                    ease: "easeInOut",
+                    delay: 2
+                  }
+                }}
+                whileHover={{ 
+                  scale: 1.03, 
+                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)",
+                  transition: { duration: 0.2 }
+                }}
+                className="bg-white/90 backdrop-blur-md rounded-lg shadow-2xl p-6 max-w-sm mx-auto md:ml-auto transform perspective-1000"
               >
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-20 h-20 rounded-full overflow-hidden bg-secondary/10 flex-shrink-0">
+                  <motion.div 
+                    className="w-20 h-20 rounded-full overflow-hidden bg-secondary/10 flex-shrink-0"
+                    whileHover={{ scale: 1.1, transition: { duration: 0.2 } }}
+                  >
                     <img 
                       src="https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
                       alt="Coffee beans" 
                       className="w-full h-full object-cover"
                     />
-                  </div>
+                  </motion.div>
                   <div>
-                    <h3 className="font-heading text-forest text-xl font-bold">Mountain Coffee</h3>
+                    <motion.h3 
+                      className="font-heading text-forest text-xl font-bold"
+                      whileHover={{ color: "#D4A24C", transition: { duration: 0.2 } }}
+                    >
+                      Mountain Coffee
+                    </motion.h3>
                     <div className="flex items-center text-sm text-secondary mt-1">
                       <Leaf className="h-4 w-4 mr-1" />
                       <span>Chemical-Free</span>
@@ -204,9 +360,18 @@ export default function Home() {
                 </div>
                 
                 <div className="flex justify-between items-center mt-2">
-                  <span className="text-forest text-2xl font-bold">$12.50</span>
+                  <motion.span 
+                    className="text-forest text-2xl font-bold"
+                    whileHover={{ scale: 1.1, color: "#D4A24C", transition: { duration: 0.2 } }}
+                  >
+                    $12.50
+                  </motion.span>
                   <Link href="/products/1">
-                    <Button className="bg-primary hover:bg-primary/90 text-white">View Details</Button>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button className="bg-primary hover:bg-primary/90 text-white">
+                        View Details
+                      </Button>
+                    </motion.div>
                   </Link>
                 </div>
               </motion.div>
@@ -214,14 +379,35 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-0 right-0 flex justify-center z-20">
+        {/* Animated Scroll Indicator */}
+        <motion.div 
+          className="absolute bottom-8 left-0 right-0 flex justify-center z-20"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ 
+            opacity: 1, 
+            y: 0,
+            transition: { delay: 1.5, duration: 0.8 }
+          }}
+        >
           <Link href="#story">
-            <div className="text-white animate-bounce bg-black/30 p-2 rounded-full backdrop-blur-sm hover:bg-black/50 transition-colors">
+            <motion.div 
+              className="text-white bg-black/30 p-3 rounded-full backdrop-blur-sm hover:bg-black/50 transition-colors cursor-pointer"
+              animate={{ 
+                y: [0, 8, 0],
+                transition: { 
+                  y: {
+                    duration: 1.5, 
+                    repeat: Infinity,
+                    repeatType: "loop"
+                  }
+                }
+              }}
+              whileHover={{ scale: 1.2, transition: { duration: 0.2 } }}
+            >
               <ChevronDown className="h-6 w-6" />
-            </div>
+            </motion.div>
           </Link>
-        </div>
+        </motion.div>
       </section>
       
       {/* Our Story Section */}
