@@ -89,276 +89,100 @@ export default function Home() {
 
   return (
     <>
-      {/* Ultra Modern Hero Section with Video and Grid Layout */}
-      <section className="relative min-h-screen overflow-hidden">
-        {/* High-quality Background Video */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-black/50 z-10"></div>
-          <video 
-            autoPlay 
-            muted 
-            loop 
-            playsInline
-            className="w-full h-full object-cover"
-          >
-            <source src="https://assets.mixkit.co/videos/preview/mixkit-farm-worker-carrying-a-basket-of-vegetables-28107-large.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        </div>
+      {/* Modern Hero Section */}
+      <section className="relative h-screen flex items-center overflow-hidden">
+        {/* Background image with parallax effect */}
+        <div 
+          className="absolute inset-0 bg-center bg-cover z-0 transform scale-110" 
+          style={{ 
+            backgroundImage: "url('https://images.unsplash.com/photo-1500076656116-558758c991c1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080')",
+            filter: "brightness(0.8)"
+          }}
+        ></div>
         
-        {/* Grid Overlay Pattern */}
-        <div className="absolute inset-0 z-5 opacity-30 mix-blend-soft-light">
-          <div className="h-full w-full" style={{ 
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0V40M40 0V40M0 0H40M0 40H40' stroke='%23E9E2D0' stroke-width='0.5' stroke-opacity='0.3'/%3E%3C/svg%3E")`,
-            backgroundSize: '40px 40px'
-          }}></div>
-        </div>
+        {/* Decorative overlay elements */}
+        <div className="absolute inset-0 bg-gradient-to-r from-forest/70 to-transparent z-10"></div>
+        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/40 to-transparent z-10"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/40 to-transparent z-10"></div>
         
-        {/* Noise Texture Overlay for depth */}
-        <div className="absolute inset-0 z-5 opacity-10 mix-blend-overlay" style={{ 
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          backgroundSize: 'cover'
-        }}></div>
-        
-        {/* Color Gradient Overlays for visual interest */}
-        <div className="absolute inset-0 z-10">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 2 }}
-            className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-cream/30 via-cream/10 to-transparent"
-          ></motion.div>
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 2, delay: 0.5 }}
-            className="absolute left-0 top-0 bottom-0 w-1/2 bg-gradient-to-r from-forest/50 via-forest/20 to-transparent"
-          ></motion.div>
-        </div>
-        
-        {/* Main Content Container */}
-        <div className="container mx-auto relative z-20 h-screen flex flex-col">
-          {/* Hero Content Grid - Full Height */}
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center py-16">
-            
-            {/* Left Side Content (Main Headline and CTA) - 7 columns on lg */}
-            <div className="lg:col-span-7 text-white text-center lg:text-left px-4 lg:px-0">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 1 }}
-                className="max-w-3xl mx-auto lg:mx-0"
-              >
-                {/* Staggered Entrance Animation for Headline */}
-                <div className="overflow-hidden mb-4">
-                  <motion.h1 
-                    className="font-heading text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-tight"
-                    initial={{ y: 100 }}
-                    animate={{ y: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                  >
-                    <span className="block text-white">Harvest</span>
-                    <span className="block text-secondary">Pure</span> 
-                    <span className="block text-white">Taste</span>
-                    <span className="block text-secondary">Natural</span>
-                  </motion.h1>
-                </div>
-                
-                {/* Description with staggered entrance */}
-                <motion.p 
-                  className="text-lg md:text-xl lg:text-2xl mt-6 mb-8 text-cream/90 max-w-xl mx-auto lg:mx-0"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.5 }}
-                >
-                  Experience authentic flavors from traditional farmers who preserve ancient growing methods.
-                </motion.p>
-                
-                {/* Button Group */}
-                <motion.div 
-                  className="flex flex-wrap gap-4 justify-center lg:justify-start mt-8"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.7, delay: 0.7 }}
-                >
-                  <Link href="/all-products">
-                    <motion.div 
-                      whileHover={{ scale: 1.05, backgroundColor: "#D4A24C" }} 
-                      whileTap={{ scale: 0.98 }}
-                      className="bg-secondary text-white font-semibold py-4 px-8 rounded-md transition-all duration-300"
-                    >
-                      Shop Products
-                    </motion.div>
-                  </Link>
-                  
-                  <Link href="/farmers">
-                    <motion.div 
-                      whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.15)" }} 
-                      whileTap={{ scale: 0.98 }}
-                      className="border-2 border-cream/60 text-cream hover:text-white font-semibold py-4 px-8 rounded-md transition-all duration-300"
-                    >
-                      Meet Our Farmers
-                    </motion.div>
-                  </Link>
-                </motion.div>
-              </motion.div>
+        {/* Left-aligned content for modern asymmetric layout */}
+        <div className="container mx-auto px-4 lg:px-8 relative z-20 flex flex-col md:flex-row items-center">
+          <div className="w-full md:w-1/2 md:pr-8 mb-10 md:mb-0">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <h1 className="font-heading text-white text-4xl md:text-5xl lg:text-7xl font-bold mb-4 leading-tight text-shadow-lg">
+                From <span className="text-secondary">Soil</span> to <span className="text-secondary">Soul</span>
+              </h1>
               
-              {/* Animated Stats Row */}
-              <motion.div 
-                className="grid grid-cols-3 gap-4 md:gap-8 mt-12 max-w-2xl mx-auto lg:mx-0"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.9 }}
-              >
-                <motion.div 
-                  className="text-center lg:text-left"
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                >
-                  <p className="text-secondary text-3xl md:text-4xl font-bold">100%</p>
-                  <p className="text-cream/80 text-sm md:text-base">Natural</p>
-                </motion.div>
+              <h2 className="font-heading text-white text-2xl md:text-3xl lg:text-4xl font-semibold mb-6 text-shadow-lg">
+                Pure Nature, Direct to Your Table
+              </h2>
+              
+              <p className="text-cream text-lg max-w-xl mb-8 text-shadow">
+                Experience the authentic flavors of traditionally grown, chemical-free products sourced directly from the farmers who nurture them with generations of wisdom.
+              </p>
+              
+              <div className="flex flex-wrap gap-4">
+                <Link href="#products">
+                  <Button size="lg" className="bg-secondary hover:bg-secondary/90 text-white font-semibold px-8 py-6 rounded-md transition duration-300">
+                    Explore Products
+                  </Button>
+                </Link>
                 
-                <motion.div 
-                  className="text-center lg:text-left"
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                >
-                  <p className="text-secondary text-3xl md:text-4xl font-bold">50+</p>
-                  <p className="text-cream/80 text-sm md:text-base">Farmer Families</p>
-                </motion.div>
-                
-                <motion.div 
-                  className="text-center lg:text-left"
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                >
-                  <p className="text-secondary text-3xl md:text-4xl font-bold">0</p>
-                  <p className="text-cream/80 text-sm md:text-base">Preservatives</p>
-                </motion.div>
-              </motion.div>
-            </div>
-            
-            {/* Right Side Content (Product Card) - 5 columns on lg */}
-            <div className="lg:col-span-5 px-4 lg:px-0">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ 
-                  duration: 0.8, 
-                  delay: 1,
-                  ease: "easeOut" 
-                }}
-                className="relative max-w-sm mx-auto"
-              >
-                {/* Floating circle decorations */}
-                <motion.div 
-                  className="absolute -top-10 -left-10 w-24 h-24 rounded-full bg-gradient-to-r from-secondary/30 to-cream/40 blur-md z-0" 
-                  animate={{ 
-                    scale: [1, 1.1, 1],
-                    opacity: [0.7, 0.9, 0.7]
-                  }}
-                  transition={{ duration: 4, repeat: Infinity, repeatType: "reverse" }}
-                ></motion.div>
-                <motion.div 
-                  className="absolute -bottom-8 -right-8 w-20 h-20 rounded-full bg-gradient-to-l from-primary/30 to-secondary/30 blur-md z-0" 
-                  animate={{ 
-                    scale: [1, 1.15, 1],
-                    opacity: [0.6, 0.8, 0.6]
-                  }}
-                  transition={{ duration: 5, repeat: Infinity, repeatType: "reverse", delay: 1 }}
-                ></motion.div>
-                
-                {/* Product Card */}
-                <motion.div
-                  whileHover={{ 
-                    scale: 1.02, 
-                    boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
-                    transition: { duration: 0.3 }
-                  }}
-                  className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-6 relative z-10"
-                >
-                  <div className="flex items-start gap-4 mb-4">
-                    <motion.div 
-                      className="w-20 h-20 rounded-full overflow-hidden bg-secondary/10 flex-shrink-0 border-2 border-secondary/20"
-                      whileHover={{ scale: 1.1, transition: { duration: 0.2 } }}
-                    >
-                      <img 
-                        src="https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
-                        alt="Coffee beans" 
-                        className="w-full h-full object-cover"
-                      />
-                    </motion.div>
-                    <div>
-                      <motion.h3 
-                        className="font-heading text-forest text-xl font-bold"
-                        whileHover={{ color: "#D4A24C", transition: { duration: 0.2 } }}
-                      >
-                        Mountain Coffee
-                      </motion.h3>
-                      
-                      {/* Label */}
-                      <div className="inline-flex items-center bg-secondary/10 text-secondary text-xs rounded-full px-2 py-1 mt-1">
-                        <Leaf className="h-3 w-3 mr-1" />
-                        <span>Chemical-Free</span>
-                      </div>
-                      
-                      <p className="text-forest/80 text-sm mt-2">Hand-picked arabica beans from 5000ft elevation</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between items-center mt-4">
-                    <motion.span 
-                      className="text-forest text-2xl font-bold"
-                      whileHover={{ scale: 1.1, color: "#D4A24C", transition: { duration: 0.2 } }}
-                    >
-                      $12.50
-                    </motion.span>
-                    <Link href="/products/1">
-                      <motion.div 
-                        whileHover={{ scale: 1.05, backgroundColor: "#254D3A" }} 
-                        whileTap={{ scale: 0.95 }}
-                        className="bg-primary text-white font-medium py-2 px-4 rounded-md"
-                      >
-                        View Details
-                      </motion.div>
-                    </Link>
-                  </div>
-                </motion.div>
-              </motion.div>
-            </div>
+                <Link href="/our-story">
+                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-semibold px-8 py-6 rounded-md transition duration-300">
+                    Our Story
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
           </div>
           
-          {/* Scroll Indicator */}
-          <motion.div 
-            className="absolute bottom-8 left-0 right-0 flex justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ 
-              opacity: 1,
-              transition: { delay: 1.5, duration: 0.8 }
-            }}
-          >
-            <Link href="#story">
-              <motion.div 
-                className="text-white bg-black/30 p-3 rounded-full backdrop-blur-sm hover:bg-secondary/50 transition-all duration-300 cursor-pointer"
-                animate={{ 
-                  y: [0, 10, 0],
-                  transition: { 
-                    y: {
-                      duration: 2, 
-                      repeat: Infinity,
-                      repeatType: "loop",
-                      ease: "easeInOut"
-                    }
-                  }
-                }}
-                whileHover={{ 
-                  scale: 1.2, 
-                  backgroundColor: "rgba(212, 162, 76, 0.5)",
-                  transition: { duration: 0.2 } 
-                }}
-              >
-                <ChevronDown className="h-6 w-6" />
-              </motion.div>
-            </Link>
-          </motion.div>
+          {/* Floating product card for visual interest */}
+          <div className="w-full md:w-1/2">
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="bg-white/90 backdrop-blur-sm p-6 rounded-lg shadow-2xl transform rotate-2 max-w-md mx-auto"
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-20 h-20 rounded-full overflow-hidden shrink-0">
+                  <img 
+                    src="https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
+                    alt="Featured product" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-heading text-forest text-xl font-bold">Mountain Coffee Beans</h3>
+                  <div className="flex items-center text-sm text-secondary font-medium">
+                    <Leaf className="h-4 w-4 mr-1" />
+                    <span>Naturally Grown</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-forest text-xl font-bold">$12.50</span>
+                <Button className="bg-primary hover:bg-primary/90 text-white">
+                  View Details
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+        
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-0 right-0 flex justify-center z-20">
+          <Link href="#story">
+            <div className="text-white animate-bounce bg-black/20 p-2 rounded-full backdrop-blur-sm">
+              <ChevronDown className="h-6 w-6" />
+            </div>
+          </Link>
         </div>
       </section>
       
