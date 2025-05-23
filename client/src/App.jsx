@@ -3,16 +3,29 @@ import { Switch, Route } from 'wouter';
 import { AnimatePresence } from 'framer-motion';
 import Layout from './components/Layout';
 import Home from './pages/Home';
+import Products from './pages/Products';
+import ProductDetail from './pages/ProductDetail';
+import OurStory from './pages/OurStory';
+import OurProcess from './pages/OurProcess';
+import Contact from './pages/Contact';
 import { Toaster } from './components/ui/toaster';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Create a client
+const queryClient = new QueryClient();
 
 const App = () => {
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <Layout>
         <AnimatePresence mode="wait">
           <Switch>
             <Route path="/" component={Home} />
-            {/* Add more routes here for other pages */}
+            <Route path="/products" component={Products} />
+            <Route path="/products/:id" component={ProductDetail} />
+            <Route path="/our-story" component={OurStory} />
+            <Route path="/our-process" component={OurProcess} />
+            <Route path="/contact" component={Contact} />
             <Route>
               {/* 404 Page */}
               <div className="flex items-center justify-center min-h-screen bg-background">
@@ -33,7 +46,7 @@ const App = () => {
         </AnimatePresence>
       </Layout>
       <Toaster />
-    </>
+    </QueryClientProvider>
   );
 };
 
