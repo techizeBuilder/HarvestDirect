@@ -20,6 +20,8 @@ export const products = pgTable("products", {
   price: doublePrecision("price").notNull(),
   category: text("category").notNull(),
   imageUrl: text("image_url").notNull(),
+  imageUrls: text("image_urls").array(),
+  videoUrl: text("video_url"),
   farmerId: integer("farmer_id").notNull(),
   stockQuantity: integer("stock_quantity").notNull().default(100),
   featured: boolean("featured").default(false),

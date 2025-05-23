@@ -7,7 +7,9 @@ import { Separator } from "@/components/ui/separator";
 import { MapPin, Leaf, Shield, Award, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { ParallaxSection } from "@/components/ui/parallax-section";
+import { ProductGallery } from "@/components/ui/product-gallery";
 import ProductCard from "@/components/ProductCard";
+import ProductReviews from "@/components/ProductReviews";
 import { useAnimations } from "@/hooks/use-animations";
 
 export default function ProductDetail() {
@@ -83,17 +85,18 @@ export default function ProductDetail() {
           </Link>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            {/* Product Image */}
+            {/* Product Gallery */}
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
-              className="rounded-xl overflow-hidden shadow-lg"
             >
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                className="w-full h-auto object-cover"
+              {/* Use our new ProductGallery component */}
+              <ProductGallery 
+                mainImage={product.imageUrl}
+                additionalImages={product.imageUrls || []}
+                videoUrl={product.videoUrl}
+                productName={product.name}
               />
             </motion.div>
             
@@ -113,17 +116,15 @@ export default function ProductDetail() {
                 {product.description}
               </p>
               
-              <div className="flex items-center space-x-1 mb-6">
+              <div className="flex flex-wrap items-center gap-4 mb-6">
                 <div className="flex items-center text-sm text-olive">
                   <Leaf className="text-primary mr-2 h-4 w-4" />
                   <span>Naturally Grown</span>
                 </div>
-                <span className="text-olive mx-2">•</span>
                 <div className="flex items-center text-sm text-olive">
                   <Shield className="text-primary mr-2 h-4 w-4" />
                   <span>Chemical-Free</span>
                 </div>
-                <span className="text-olive mx-2">•</span>
                 <div className="flex items-center text-sm text-olive">
                   <Award className="text-primary mr-2 h-4 w-4" />
                   <span>Premium Quality</span>
@@ -140,7 +141,13 @@ export default function ProductDetail() {
               </div>
               
               <div className="mb-8">
-                <AddToCartButton product={product} showIcon={true} fullWidth />
+                <AddToCartButton 
+                  product={product} 
+                  showIcon={true} 
+                  fullWidth 
+                  showQuantitySelector={true}
+                  max={product.stockQuantity}
+                />
               </div>
               
               {farmer && (
@@ -233,6 +240,17 @@ export default function ProductDetail() {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+      
+      {/* Product Reviews Section */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4 lg:px-8">
+          <h2 className="font-heading text-forest text-3xl font-bold mb-8 text-center">
+            Customer Reviews
+          </h2>
+          
+          <ProductReviews productId={productId} />
         </div>
       </section>
       
