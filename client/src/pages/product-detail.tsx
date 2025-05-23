@@ -162,9 +162,7 @@ export default function ProductDetail() {
                     <span>{farmer.location}</span>
                   </div>
                   <p className="text-olive text-sm italic">
-                    "{farmer.story && farmer.story.length > 120 
-                      ? `${farmer.story.substring(0, 120)}...` 
-                      : farmer.story}"
+                    "{farmer.story.substring(0, 120)}..."
                   </p>
                   <Link href={`/farmers`}>
                     <Button variant="link" className="p-0 h-auto text-primary mt-2">
@@ -191,7 +189,7 @@ export default function ProductDetail() {
             transition={{ duration: 0.8 }}
             className="font-heading text-white text-3xl md:text-4xl font-bold mb-6 text-shadow"
           >
-            The Journey Behind Each {product?.name || "Product"}
+            The Journey Behind Each {product.name}
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -200,24 +198,9 @@ export default function ProductDetail() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-cream text-lg max-w-3xl mx-auto text-shadow"
           >
-            Our {product?.name || "product"} is meticulously grown using traditional methods that have been passed down through generations. 
-            Each {product?.category ? product.category.toLowerCase() : "product"} is carefully harvested at the peak of ripeness to ensure maximum flavor and nutrition.
+            Our {product.name} is meticulously grown using traditional methods that have been passed down through generations. 
+            Each {product.category.toLowerCase()} is carefully harvested at the peak of ripeness to ensure maximum flavor and nutrition.
           </motion.p>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="mt-10"
-          >
-            <Button 
-              className="bg-secondary hover:bg-secondary/90 text-white"
-              size="lg"
-            >
-              Watch Our Story
-            </Button>
-          </motion.div>
         </div>
       </ParallaxSection>
       
@@ -281,17 +264,11 @@ export default function ProductDetail() {
           </h2>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {filteredRelatedProducts.length > 0 ? (
-              filteredRelatedProducts.map((relatedProduct: any) => (
-                <div key={relatedProduct.id} className="scroll-animation">
-                  <ProductCard product={relatedProduct} />
-                </div>
-              ))
-            ) : (
-              <div className="col-span-4 text-center py-8">
-                <p className="text-muted-foreground italic">Loading related products...</p>
+            {filteredRelatedProducts.map((relatedProduct) => (
+              <div key={relatedProduct.id} className="scroll-animation">
+                <ProductCard product={relatedProduct} />
               </div>
-            )}
+            ))}
           </div>
         </div>
       </section>
