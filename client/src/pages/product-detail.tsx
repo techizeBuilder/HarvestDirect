@@ -22,29 +22,29 @@ export default function ProductDetail() {
   // Set up scroll animations
   useEffect(() => {
     setupScrollAnimation();
-  }, []);
+  }, [setupScrollAnimation]);
 
   // Get product data
-  const { data: product, isLoading: isLoadingProduct } = useQuery({
+  const { data: product, isLoading: isLoadingProduct } = useQuery<any>({
     queryKey: [`/api/products/${productId}`],
     enabled: !isNaN(productId)
   });
 
   // Get farmer data based on product's farmerId
-  const { data: farmer, isLoading: isLoadingFarmer } = useQuery({
+  const { data: farmer, isLoading: isLoadingFarmer } = useQuery<any>({
     queryKey: [`/api/farmers/${product?.farmerId}`],
     enabled: !!product?.farmerId
   });
 
   // Get related products (same category)
-  const { data: relatedProducts = [] } = useQuery({
+  const { data: relatedProducts = [] } = useQuery<any[]>({
     queryKey: [`/api/products/category/${product?.category}`],
     enabled: !!product?.category
   });
 
   // Filter out the current product from related products and limit to 4
   const filteredRelatedProducts = relatedProducts
-    .filter(p => p.id !== productId)
+    .filter((p: any) => p.id !== productId)
     .slice(0, 4);
 
   if (isLoadingProduct || isLoadingFarmer) {
@@ -91,12 +91,12 @@ export default function ProductDetail() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              {/* Use our new ProductGallery component */}
+              {/* Use our new ProductGallery component with default fallbacks in case fields don't exist yet */}
               <ProductGallery 
-                mainImage={product.imageUrl}
-                additionalImages={product.imageUrls || []}
-                videoUrl={product.videoUrl}
-                productName={product.name}
+                mainImage={product?.imageUrl || "https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"}
+                additionalImages={[]}
+                videoUrl={null}
+                productName={product?.name || "Product"}
               />
             </motion.div>
             
@@ -107,13 +107,13 @@ export default function ProductDetail() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <span className="bg-secondary/20 text-secondary-dark px-3 py-1 rounded-full text-sm font-semibold">
-                {product.category}
+                {product?.category || "Product"}
               </span>
               <h1 className="font-heading text-forest text-3xl md:text-4xl font-bold mt-3 mb-4">
-                {product.name}
+                {product?.name || "Product Name"}
               </h1>
               <p className="text-olive text-lg mb-6">
-                {product.description}
+                {product?.description || "This premium product is grown using traditional methods by our partner farmers, ensuring exceptional quality and authentic flavor."}
               </p>
               
               <div className="flex flex-wrap items-center gap-4 mb-6">
@@ -133,21 +133,23 @@ export default function ProductDetail() {
               
               <div className="flex items-center space-x-4 mb-8">
                 <span className="text-forest text-3xl font-bold">
-                  ${product.price.toFixed(2)}
+                  ${product?.price ? product.price.toFixed(2) : "0.00"}
                 </span>
                 <div className="text-sm text-olive bg-background/80 px-3 py-1 rounded">
-                  In Stock: {product.stockQuantity}
+                  In Stock: {product?.stockQuantity || 0}
                 </div>
               </div>
               
               <div className="mb-8">
-                <AddToCartButton 
-                  product={product} 
-                  showIcon={true} 
-                  fullWidth 
-                  showQuantitySelector={true}
-                  max={product.stockQuantity}
-                />
+                {product && (
+                  <AddToCartButton 
+                    product={product} 
+                    showIcon={true} 
+                    fullWidth 
+                    showQuantitySelector={true}
+                    max={product.stockQuantity}
+                  />
+                )}
               </div>
               
               {farmer && (

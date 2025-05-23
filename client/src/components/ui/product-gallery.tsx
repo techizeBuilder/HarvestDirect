@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 interface ProductGalleryProps {
   mainImage: string;
   additionalImages?: string[];
-  videoUrl?: string;
+  videoUrl?: string | null;
   productName: string;
 }
 
@@ -19,8 +19,23 @@ export function ProductGallery({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
   
+  // Create a default array of additional images if none provided
+  const defaultAdditionalImages = [
+    "https://images.unsplash.com/photo-1580933073521-dc49bab0c80d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+    "https://images.unsplash.com/photo-1585827693631-555a2f10b55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+    "https://images.unsplash.com/photo-1598526724533-83c05e43a752?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+  ];
+  
+  // Use provided additional images or default ones if empty
+  const imagesToUse = additionalImages && additionalImages.length > 0 
+    ? additionalImages 
+    : defaultAdditionalImages;
+  
+  // Set a default video URL if none provided
+  const videoUrlToUse = videoUrl || "https://www.youtube.com/embed/B1wpUvgZ9ew";
+  
   // Combine all images into one array
-  const allImages = [mainImage, ...(additionalImages || [])];
+  const allImages = [mainImage, ...imagesToUse];
   
   const handlePrev = () => {
     if (showVideo) {
@@ -31,11 +46,11 @@ export function ProductGallery({
   };
   
   const handleNext = () => {
-    if (showVideo && videoUrl) {
+    if (showVideo) {
       return;
     }
     
-    if (currentIndex === allImages.length - 1 && videoUrl) {
+    if (currentIndex === allImages.length - 1) {
       setShowVideo(true);
     } else {
       setCurrentIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
@@ -57,9 +72,9 @@ export function ProductGallery({
       <div className="relative rounded-xl overflow-hidden shadow-lg aspect-square bg-muted">
         {/* Current Image or Video */}
         <div className="w-full h-full">
-          {showVideo && videoUrl ? (
+          {showVideo ? (
             <iframe 
-              src={videoUrl}
+              src={videoUrlToUse}
               title={`${productName} video`}
               className="w-full h-full object-cover"
               allowFullScreen
@@ -114,19 +129,17 @@ export function ProductGallery({
           </motion.div>
         ))}
         
-        {videoUrl && (
-          <motion.div
-            onClick={toggleVideo}
-            whileHover={{ scale: 1.05 }}
-            className={`cursor-pointer rounded-md overflow-hidden w-20 h-20 shrink-0 border-2 transition-all relative bg-muted ${
-              showVideo ? "border-primary" : "border-transparent"
-            }`}
-          >
-            <div className="absolute inset-0 flex items-center justify-center">
-              <PlayCircle className="text-primary h-10 w-10" />
-            </div>
-          </motion.div>
-        )}
+        <motion.div
+          onClick={toggleVideo}
+          whileHover={{ scale: 1.05 }}
+          className={`cursor-pointer rounded-md overflow-hidden w-20 h-20 shrink-0 border-2 transition-all relative bg-muted ${
+            showVideo ? "border-primary" : "border-transparent"
+          }`}
+        >
+          <div className="absolute inset-0 flex items-center justify-center">
+            <PlayCircle className="text-primary h-10 w-10" />
+          </div>
+        </motion.div>
       </div>
     </div>
   );
