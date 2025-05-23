@@ -89,146 +89,138 @@ export default function Home() {
 
   return (
     <>
-      {/* Premium Hero Section */}
-      <section className="relative min-h-screen flex items-center py-20">
-        {/* Split background design */}
+      {/* Modern Video Hero Section */}
+      <section className="relative min-h-screen flex items-center overflow-hidden">
+        {/* Background Video */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-forest"></div>
-          <div className="absolute top-0 right-0 bottom-0 w-1/2 bg-cream md:block hidden"></div>
-          <div className="absolute inset-y-0 left-1/2 w-1/3 -ml-[16.67%] bg-cream skew-x-12 transform-gpu md:block hidden"></div>
+          <div className="absolute inset-0 bg-black/50 z-10"></div>
+          <video 
+            autoPlay 
+            muted 
+            loop 
+            className="w-full h-full object-cover"
+          >
+            <source src="https://player.vimeo.com/external/370467553.sd.mp4?s=3794e4edbbf3aa6a71f0e173895eb86c30ea5a73&profile_id=139&oauth2_token_id=57447761" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
         </div>
         
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-5 pointer-events-none z-10">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
-            <defs>
-              <pattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse">
-                <path d="M 8 0 L 0 0 0 8" fill="none" stroke="currentColor" strokeWidth="0.5" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
+        {/* Diagonal Overlay Design */}
+        <div className="absolute inset-0 z-10 overflow-hidden">
+          <div className="absolute -right-1/4 top-0 bottom-0 w-1/2 bg-gradient-to-l from-cream/80 via-cream/40 to-transparent transform skew-x-12 z-10"></div>
+        </div>
+
+        {/* Grid Pattern Overlay */}
+        <div className="absolute inset-0 z-10 opacity-10">
+          <div className="h-full w-full" style={{ 
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M1 0V20M0 1H20\' stroke=\'white\' stroke-width=\'0.5\'/%3E%3C/svg%3E")',
+            backgroundSize: '30px 30px'
+          }}></div>
         </div>
         
         <div className="container mx-auto px-4 lg:px-8 relative z-20">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            {/* Left side content */}
-            <div className="text-center md:text-left text-white">
+          <div className="grid grid-cols-1 md:grid-cols-2 items-center">
+            {/* Content - Left Side */}
+            <div className="text-left text-white py-12 md:py-0">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7 }}
               >
-                <h1 className="font-heading text-4xl md:text-5xl lg:text-7xl font-bold mb-6 leading-tight">
-                  Harvest <span className="text-secondary">Pure</span><br />
-                  Taste <span className="text-secondary">Natural</span>
+                <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold mb-4 leading-none">
+                  <span className="text-white">Harvest</span> <span className="text-secondary">Pure</span><br />
+                  <span className="text-white">Taste</span> <span className="text-secondary">Natural</span>
                 </h1>
                 
-                <p className="text-lg md:text-xl max-w-xl mx-auto md:mx-0 mb-8 text-cream/90">
-                  Experience authentic flavors from traditional farmers who preserve ancient methods and natural growing practices.
+                <p className="text-lg md:text-xl max-w-xl mb-8 text-cream/90">
+                  Experience authentic flavors from traditional farmers who preserve ancient growing methods, delivering pure, chemical-free products directly to your table.
                 </p>
                 
-                <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                  <Button 
-                    size="lg" 
-                    className="bg-secondary hover:bg-secondary/90 text-white font-semibold px-8 py-6 text-lg"
-                  >
-                    Shop Products
-                  </Button>
+                <div className="flex flex-wrap gap-4 mb-10">
+                  <Link href="/products">
+                    <Button 
+                      size="lg" 
+                      className="bg-secondary hover:bg-secondary/90 text-white font-medium px-8 py-6 rounded-md"
+                    >
+                      Shop Products
+                    </Button>
+                  </Link>
                   
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="border-cream text-cream hover:bg-white/10 font-semibold px-8 py-6 text-lg"
-                  >
-                    Meet Our Farmers
-                  </Button>
+                  <Link href="/farmers">
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="border-cream/60 text-cream hover:bg-white/10 font-medium px-8 py-6 rounded-md"
+                    >
+                      Meet Our Farmers
+                    </Button>
+                  </Link>
                 </div>
                 
-                {/* Stats */}
-                <div className="mt-12 grid grid-cols-3 gap-4">
-                  <div className="text-center">
+                {/* Stats - Horizontal Bar */}
+                <div className="flex flex-wrap gap-6 md:gap-12 items-center text-center md:text-left mt-6">
+                  <div>
                     <p className="text-secondary text-3xl font-bold">100%</p>
-                    <p className="text-cream text-sm">Natural</p>
+                    <p className="text-cream/80 text-sm">Natural</p>
                   </div>
-                  <div className="text-center">
+                  <div className="h-12 w-px bg-cream/20 hidden md:block"></div>
+                  <div>
                     <p className="text-secondary text-3xl font-bold">50+</p>
-                    <p className="text-cream text-sm">Farmer Families</p>
+                    <p className="text-cream/80 text-sm">Farmer Families</p>
                   </div>
-                  <div className="text-center">
+                  <div className="h-12 w-px bg-cream/20 hidden md:block"></div>
+                  <div>
                     <p className="text-secondary text-3xl font-bold">0</p>
-                    <p className="text-cream text-sm">Preservatives</p>
+                    <p className="text-cream/80 text-sm">Preservatives</p>
                   </div>
                 </div>
               </motion.div>
             </div>
             
-            {/* Right side image and card */}
-            <div className="relative md:flex hidden">
+            {/* Floating Product Card - Right Side */}
+            <div className="md:block">
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.7 }}
-                className="relative"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.3 }}
+                className="bg-white/90 backdrop-blur-md rounded-lg shadow-2xl p-6 max-w-sm mx-auto md:ml-auto"
               >
-                <img 
-                  src="https://images.unsplash.com/photo-1591102272330-a7ea4e710225?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1000&q=80" 
-                  alt="Farmer with produce" 
-                  className="rounded-lg shadow-2xl object-cover h-[500px]"
-                />
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-20 h-20 rounded-full overflow-hidden bg-secondary/10 flex-shrink-0">
+                    <img 
+                      src="https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
+                      alt="Coffee beans" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-forest text-xl font-bold">Mountain Coffee</h3>
+                    <div className="flex items-center text-sm text-secondary mt-1">
+                      <Leaf className="h-4 w-4 mr-1" />
+                      <span>Chemical-Free</span>
+                    </div>
+                    <p className="text-forest/80 text-sm mt-2">Hand-picked arabica beans from 5000ft elevation</p>
+                  </div>
+                </div>
                 
-                {/* Product card overlap */}
-                <motion.div
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.7, delay: 0.3 }}
-                  className="absolute -bottom-12 -left-12 bg-white rounded-lg shadow-xl p-6 max-w-[250px]"
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-16 h-16 rounded-full overflow-hidden bg-secondary/10">
-                      <img 
-                        src="https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
-                        alt="Coffee beans" 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div>
-                      <h3 className="font-heading text-forest font-bold">Mountain Coffee</h3>
-                      <div className="flex items-center text-xs text-secondary">
-                        <Leaf className="h-3 w-3 mr-1" />
-                        <span>Chemical-Free</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-forest font-bold">$12.50</span>
-                    <Button size="sm" className="bg-primary text-white text-xs px-3">View</Button>
-                  </div>
-                </motion.div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-forest text-2xl font-bold">$12.50</span>
+                  <Link href="/products/1">
+                    <Button className="bg-primary hover:bg-primary/90 text-white">View Details</Button>
+                  </Link>
+                </div>
               </motion.div>
             </div>
           </div>
         </div>
         
-        {/* Mobile image - only visible on mobile */}
-        <div className="md:hidden block absolute bottom-0 left-0 right-0 h-64 z-10">
-          <div className="relative h-full overflow-hidden">
-            <div 
-              className="absolute inset-0 bg-center bg-cover" 
-              style={{ 
-                backgroundImage: "url('https://images.unsplash.com/photo-1591102272330-a7ea4e710225?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1000&q=80')",
-                opacity: 0.8
-              }}
-            ></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/50 to-transparent"></div>
-          </div>
-        </div>
-        
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-0 right-0 flex justify-center z-30">
-          <a href="#story" className="text-white md:text-forest animate-bounce bg-secondary/20 p-2 rounded-full backdrop-blur-sm">
-            <ChevronDown className="h-6 w-6" />
-          </a>
+        <div className="absolute bottom-8 left-0 right-0 flex justify-center z-20">
+          <Link href="#story">
+            <div className="text-white animate-bounce bg-black/30 p-2 rounded-full backdrop-blur-sm hover:bg-black/50 transition-colors">
+              <ChevronDown className="h-6 w-6" />
+            </div>
+          </Link>
         </div>
       </section>
       
