@@ -89,41 +89,99 @@ export default function Home() {
 
   return (
     <>
-      {/* Hero Section */}
-      <section 
-        className="h-screen bg-center bg-cover relative" 
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1500076656116-558758c991c1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080')" }}
-      >
-        <div className="absolute inset-0 bg-forest bg-opacity-40"></div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="container mx-auto px-4 text-center">
-            <AnimatedText tag="h1" className="font-heading text-white text-4xl md:text-6xl lg:text-7xl font-bold mb-6 text-shadow">
-              From Our Farmers<br/>To Your Table
-            </AnimatedText>
-            
-            <AnimatedText 
-              tag="p" 
-              delay={0.6} 
-              className="text-cream text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto mb-8 text-shadow"
+      {/* Modern Hero Section */}
+      <section className="relative h-screen flex items-center overflow-hidden">
+        {/* Background image with parallax effect */}
+        <div 
+          className="absolute inset-0 bg-center bg-cover z-0 transform scale-110" 
+          style={{ 
+            backgroundImage: "url('https://images.unsplash.com/photo-1500076656116-558758c991c1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080')",
+            filter: "brightness(0.8)"
+          }}
+        ></div>
+        
+        {/* Decorative overlay elements */}
+        <div className="absolute inset-0 bg-gradient-to-r from-forest/70 to-transparent z-10"></div>
+        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/40 to-transparent z-10"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/40 to-transparent z-10"></div>
+        
+        {/* Left-aligned content for modern asymmetric layout */}
+        <div className="container mx-auto px-4 lg:px-8 relative z-20 flex flex-col md:flex-row items-center">
+          <div className="w-full md:w-1/2 md:pr-8 mb-10 md:mb-0">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
             >
-              Pure, preservative-free, and naturally grown products sourced directly from local farmers.
-            </AnimatedText>
-            
-            <AnimatedText delay={0.9}>
-              <Link href="#products">
-                <Button size="lg" className="bg-secondary hover:bg-secondary-dark text-white font-semibold px-8 py-7 rounded-md transition duration-300 text-lg">
-                  Explore Our Products
+              <h1 className="font-heading text-white text-4xl md:text-5xl lg:text-7xl font-bold mb-4 leading-tight text-shadow-lg">
+                From <span className="text-secondary">Soil</span> to <span className="text-secondary">Soul</span>
+              </h1>
+              
+              <h2 className="font-heading text-white text-2xl md:text-3xl lg:text-4xl font-semibold mb-6 text-shadow-lg">
+                Pure Nature, Direct to Your Table
+              </h2>
+              
+              <p className="text-cream text-lg max-w-xl mb-8 text-shadow">
+                Experience the authentic flavors of traditionally grown, chemical-free products sourced directly from the farmers who nurture them with generations of wisdom.
+              </p>
+              
+              <div className="flex flex-wrap gap-4">
+                <Link href="#products">
+                  <Button size="lg" className="bg-secondary hover:bg-secondary/90 text-white font-semibold px-8 py-6 rounded-md transition duration-300">
+                    Explore Products
+                  </Button>
+                </Link>
+                
+                <Link href="/our-story">
+                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-semibold px-8 py-6 rounded-md transition duration-300">
+                    Our Story
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+          
+          {/* Floating product card for visual interest */}
+          <div className="w-full md:w-1/2">
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="bg-white/90 backdrop-blur-sm p-6 rounded-lg shadow-2xl transform rotate-2 max-w-md mx-auto"
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-20 h-20 rounded-full overflow-hidden shrink-0">
+                  <img 
+                    src="https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
+                    alt="Featured product" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-heading text-forest text-xl font-bold">Mountain Coffee Beans</h3>
+                  <div className="flex items-center text-sm text-secondary font-medium">
+                    <Leaf className="h-4 w-4 mr-1" />
+                    <span>Naturally Grown</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-forest text-xl font-bold">$12.50</span>
+                <Button className="bg-primary hover:bg-primary/90 text-white">
+                  View Details
                 </Button>
-              </Link>
-            </AnimatedText>
+              </div>
+            </motion.div>
           </div>
         </div>
         
-        <div className="absolute bottom-10 left-0 right-0 flex justify-center">
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-0 right-0 flex justify-center z-20">
           <Link href="#story">
-            <a className="text-white animate-bounce">
-              <ChevronDown className="h-8 w-8" />
-            </a>
+            <div className="text-white animate-bounce bg-black/20 p-2 rounded-full backdrop-blur-sm">
+              <ChevronDown className="h-6 w-6" />
+            </div>
           </Link>
         </div>
       </section>
