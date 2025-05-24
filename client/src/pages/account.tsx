@@ -69,7 +69,12 @@ export default function Account() {
   const fetchPayments = async () => {
     try {
       setIsLoading(true);
-      const data = await apiRequest('GET', '/api/payments/history');
+      const response = await fetch('/api/payments/history', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
       console.log('Payment data:', data);
       setPayments(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -87,7 +92,12 @@ export default function Account() {
   const fetchSubscriptions = async () => {
     try {
       setIsLoading(true);
-      const data = await apiRequest('GET', '/api/subscriptions');
+      const response = await fetch('/api/subscriptions', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
       console.log('Subscription data:', data);
       setSubscriptions(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -115,7 +125,7 @@ export default function Account() {
   const handleCancelSubscription = async (subscriptionId: number) => {
     try {
       setIsLoading(true);
-      const response = await apiRequest(`/api/subscriptions/${subscriptionId}/cancel`, {
+      const response = await fetch(`/api/subscriptions/${subscriptionId}/cancel`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

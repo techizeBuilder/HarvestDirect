@@ -33,18 +33,28 @@ export function AddToCartButton({
   // Set max quantity to the available stock (or specified max)
   const maxQuantity = max !== undefined ? max : product.stockQuantity;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     setIsAdding(true);
-    addToCart(product.id, selectedQuantity);
-    
-    // Animation and toast notification
-    setTimeout(() => {
-      setIsAdding(false);
+    try {
+      await addToCart(product.id, selectedQuantity);
+      
       toast({
         title: "Added to basket",
         description: `${product.name} has been added to your basket.`,
       });
-    }, 500);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast({
+        title: "Failed to add item",
+        description: "There was an error adding this item to your basket. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      // Animation delay
+      setTimeout(() => {
+        setIsAdding(false);
+      }, 300);
+    }
   };
   
   const handleQuantityChange = (newQuantity: number) => {
