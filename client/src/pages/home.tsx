@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,7 @@ export default function Home() {
   const { setupScrollAnimation } = useAnimations();
 
   // Category buttons state
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const categoryButtons = [
     { id: "all", label: "All Products" },
     { id: "coffee-tea", label: "Coffee & Tea" },
@@ -269,11 +270,12 @@ export default function Home() {
           
           {/* Category Navigation */}
           <div className="flex flex-wrap justify-center gap-3 mb-12 scroll-animation">
-            {categoryButtons.map((button, index) => (
+            {categoryButtons.map((button) => (
               <Button
                 key={button.id}
-                variant="ghost"
-                className={`category-btn ${index === 0 ? 'active' : ''} px-5 py-2 rounded-full font-medium transition duration-200`}
+                variant={selectedCategory === (button.id === "all" ? null : button.id) ? "default" : "outline"} 
+                className="px-5 py-2 rounded-full font-medium transition duration-200"
+                onClick={() => setSelectedCategory(button.id === "all" ? null : button.id)}
               >
                 {button.label}
               </Button>
@@ -282,11 +284,19 @@ export default function Home() {
           
           {/* Products Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {products.map((product) => (
-              <div key={product.id} className="scroll-animation">
-                <ProductCard product={product} />
-              </div>
-            ))}
+            {products
+              .filter((product: any) => 
+                !selectedCategory || 
+                (selectedCategory === "coffee-tea" && product.category === "Coffee & Tea") ||
+                (selectedCategory === "spices" && product.category === "Spices") ||
+                (selectedCategory === "grains" && product.category === "Grains") ||
+                (selectedCategory === "others" && product.category === "Others")
+              )
+              .map((product: any) => (
+                <div key={product.id} className="scroll-animation">
+                  <ProductCard product={product} />
+                </div>
+              ))}
           </div>
           
           <div className="text-center mt-12">

@@ -69,23 +69,9 @@ export default function Account() {
   const fetchPayments = async () => {
     try {
       setIsLoading(true);
-      const response = await apiRequest('/api/payments/history', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setPayments(data.payments || []);
-      } else {
-        toast({
-          title: 'Error',
-          description: data.message || 'Failed to fetch payment history',
-          variant: 'destructive'
-        });
-      }
+      const data = await apiRequest('GET', '/api/payments/history');
+      console.log('Payment data:', data);
+      setPayments(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching payments:', error);
       toast({
