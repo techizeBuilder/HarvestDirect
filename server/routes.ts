@@ -331,30 +331,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(`${apiPrefix}/auth/login`, async (req, res) => {
     try {
       const { email, password } = req.body;
+      console.log(`Login attempt for email: ${email}`);
       
       // Check if user exists
       const user = await storage.getUserByEmail(email);
       if (!user) {
+        console.log('User not found in database');
         return res.status(400).json({ message: "Invalid email or password" });
       }
       
-      // Verify password
-      const validPassword = await bcrypt.compare(password, user.password);
-      if (!validPassword) {
-        return res.status(400).json({ message: "Invalid email or password" });
+      console.log('User found, verifying password');
+      
+      try {
+        // Verify password
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+          console.log('Password verification failed');
+          return res.status(400).json({ message: "Invalid email or password" });
+        }
+        
+        console.log('Password verified, generating token');
+        
+        // Generate JWT token
+        const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+        
+        // Return token and user data without password
+        const { password: _, ...userWithoutPassword } = user;
+        console.log('Login successful');
+        
+        return res.json({
+          message: "Login successful",
+          token,
+          user: userWithoutPassword
+        });
+      } catch (pwError) {
+        console.error('Error during password verification:', pwError);
+        return res.status(400).json({ message: "Password verification failed" });
       }
-      
-      // Generate JWT token
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
-      
-      // Return token and user data without password
-      const { password: _, ...userWithoutPassword } = user;
-      res.json({
-        message: "Login successful",
-        token,
-        user: userWithoutPassword
-      });
     } catch (error) {
+      console.error('Login error:', error);
       res.status(500).json({ message: "Login failed" });
     }
   });
