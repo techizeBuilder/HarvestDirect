@@ -87,23 +87,9 @@ export default function Account() {
   const fetchSubscriptions = async () => {
     try {
       setIsLoading(true);
-      const response = await apiRequest('/api/subscriptions', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setSubscriptions(data.subscriptions || []);
-      } else {
-        toast({
-          title: 'Error',
-          description: data.message || 'Failed to fetch subscriptions',
-          variant: 'destructive'
-        });
-      }
+      const data = await apiRequest('GET', '/api/subscriptions');
+      console.log('Subscription data:', data);
+      setSubscriptions(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
       toast({
