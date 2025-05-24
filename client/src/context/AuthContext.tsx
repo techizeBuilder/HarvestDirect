@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { apiRequest } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 interface User {

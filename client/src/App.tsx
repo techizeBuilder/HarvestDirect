@@ -10,8 +10,15 @@ import AllFarmers from "@/pages/all-farmers";
 import OurStory from "@/pages/our-story";
 import OurProcess from "@/pages/our-process";
 import Contact from "@/pages/contact";
-import Layout from "@/components/Layout";
+import Login from "@/pages/login";
+import Register from "@/pages/register";
+import Account from "@/pages/account";
+import Payment from "@/pages/payment";
+import PaymentSuccess from "@/pages/payment-success";
 import { CartProvider } from "@/context/CartContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 
 function Router() {
   return (
@@ -24,6 +31,11 @@ function Router() {
       <Route path="/our-story" component={OurStory} />
       <Route path="/our-process" component={OurProcess} />
       <Route path="/contact" component={Contact} />
+      <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
+      <Route path="/account" component={Account} />
+      <Route path="/payment" component={Payment} />
+      <Route path="/payment-success" component={PaymentSuccess} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -31,14 +43,16 @@ function Router() {
 
 function App() {
   return (
-    <TooltipProvider>
-      <CartProvider>
-        <Layout>
-          <Router />
-        </Layout>
-        <Toaster />
-      </CartProvider>
-    </TooltipProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <CartProvider>
+            <Router />
+            <Toaster />
+          </CartProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 
