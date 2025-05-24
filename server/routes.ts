@@ -496,7 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orderId: order.id,
         amount: order.amount,
         currency: order.currency,
-        keyId: razorpay.key_id
+        keyId: process.env.RAZORPAY_KEY_ID
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to initialize payment" });

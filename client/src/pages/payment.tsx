@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useParams } from 'wouter';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
@@ -15,7 +15,7 @@ declare global {
 }
 
 export default function Payment() {
-  const [, params] = useParams();
+  const location = useLocation();
   const [, navigate] = useLocation();
   const { isAuthenticated, token, user } = useAuth();
   const { toast } = useToast();
