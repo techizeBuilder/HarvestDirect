@@ -48,7 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       console.log('Attempting login with:', { email, password: '***' });
       
-      const response = await apiRequest('/api/auth/login', {
+      // Use direct fetch instead of apiRequest to better handle the response
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -100,7 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      const response = await apiRequest('/api/auth/register', {
+      // Use direct fetch instead of apiRequest for consistency with login
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
