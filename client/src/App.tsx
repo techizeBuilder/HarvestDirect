@@ -19,27 +19,7 @@ import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-
-function Router() {
-  return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/products" component={AllProducts} />
-      <Route path="/products/:id" component={ProductDetail} />
-      <Route path="/farmers" component={AllFarmers} />
-      <Route path="/checkout" component={Checkout} />
-      <Route path="/our-story" component={OurStory} />
-      <Route path="/our-process" component={OurProcess} />
-      <Route path="/contact" component={Contact} />
-      <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
-      <Route path="/account" component={Account} />
-      <Route path="/payment" component={Payment} />
-      <Route path="/payment-success" component={PaymentSuccess} />
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
+import Layout from "@/components/Layout";
 
 function App() {
   return (
@@ -47,7 +27,24 @@ function App() {
       <TooltipProvider>
         <AuthProvider>
           <CartProvider>
-            <Router />
+            <Layout>
+              <Switch>
+                <Route path="/" component={Home} />
+                <Route path="/products" component={AllProducts} />
+                <Route path="/products/:id" component={ProductDetail} />
+                <Route path="/farmers" component={AllFarmers} />
+                <Route path="/checkout" component={Checkout} />
+                <Route path="/our-story" component={OurStory} />
+                <Route path="/our-process" component={OurProcess} />
+                <Route path="/contact" component={Contact} />
+                <Route path="/login" component={Login} />
+                <Route path="/register" component={Register} />
+                <Route path="/account" component={Account} />
+                <Route path="/payment" component={Payment} />
+                <Route path="/payment-success" component={PaymentSuccess} />
+                <Route component={NotFound} />
+              </Switch>
+            </Layout>
             <Toaster />
           </CartProvider>
         </AuthProvider>
