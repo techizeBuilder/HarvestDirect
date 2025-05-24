@@ -46,31 +46,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await apiRequest('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      
+      console.log('Attempting login with:', { email, password: '***' });
+      
+      const data = await apiRequest('POST', '/api/auth/login', {
+        email, 
+        password
       });
-
-      const data = await response.json();
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      setToken(data.token);
-      setUser(data.user);
+      console.log('Login response:', data);
       
-      // Store in localStorage
-      localStorage.setItem('auth_token', data.token);
-      localStorage.setItem('auth_user', JSON.stringify(data.user));
-      
-      toast({
-        title: 'Login successful',
-        description: 'Welcome back!',
-      });
+      if (data && data.token) {
+        // Save auth data to localStorage
+        localStorage.setItem('auth_token', data.token);
+        localStorage.setItem('auth_user', JSON.stringify(data.user));
+        
+        // Update state
+        setToken(data.token);
+        setUser(data.user);
+        
+        toast({
+          title: 'Login successful',
+          description: 'Welcome back!',
+        });
 
       return true;
     } catch (error) {

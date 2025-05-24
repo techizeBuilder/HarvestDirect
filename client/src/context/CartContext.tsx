@@ -60,16 +60,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const fetchCart = async (id: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/cart`, {
-        headers: {
-          "X-Session-Id": id
-        }
-      });
-      
-      const data = await response.json();
-      setCartItems(data.items || []);
+      const data = await apiRequest("GET", `/api/cart?sessionId=${id}`);
+      console.log("Fetched cart data:", data);
+      if (data && data.items) {
+        setCartItems(data.items);
+      } else {
+        setCartItems([]);
+      }
     } catch (error) {
       console.error("Error fetching cart:", error);
+      setCartItems([]);
     } finally {
       setIsLoading(false);
     }
@@ -90,13 +90,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addToCart = async (productId: number, quantity: number) => {
     setIsLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/cart/items", {
+      const data = await apiRequest("POST", "/api/cart/items", {
         productId,
-        quantity
+        quantity,
+        sessionId
       });
       
-      const data = await response.json();
-      setCartItems(data.items || []);
+      console.log("Added to cart:", data);
+      if (data && data.items) {
+        setCartItems(data.items);
+      }
     } catch (error) {
       console.error("Error adding to cart:", error);
     } finally {
