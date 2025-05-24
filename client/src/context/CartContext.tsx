@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { apiRequest } from "@/lib/queryClient";
 import { Product } from "@shared/schema";
 import { v4 as uuidv4 } from "uuid"; // Using UUID v4 for session IDs
 
@@ -60,7 +59,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const fetchCart = async (id: string) => {
     setIsLoading(true);
     try {
-      const data = await apiRequest("GET", `/api/cart?sessionId=${id}`);
+      const response = await fetch(`/api/cart?sessionId=${id}`);
+      const data = await response.json();
+      
       console.log("Fetched cart data:", data);
       if (data && data.items) {
         setCartItems(data.items);
@@ -90,15 +91,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addToCart = async (productId: number, quantity: number) => {
     setIsLoading(true);
     try {
-      const data = await apiRequest("POST", "/api/cart/items", {
-        productId,
-        quantity,
-        sessionId
+      const response = await fetch("/api/cart/items", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId,
+          quantity,
+          sessionId
+        })
       });
       
+      const data = await response.json();
       console.log("Added to cart:", data);
+      
       if (data && data.items) {
         setCartItems(data.items);
+        // Open the cart when an item is added
+        openCart();
       }
     } catch (error) {
       console.error("Error adding to cart:", error);
@@ -108,14 +119,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateCartItem = async (productId: number, quantity: number) => {
+    if (quantity < 1) {
+      return removeFromCart(productId);
+    }
+    
     setIsLoading(true);
     try {
-      const response = await apiRequest("PUT", `/api/cart/items/${productId}`, {
-        quantity
+      const response = await fetch("/api/cart/items", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId,
+          quantity,
+          sessionId
+        })
       });
       
       const data = await response.json();
-      setCartItems(data.items || []);
+      
+      if (data && data.items) {
+        setCartItems(data.items);
+      }
     } catch (error) {
       console.error("Error updating cart item:", error);
     } finally {
@@ -126,10 +152,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const removeFromCart = async (productId: number) => {
     setIsLoading(true);
     try {
-      const response = await apiRequest("DELETE", `/api/cart/items/${productId}`);
+      const response = await fetch(`/api/cart/items?sessionId=${sessionId}&productId=${productId}`, {
+        method: "DELETE"
+      });
       
       const data = await response.json();
-      setCartItems(data.items || []);
+      
+      if (data && data.items) {
+        setCartItems(data.items);
+      }
     } catch (error) {
       console.error("Error removing from cart:", error);
     } finally {
@@ -138,13 +169,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const clearCart = async () => {
-    // Clear all items one by one
     setIsLoading(true);
     try {
-      for (const item of cartItems) {
-        await apiRequest("DELETE", `/api/cart/items/${item.product.id}`);
+      const response = await fetch(`/api/cart?sessionId=${sessionId}`, {
+        method: "DELETE"
+      });
+      
+      if (response.ok) {
+        setCartItems([]);
       }
-      setCartItems([]);
     } catch (error) {
       console.error("Error clearing cart:", error);
     } finally {
