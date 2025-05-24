@@ -8,12 +8,16 @@ import {
   Testimonial, InsertTestimonial,
   NewsletterSubscription, InsertNewsletterSubscription,
   ProductReview, InsertProductReview,
-  products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews
+  User, InsertUser,
+  Payment, InsertPayment,
+  Subscription, InsertSubscription,
+  products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews,
+  users, payments, subscriptions
 } from '@shared/schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
 import { db } from './db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, is } from 'drizzle-orm';
 
 // modify the interface with any CRUD methods
 // you might need
@@ -44,6 +48,26 @@ export interface IStorage {
   // Product Reviews
   getProductReviews(productId: number): Promise<ProductReview[]>;
   addProductReview(review: InsertProductReview): Promise<ProductReview>;
+
+  // User Authentication
+  createUser(user: InsertUser): Promise<User>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserById(id: number): Promise<User | undefined>;
+  updateUser(id: number, userData: Partial<InsertUser>): Promise<User>;
+  verifyUserEmail(token: string): Promise<boolean>;
+  resetPasswordRequest(email: string): Promise<boolean>;
+  resetPassword(token: string, newPassword: string): Promise<boolean>;
+
+  // Payments
+  createPayment(payment: InsertPayment): Promise<Payment>;
+  getPaymentsByUserId(userId: number): Promise<Payment[]>;
+  getPaymentById(id: number): Promise<Payment | undefined>;
+
+  // Subscriptions
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  getSubscriptionsByUserId(userId: number): Promise<Subscription[]>;
+  getSubscriptionById(id: number): Promise<Subscription | undefined>;
+  updateSubscriptionStatus(id: number, status: string): Promise<Subscription>;
 }
 
 export class MemStorage implements IStorage {
@@ -343,7 +367,11 @@ export class MemStorage implements IStorage {
   async addProductReview(review: InsertProductReview): Promise<ProductReview> {
     const newReview: ProductReview = {
       id: this.currentProductReviewId++,
-      ...review,
+      productId: review.productId,
+      customerName: review.customerName,
+      rating: review.rating,
+      reviewText: review.reviewText,
+      verified: review.verified ?? false,
       createdAt: new Date()
     };
     

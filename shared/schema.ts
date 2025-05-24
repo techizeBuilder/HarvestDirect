@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, doublePrecision, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, doublePrecision, timestamp, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -11,6 +11,12 @@ export const ProductCategory = {
 } as const;
 
 export type ProductCategoryType = typeof ProductCategory[keyof typeof ProductCategory];
+
+// User Role Enum
+export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
+
+// Subscription Status Enum
+export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', 'canceled', 'expired', 'past_due']);
 
 // Product Schema
 export const products = pgTable("products", {
@@ -144,6 +150,64 @@ export const insertProductReviewSchema = createInsertSchema(productReviews).omit
   createdAt: true
 });
 
+// User Schema
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  name: text("name").notNull(),
+  role: userRoleEnum("role").notNull().default("user"),
+  emailVerified: boolean("email_verified").default(false),
+  verificationToken: text("verification_token"),
+  resetToken: text("reset_token"),
+  resetTokenExpiry: timestamp("reset_token_expiry"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Payment Schema
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  orderId: integer("order_id"),
+  razorpayPaymentId: text("razorpay_payment_id").notNull(),
+  amount: doublePrecision("amount").notNull(),
+  currency: text("currency").notNull().default("INR"),
+  status: text("status").notNull(),
+  method: text("method"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertPaymentSchema = createInsertSchema(payments).omit({
+  id: true,
+  createdAt: true
+});
+
+// Subscription Schema
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  razorpaySubscriptionId: text("razorpay_subscription_id").notNull(),
+  planName: text("plan_name").notNull(),
+  status: subscriptionStatusEnum("status").notNull().default("active"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Export types
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = typeof products.$inferSelect;
@@ -171,6 +235,15 @@ export type Order = typeof orders.$inferSelect;
 
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Payment = typeof payments.$inferSelect;
+
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
 
 // Cart with items
 export interface CartWithItems extends Cart {
