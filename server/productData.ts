@@ -7,7 +7,9 @@ export const productData: Product[] = [
     description: "Hand-picked arabica beans from 5000ft elevation, sun-dried and small-batch roasted.",
     price: 12.50,
     category: ProductCategory.COFFEE_TEA,
-    imageUrl: "/images/products/coffee-beans.jpg",
+    imageUrl: "https://images.pexels.com/photos/1695052/pexels-photo-1695052.jpeg?auto=compress&cs=tinysrgb&w=800",
+    imageUrls: [],
+    videoUrl: null,
     farmerId: 1,
     stockQuantity: 100,
     featured: true
@@ -18,7 +20,9 @@ export const productData: Product[] = [
     description: "Bold, aromatic peppercorns from heritage vines, traditionally sun-dried to preserve natural oils.",
     price: 8.95,
     category: ProductCategory.SPICES,
-    imageUrl: "/images/products/black-pepper.jpg",
+    imageUrl: "https://images.pexels.com/photos/4198772/pexels-photo-4198772.jpeg?auto=compress&cs=tinysrgb&w=800",
+    imageUrls: [],
+    videoUrl: null,
     farmerId: 3,
     stockQuantity: 120,
     featured: true
@@ -29,7 +33,9 @@ export const productData: Product[] = [
     description: "Large, intensely aromatic green cardamom pods grown in virgin forest shade.",
     price: 9.25,
     category: ProductCategory.SPICES,
-    imageUrl: "https://pixabay.com/get/g9d121408164112155540c98d20cd75e1f57a6198ce8f04c93b01792823680cbad6e1f1295c51fad251011b25ade98c6d27ae084a7e1d2f6a1c0dcc2fda0c2dfc_1280.jpg",
+    imageUrl: "https://images.pexels.com/photos/4197444/pexels-photo-4197444.jpeg?auto=compress&cs=tinysrgb&w=800",
+    imageUrls: [],
+    videoUrl: null,
     farmerId: 1,
     stockQuantity: 85,
     featured: true
