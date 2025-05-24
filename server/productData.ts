@@ -7,7 +7,7 @@ export const productData: Product[] = [
     description: "Hand-picked arabica beans from 5000ft elevation, sun-dried and small-batch roasted.",
     price: 12.50,
     category: ProductCategory.COFFEE_TEA,
-    imageUrl: "https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+    imageUrl: "/images/products/coffee-beans.jpg",
     farmerId: 1,
     stockQuantity: 100,
     featured: true
@@ -18,7 +18,7 @@ export const productData: Product[] = [
     description: "Bold, aromatic peppercorns from heritage vines, traditionally sun-dried to preserve natural oils.",
     price: 8.95,
     category: ProductCategory.SPICES,
-    imageUrl: "https://pixabay.com/get/g6fbe4970c358b3c40db468d1280acc001b9ad0a93f82431ed106bb72c5afd982f2b13ebf2ad2bd5e06afcdbdaffed0d812d54e5e21bafa5b263988262e1192cb_1280.jpg",
+    imageUrl: "/images/products/black-pepper.jpg",
     farmerId: 3,
     stockQuantity: 120,
     featured: true

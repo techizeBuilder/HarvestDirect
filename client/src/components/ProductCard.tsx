@@ -20,7 +20,10 @@ export default function ProductCard({ product }: ProductCardProps) {
             <motion.img 
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.5 }}
-              src={product.imageUrl} 
+              src={product.imageUrl || '/images/products/placeholder.jpg'} 
+              onError={(e) => {
+                e.currentTarget.src = '/images/products/placeholder.jpg';
+              }}
               alt={product.name} 
               className="w-full h-full object-cover transition-transform duration-500"
             />
