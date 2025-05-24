@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 import { 
   Product, InsertProduct, 
   Farmer, InsertFarmer, 
@@ -12,12 +13,12 @@ import {
   Payment, InsertPayment,
   Subscription, InsertSubscription,
   products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews,
-  users, payments, subscriptions
+  users, payments, subscriptions, subscriptionStatusEnum
 } from '@shared/schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
 import { db } from './db';
-import { eq, and, is } from 'drizzle-orm';
+import { eq, and, isNotNull, sql } from 'drizzle-orm';
 
 // modify the interface with any CRUD methods
 // you might need
@@ -78,10 +79,16 @@ export class MemStorage implements IStorage {
   private testimonials: Map<number, Testimonial>;
   private newsletterSubscriptions: Map<number, NewsletterSubscription>;
   private productReviews: Map<number, ProductReview>;
+  private users: Map<number, User>;
+  private payments: Map<number, Payment>;
+  private subscriptions: Map<number, Subscription>;
   
   private currentCartItemId: number;
   private currentNewsletterSubscriptionId: number;
   private currentProductReviewId: number;
+  private currentUserId: number;
+  private currentPaymentId: number;
+  private currentSubscriptionId: number;
 
   constructor() {
     this.products = new Map();
@@ -91,10 +98,16 @@ export class MemStorage implements IStorage {
     this.testimonials = new Map();
     this.newsletterSubscriptions = new Map();
     this.productReviews = new Map();
+    this.users = new Map();
+    this.payments = new Map();
+    this.subscriptions = new Map();
     
     this.currentCartItemId = 1;
     this.currentNewsletterSubscriptionId = 1;
     this.currentProductReviewId = 1;
+    this.currentUserId = 1;
+    this.currentPaymentId = 1;
+    this.currentSubscriptionId = 1;
     
     // Initialize with seed data
     this.initializeProducts();
@@ -378,6 +391,199 @@ export class MemStorage implements IStorage {
     this.productReviews.set(newReview.id, newReview);
     return newReview;
   }
+
+  // User Authentication methods
+  async createUser(user: InsertUser): Promise<User> {
+    // Check if email already exists
+    const existingUser = Array.from(this.users.values()).find(
+      u => u.email === user.email
+    );
+
+    if (existingUser) {
+      throw new Error("Email already in use");
+    }
+
+    const newUser: User = {
+      id: this.currentUserId++,
+      email: user.email,
+      password: user.password,
+      name: user.name,
+      role: user.role || "user",
+      emailVerified: user.emailVerified || false,
+      verificationToken: user.verificationToken,
+      resetToken: user.resetToken,
+      resetTokenExpiry: user.resetTokenExpiry,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    this.users.set(newUser.id, newUser);
+    return newUser;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+
+  async getUserById(id: number): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User> {
+    const user = this.users.get(id);
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const updatedUser: User = {
+      ...user,
+      ...userData,
+      updatedAt: new Date()
+    };
+
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async verifyUserEmail(token: string): Promise<boolean> {
+    const user = Array.from(this.users.values()).find(
+      u => u.verificationToken === token
+    );
+
+    if (!user) {
+      return false;
+    }
+
+    const updatedUser: User = {
+      ...user,
+      emailVerified: true,
+      verificationToken: null,
+      updatedAt: new Date()
+    };
+
+    this.users.set(user.id, updatedUser);
+    return true;
+  }
+
+  async resetPasswordRequest(email: string): Promise<boolean> {
+    const user = Array.from(this.users.values()).find(
+      u => u.email === email
+    );
+
+    if (!user) {
+      return false;
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date();
+    resetTokenExpiry.setHours(resetTokenExpiry.getHours() + 1); // Token valid for 1 hour
+
+    const updatedUser: User = {
+      ...user,
+      resetToken,
+      resetTokenExpiry,
+      updatedAt: new Date()
+    };
+
+    this.users.set(user.id, updatedUser);
+    return true;
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<boolean> {
+    const now = new Date();
+    const user = Array.from(this.users.values()).find(
+      u => u.resetToken === token && u.resetTokenExpiry && u.resetTokenExpiry > now
+    );
+
+    if (!user) {
+      return false;
+    }
+
+    const updatedUser: User = {
+      ...user,
+      password: newPassword,
+      resetToken: null,
+      resetTokenExpiry: null,
+      updatedAt: new Date()
+    };
+
+    this.users.set(user.id, updatedUser);
+    return true;
+  }
+
+  // Payment methods
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const newPayment: Payment = {
+      id: this.currentPaymentId++,
+      userId: payment.userId,
+      orderId: payment.orderId,
+      razorpayPaymentId: payment.razorpayPaymentId,
+      amount: payment.amount,
+      currency: payment.currency || "INR",
+      status: payment.status,
+      method: payment.method,
+      createdAt: new Date()
+    };
+
+    this.payments.set(newPayment.id, newPayment);
+    return newPayment;
+  }
+
+  async getPaymentsByUserId(userId: number): Promise<Payment[]> {
+    return Array.from(this.payments.values()).filter(
+      payment => payment.userId === userId
+    );
+  }
+
+  async getPaymentById(id: number): Promise<Payment | undefined> {
+    return this.payments.get(id);
+  }
+
+  // Subscription methods
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    const newSubscription: Subscription = {
+      id: this.currentSubscriptionId++,
+      userId: subscription.userId,
+      razorpaySubscriptionId: subscription.razorpaySubscriptionId,
+      planName: subscription.planName,
+      status: subscription.status || "active",
+      startDate: subscription.startDate,
+      endDate: subscription.endDate,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    this.subscriptions.set(newSubscription.id, newSubscription);
+    return newSubscription;
+  }
+
+  async getSubscriptionsByUserId(userId: number): Promise<Subscription[]> {
+    return Array.from(this.subscriptions.values()).filter(
+      subscription => subscription.userId === userId
+    );
+  }
+
+  async getSubscriptionById(id: number): Promise<Subscription | undefined> {
+    return this.subscriptions.get(id);
+  }
+
+  async updateSubscriptionStatus(id: number, status: string): Promise<Subscription> {
+    const subscription = this.subscriptions.get(id);
+    
+    if (!subscription) {
+      throw new Error("Subscription not found");
+    }
+
+    const updatedSubscription: Subscription = {
+      ...subscription,
+      status: status as any,
+      updatedAt: new Date()
+    };
+
+    this.subscriptions.set(id, updatedSubscription);
+    return updatedSubscription;
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -591,6 +797,186 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return newSubscription;
+  }
+
+  // User Authentication methods
+  async createUser(user: InsertUser): Promise<User> {
+    // Check if email already exists
+    const [existingUser] = await db.select()
+      .from(users)
+      .where(eq(users.email, user.email));
+
+    if (existingUser) {
+      throw new Error("Email already in use");
+    }
+
+    const [newUser] = await db
+      .insert(users)
+      .values(user)
+      .returning();
+
+    return newUser;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.email, email));
+    
+    return user;
+  }
+
+  async getUserById(id: number): Promise<User | undefined> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.id, id));
+    
+    return user;
+  }
+
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User> {
+    const [updatedUser] = await db.update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+
+    if (!updatedUser) {
+      throw new Error("User not found");
+    }
+
+    return updatedUser;
+  }
+
+  async verifyUserEmail(token: string): Promise<boolean> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.verificationToken, token));
+
+    if (!user) {
+      return false;
+    }
+
+    await db.update(users)
+      .set({
+        emailVerified: true,
+        verificationToken: null
+      })
+      .where(eq(users.id, user.id));
+
+    return true;
+  }
+
+  async resetPasswordRequest(email: string): Promise<boolean> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.email, email));
+
+    if (!user) {
+      return false;
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date();
+    resetTokenExpiry.setHours(resetTokenExpiry.getHours() + 1); // Token valid for 1 hour
+
+    await db.update(users)
+      .set({
+        resetToken,
+        resetTokenExpiry
+      })
+      .where(eq(users.id, user.id));
+
+    return true;
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<boolean> {
+    const now = new Date();
+    
+    const [user] = await db.select()
+      .from(users)
+      .where(and(
+        eq(users.resetToken, token),
+        isNotNull(users.resetTokenExpiry)
+      ));
+
+    if (!user || !user.resetTokenExpiry || user.resetTokenExpiry < now) {
+      return false;
+    }
+
+    await db.update(users)
+      .set({
+        password: newPassword,
+        resetToken: null,
+        resetTokenExpiry: null
+      })
+      .where(eq(users.id, user.id));
+
+    return true;
+  }
+
+  // Payment methods
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const [newPayment] = await db
+      .insert(payments)
+      .values(payment)
+      .returning();
+
+    return newPayment;
+  }
+
+  async getPaymentsByUserId(userId: number): Promise<Payment[]> {
+    const userPayments = await db.select()
+      .from(payments)
+      .where(eq(payments.userId, userId));
+
+    return userPayments;
+  }
+
+  async getPaymentById(id: number): Promise<Payment | undefined> {
+    const [payment] = await db.select()
+      .from(payments)
+      .where(eq(payments.id, id));
+
+    return payment;
+  }
+
+  // Subscription methods
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    const [newSubscription] = await db
+      .insert(subscriptions)
+      .values(subscription)
+      .returning();
+
+    return newSubscription;
+  }
+
+  async getSubscriptionsByUserId(userId: number): Promise<Subscription[]> {
+    const userSubscriptions = await db.select()
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, userId));
+
+    return userSubscriptions;
+  }
+
+  async getSubscriptionById(id: number): Promise<Subscription | undefined> {
+    const [subscription] = await db.select()
+      .from(subscriptions)
+      .where(eq(subscriptions.id, id));
+
+    return subscription;
+  }
+
+  async updateSubscriptionStatus(id: number, status: string): Promise<Subscription> {
+    const [updatedSubscription] = await db.update(subscriptions)
+      .set({ status: status as any })
+      .where(eq(subscriptions.id, id))
+      .returning();
+
+    if (!updatedSubscription) {
+      throw new Error("Subscription not found");
+    }
+
+    return updatedSubscription;
   }
 }
 
