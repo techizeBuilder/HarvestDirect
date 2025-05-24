@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Search, 
   ShoppingBasket, 
   Menu, 
-  X
+  X,
+  User
 } from "lucide-react";
 
 export default function Navbar() {
@@ -15,6 +17,7 @@ export default function Navbar() {
   const [showSearch, setShowSearch] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { cartItems, openCart } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
   const [location] = useLocation();
   
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
@@ -91,6 +94,33 @@ export default function Navbar() {
               <Search className="h-5 w-5" />
             </Button>
             
+            {/* Auth Links - Desktop */}
+            <div className="hidden lg:flex items-center space-x-4">
+              {isAuthenticated ? (
+                <>
+                  <Link href="/account" className="text-forest hover:text-primary font-medium transition duration-200">
+                    My Account
+                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    onClick={logout} 
+                    className="text-forest hover:text-primary hover:bg-transparent"
+                  >
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="text-forest hover:text-primary font-medium transition duration-200">
+                    Login
+                  </Link>
+                  <Link href="/register" className="text-forest hover:text-primary font-medium transition duration-200">
+                    Register
+                  </Link>
+                </>
+              )}
+            </div>
+            
             <Button 
               variant="ghost" 
               size="icon" 
@@ -130,6 +160,47 @@ export default function Navbar() {
                   {link.label}
                 </Link>
               ))}
+              
+              {/* Auth Links - Mobile */}
+              <div className="pt-2 border-t border-border/30">
+                {isAuthenticated ? (
+                  <>
+                    <Link
+                      href="/account"
+                      className="text-forest hover:text-primary font-medium py-2 transition duration-200 block"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      My Account
+                    </Link>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setShowMobileMenu(false);
+                      }}
+                      className="text-forest hover:text-primary font-medium py-2 transition duration-200 block"
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="text-forest hover:text-primary font-medium py-2 transition duration-200 block"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="text-forest hover:text-primary font-medium py-2 transition duration-200 block"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      Register
+                    </Link>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}
