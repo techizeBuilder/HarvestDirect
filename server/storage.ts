@@ -410,9 +410,9 @@ export class MemStorage implements IStorage {
       name: user.name,
       role: user.role || "user",
       emailVerified: user.emailVerified || false,
-      verificationToken: user.verificationToken,
-      resetToken: user.resetToken,
-      resetTokenExpiry: user.resetTokenExpiry,
+      verificationToken: user.verificationToken || null,
+      resetToken: user.resetToken || null,
+      resetTokenExpiry: user.resetTokenExpiry || null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -517,12 +517,12 @@ export class MemStorage implements IStorage {
     const newPayment: Payment = {
       id: this.currentPaymentId++,
       userId: payment.userId,
-      orderId: payment.orderId,
+      orderId: payment.orderId ?? null,
       razorpayPaymentId: payment.razorpayPaymentId,
       amount: payment.amount,
       currency: payment.currency || "INR",
       status: payment.status,
-      method: payment.method,
+      method: payment.method ?? null,
       createdAt: new Date()
     };
 
