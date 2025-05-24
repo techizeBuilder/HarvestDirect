@@ -289,32 +289,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(userData.password, salt);
       
-      // Generate verification token
-      const verificationToken = crypto.randomBytes(32).toString('hex');
-      
-      // Create user with hashed password
+      // Create user with hashed password and mark as already verified
       const user = await storage.createUser({
         ...userData,
         password: hashedPassword,
-        verificationToken
+        emailVerified: true
       });
-      
-      // Send verification email if email configuration is available
-      if (transporter) {
-        const verificationUrl = `${req.protocol}://${req.get('host')}${apiPrefix}/auth/verify/${verificationToken}`;
-        
-        await transporter.sendMail({
-          from: 'noreply@yourstore.com',
-          to: user.email,
-          subject: 'Verify Your Email',
-          html: `<p>Please click <a href="${verificationUrl}">here</a> to verify your email.</p>`
-        });
-      }
       
       // Return success message without exposing password
       const { password, ...userWithoutPassword } = user;
       res.status(201).json({ 
-        message: "Registration successful. Please verify your email.",
+        message: "Registration successful. You can now log in.",
         user: userWithoutPassword
       });
     } catch (error) {
@@ -357,11 +342,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validPassword = await bcrypt.compare(password, user.password);
       if (!validPassword) {
         return res.status(400).json({ message: "Invalid email or password" });
-      }
-      
-      // Check if email is verified
-      if (!user.emailVerified) {
-        return res.status(403).json({ message: "Please verify your email before logging in" });
       }
       
       // Generate JWT token
