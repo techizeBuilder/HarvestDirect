@@ -24,7 +24,7 @@ const formSchema = z.object({
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
   zip: z.string().min(5, "ZIP code is required"),
-  paymentMethod: z.enum(["credit", "paypal"]),
+  paymentMethod: z.enum(["razorpay", "cod"]),
   cardNumber: z.string().optional(),
   cardExpiry: z.string().optional(),
   cardCvc: z.string().optional(),
@@ -48,7 +48,7 @@ export default function Checkout() {
       city: "",
       state: "",
       zip: "",
-      paymentMethod: "credit",
+      paymentMethod: "razorpay",
       cardNumber: "",
       cardExpiry: "",
       cardCvc: "",
@@ -73,17 +73,33 @@ export default function Checkout() {
     setIsSubmitting(true);
     
     try {
-      // Simulate order processing delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Create the order data
+      const orderData = {
+        ...values,
+        cartItems,
+        subtotal,
+        shipping,
+        total
+      };
       
-      // Clear cart after successful order
-      await clearCart();
-      
-      // Show success state
-      setOrderComplete(true);
-      
-      // Scroll to top
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (values.paymentMethod === "razorpay") {
+        // Redirect to Razorpay payment page
+        setLocation(`/payment?amount=${total}&currency=INR&description=Purchase from Farm to Table`);
+        return;
+      } else if (values.paymentMethod === "cod") {
+        // Process Cash on Delivery order
+        // Simulate order processing delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Clear cart after successful order
+        await clearCart();
+        
+        // Show success state
+        setOrderComplete(true);
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -278,17 +294,17 @@ export default function Checkout() {
                             className="space-y-4"
                           >
                             <div className="flex items-center space-x-3 border p-4 rounded-md">
-                              <RadioGroupItem value="credit" id="credit" />
-                              <Label htmlFor="credit" className="flex items-center font-medium cursor-pointer">
+                              <RadioGroupItem value="razorpay" id="razorpay" />
+                              <Label htmlFor="razorpay" className="flex items-center font-medium cursor-pointer">
                                 <CreditCard className="mr-2 h-5 w-5 text-primary" />
-                                Credit / Debit Card
+                                Pay with Razorpay
                               </Label>
                             </div>
                             <div className="flex items-center space-x-3 border p-4 rounded-md">
-                              <RadioGroupItem value="paypal" id="paypal" />
-                              <Label htmlFor="paypal" className="flex items-center font-medium cursor-pointer">
-                                <i className="fab fa-paypal mr-2 text-[#003087] text-lg"></i>
-                                PayPal
+                              <RadioGroupItem value="cod" id="cod" />
+                              <Label htmlFor="cod" className="flex items-center font-medium cursor-pointer">
+                                <Truck className="mr-2 h-5 w-5 text-primary" />
+                                Cash on Delivery
                               </Label>
                             </div>
                           </RadioGroup>
@@ -299,7 +315,7 @@ export default function Checkout() {
                   />
                   
                   <AnimatePresence>
-                    {form.watch("paymentMethod") === "credit" && (
+                    {form.watch("paymentMethod") === "razorpay" && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
@@ -307,46 +323,23 @@ export default function Checkout() {
                         transition={{ duration: 0.3 }}
                         className="overflow-hidden mt-6"
                       >
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <FormField
-                            control={form.control}
-                            name="cardNumber"
-                            render={({ field }) => (
-                              <FormItem className="col-span-2">
-                                <FormLabel>Card Number</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="1234 5678 9012 3456" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="cardExpiry"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Expiry Date</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="MM/YY" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="cardCvc"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>CVC</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="123" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                        <div className="p-4 bg-gray-50 rounded-md text-sm">
+                          <p className="mb-2">You will be redirected to Razorpay's secure payment page to complete your purchase after submitting the order.</p>
+                          <p>Razorpay accepts all major credit/debit cards, UPI, wallets, and net banking options.</p>
+                        </div>
+                      </motion.div>
+                    )}
+                    {form.watch("paymentMethod") === "cod" && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden mt-6"
+                      >
+                        <div className="p-4 bg-gray-50 rounded-md text-sm">
+                          <p className="mb-2">Pay with cash when your order is delivered.</p>
+                          <p>Our delivery personnel will collect the payment at the time of delivery.</p>
                         </div>
                       </motion.div>
                     )}
@@ -435,7 +428,7 @@ export default function Checkout() {
                 </div>
                 <div className="flex items-start">
                   <Shield className="h-5 w-5 mr-2 text-primary flex-shrink-0 mt-0.5" />
-                  <p>All transactions are secure and encrypted. We never store your full payment details.</p>
+                  <p>All transactions are secure and encrypted. Pay securely with Razorpay or choose Cash on Delivery.</p>
                 </div>
               </div>
             </div>
