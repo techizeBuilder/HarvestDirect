@@ -15,6 +15,17 @@ import Register from "@/pages/register";
 import Account from "@/pages/account";
 import Payment from "@/pages/payment";
 import PaymentSuccess from "@/pages/payment-success";
+
+// Admin Pages
+import AdminLogin from "@/pages/admin/login";
+import AdminDashboard from "@/pages/admin/dashboard";
+import AdminProducts from "@/pages/admin/products";
+import AdminOrders from "@/pages/admin/orders";
+import AdminUsers from "@/pages/admin/users";
+import AdminInventory from "@/pages/admin/inventory";
+import AdminDiscounts from "@/pages/admin/discounts";
+import AdminSettings from "@/pages/admin/settings";
+
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -29,6 +40,7 @@ function App() {
           <CartProvider>
             <Layout>
               <Switch>
+                {/* Main Store Routes */}
                 <Route path="/" component={Home} />
                 <Route path="/products" component={AllProducts} />
                 <Route path="/products/:id" component={ProductDetail} />
@@ -42,6 +54,18 @@ function App() {
                 <Route path="/account" component={Account} />
                 <Route path="/payment" component={Payment} />
                 <Route path="/payment-success" component={PaymentSuccess} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin/login" component={AdminLogin} />
+                <Route path="/admin/dashboard" component={AdminDashboard} />
+                <Route path="/admin/products" component={AdminProducts} />
+                <Route path="/admin/orders" component={AdminOrders} />
+                <Route path="/admin/users" component={AdminUsers} />
+                <Route path="/admin/inventory" component={AdminInventory} />
+                <Route path="/admin/discounts" component={AdminDiscounts} />
+                <Route path="/admin/settings" component={AdminSettings} />
+                
+                {/* 404 Route */}
                 <Route component={NotFound} />
               </Switch>
             </Layout>
