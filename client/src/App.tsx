@@ -15,6 +15,10 @@ import Register from "@/pages/register";
 import Account from "@/pages/account";
 import Payment from "@/pages/payment";
 import PaymentSuccess from "@/pages/payment-success";
+import FAQs from "@/pages/faqs";
+import ShippingReturns from "@/pages/shipping-returns";
+import TrackOrder from "@/pages/track-order";
+import PrivacyPolicy from "@/pages/privacy-policy";
 
 // Admin Pages
 import AdminLogin from "@/pages/admin/login";
@@ -67,6 +71,12 @@ function App() {
                       <Route path="/account" component={Account} />
                       <Route path="/payment" component={Payment} />
                       <Route path="/payment-success" component={PaymentSuccess} />
+                      
+                      {/* Customer Care Pages */}
+                      <Route path="/faqs" component={FAQs} />
+                      <Route path="/shipping-returns" component={ShippingReturns} />
+                      <Route path="/track-order" component={TrackOrder} />
+                      <Route path="/privacy-policy" component={PrivacyPolicy} />
                       
                       {/* 404 Route */}
                       <Route component={NotFound} />
