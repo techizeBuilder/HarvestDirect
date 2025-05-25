@@ -1,280 +1,280 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Star, StarHalf, AlertCircle, Info } from "lucide-react";
-import { motion } from "framer-motion";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/context/AuthContext";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { Star, StarHalf } from "lucide-react";
+
+// Review schema for validation
+const reviewSchema = z.object({
+  userId: z.number(),
+  productId: z.number(),
+  rating: z.number().min(1, "Please select a rating").max(5),
+  review: z.string().min(10, "Review must be at least 10 characters long"),
+});
+
+// Type definition for our form
+type ReviewFormData = z.infer<typeof reviewSchema>;
 
 interface ProductReviewSystemProps {
   productId: number;
 }
 
-const reviewSchema = z.object({
-  customerName: z.string().min(2, "Name must be at least 2 characters"),
-  reviewText: z.string().min(10, "Review must be at least 10 characters long"),
-  rating: z.coerce.number().min(1).max(5)
-});
-
-type ReviewFormData = z.infer<typeof reviewSchema>;
-
 export default function ProductReviewSystem({ productId }: ProductReviewSystemProps) {
-  const [selectedRating, setSelectedRating] = useState<number>(5);
+  const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
-  const { user, isAuthenticated } = useAuth();
-  
-  // Fetch product reviews
-  const { data: reviews = [], isLoading, refetch } = useQuery<any[]>({
-    queryKey: [`/api/products/${productId}/reviews`],
-    enabled: !!productId
-  });
-  
-  // Check if user can review this product (has purchased and received it)
-  const { data: canReview = false, isLoading: isCheckingReviewEligibility } = useQuery<boolean>({
+  const queryClient = useQueryClient();
+
+  // Get the current user ID from the session or local storage
+  // In a real app, this would come from your auth context
+  const userId = 1; // Placeholder, replace with actual user ID
+
+  // Check if the user can review this product (if they've purchased and received it)
+  const { data: canReview, isLoading: checkingEligibility } = useQuery({
     queryKey: [`/api/products/${productId}/can-review`],
-    enabled: !!productId && isAuthenticated,
+    enabled: !!productId && !!userId,
   });
-  
-  // Form setup
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ReviewFormData>({
+
+  // Fetch existing reviews for this product
+  const { data: reviews, isLoading: loadingReviews } = useQuery({
+    queryKey: [`/api/products/${productId}/reviews`],
+    enabled: !!productId,
+  });
+
+  // Set up the form with validation
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting }
+  } = useForm({
     resolver: zodResolver(reviewSchema),
     defaultValues: {
-      customerName: user?.name || '',
-      reviewText: '',
-      rating: 5
+      userId: userId,
+      productId: productId,
+      rating: 0,
+      review: "",
     }
   });
-  
-  // Submit review mutation
-  const addReviewMutation = useMutation({
+
+  // Watch the rating field for real-time updates
+  const currentRating = watch("rating");
+
+  // Set up the mutation to submit the review
+  const mutation = useMutation({
     mutationFn: async (data: ReviewFormData) => {
       return apiRequest(`/api/products/${productId}/reviews`, {
-        method: 'POST',
-        body: JSON.stringify({
-          customerName: user?.name || data.customerName,
-          reviewText: data.reviewText,
-          rating: data.rating,
-          productId: productId,
-          userId: user?.id,
-          orderId: 1, // This would come from the actual order in a real implementation
-          verified: true
-        })
+        method: "POST",
+        body: JSON.stringify(data)
       });
     },
     onSuccess: () => {
+      // Show success message
       toast({
         title: "Review submitted!",
-        description: "Thank you for sharing your thoughts.",
+        description: "Thank you for sharing your feedback.",
+        variant: "default"
       });
+      
+      // Reset the form
       reset();
-      refetch();
-      queryClient.invalidateQueries({ queryKey: [`/api/products/${productId}`] });
+      
+      // Show success state
+      setIsSuccess(true);
+      
+      // Hide success state after 5 seconds
+      setTimeout(() => {
+        setIsSuccess(false);
+      }, 5000);
+      
+      // Invalidate the cache to refresh the reviews
+      queryClient.invalidateQueries({ queryKey: [`/api/products/${productId}/reviews`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/products/${productId}/can-review`] });
     },
-    onError: () => {
+    onError: (error) => {
+      // Show error message
       toast({
-        title: "Error submitting review",
-        description: "Please try again later.",
+        title: "Failed to submit review",
+        description: "There was a problem submitting your review. Please try again.",
         variant: "destructive"
       });
+      console.error("Review submission error:", error);
     }
   });
-  
-  const onSubmit = (data: ReviewFormData) => {
-    data.rating = selectedRating;
-    addReviewMutation.mutate(data);
+
+  // Handle form submission
+  const onSubmit = (data: any) => {
+    // Ensure the data includes the user ID and product ID
+    const reviewData = {
+      ...data,
+      userId: userId,
+      productId: productId
+    };
+    mutation.mutate(reviewData as ReviewFormData);
   };
-  
-  // Calculate average rating
-  const averageRating = reviews.length ? 
-    reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length : 
-    0;
-  
-  // Helper to render star ratings
+
+  // Calculate average rating from reviews
+  const calculateAverageRating = () => {
+    if (!reviews || !Array.isArray(reviews) || reviews.length === 0) return 0;
+    
+    const totalRating = reviews.reduce((acc: number, review: any) => acc + review.rating, 0);
+    return totalRating / reviews.length;
+  };
+
+  // Format the average rating to display stars
+  const averageRating = calculateAverageRating();
+  const roundedRating = Math.round(averageRating * 2) / 2; // Round to nearest 0.5
+
+  // Helper to render stars based on rating
   const renderStars = (rating: number) => {
     const stars = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
     
+    // Add full stars
     for (let i = 0; i < fullStars; i++) {
-      stars.push(<Star key={i} className="fill-[#DDA15E] text-[#DDA15E] w-5 h-5" />);
+      stars.push(
+        <Star key={`full-${i}`} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+      );
     }
     
+    // Add half star if needed
     if (hasHalfStar) {
-      stars.push(<StarHalf key="half" className="fill-[#DDA15E] text-[#DDA15E] w-5 h-5" />);
+      stars.push(
+        <StarHalf key="half" className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+      );
     }
     
-    for (let i = Math.ceil(rating); i < 5; i++) {
-      stars.push(<Star key={`empty-${i}`} className="text-gray-300 w-5 h-5" />);
+    // Add empty stars
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(
+        <Star key={`empty-${i}`} className="h-5 w-5 text-gray-300" />
+      );
     }
     
     return stars;
   };
-  
+
+  if (checkingEligibility) {
+    return <div className="p-4 text-center">Checking if you can review this product...</div>;
+  }
+
   return (
-    <div className="mt-16">
-      <h2 className="font-heading text-forest text-2xl md:text-3xl font-bold mb-8">
-        Customer Reviews
-      </h2>
+    <div className="mt-8 border-t pt-8">
+      <h2 className="text-2xl font-bold mb-4">Customer Reviews</h2>
       
-      {/* Review summary */}
-      <div className="flex items-start flex-wrap gap-8 mb-12">
-        <div className="bg-muted rounded-lg p-6 flex flex-col items-center min-w-[200px]">
-          <h3 className="text-forest font-bold text-4xl mb-2">
-            {averageRating.toFixed(1)}
-          </h3>
-          <div className="flex mb-2">
-            {renderStars(averageRating)}
+      {/* Display average rating */}
+      {!loadingReviews && reviews && Array.isArray(reviews) && reviews.length > 0 && (
+        <div className="flex items-center mb-6">
+          <div className="flex items-center mr-2">
+            {renderStars(roundedRating)}
           </div>
-          <p className="text-olive text-sm">
-            Based on {reviews.length} review{reviews.length !== 1 ? 's' : ''}
-          </p>
+          <span className="text-lg font-medium">
+            {averageRating.toFixed(1)} out of 5 ({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})
+          </span>
         </div>
-        
-        <div className="flex-1 min-w-[300px]">
-          <h3 className="text-forest font-bold text-xl mb-4">Add Your Review</h3>
-          
-          {isAuthenticated && !canReview && !isCheckingReviewEligibility && (
-            <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-4 text-amber-700 flex items-start">
-              <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium">You can only review products you've purchased and received</p>
-                <p className="text-sm mt-1">Once your order is delivered, you'll be able to share your experience with this product.</p>
-              </div>
+      )}
+
+      {/* User can write a review section */}
+      {canReview && (
+        <div className="bg-background p-6 rounded-lg mb-8">
+          <h3 className="text-xl font-bold mb-4">Write a Review</h3>
+          {isSuccess ? (
+            <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 mb-6">
+              <p className="font-medium">Thank you for your review!</p>
+              <p>Your feedback helps other customers make informed decisions.</p>
             </div>
-          )}
-          
-          {!isAuthenticated && (
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4 text-blue-700 flex items-start">
-              <Info className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium">Sign in to leave a review</p>
-                <p className="text-sm mt-1">
-                  <a href="/login" className="text-primary underline">Log in</a> or <a href="/register" className="text-primary underline">create an account</a> to share your experience with this product.
-                </p>
-              </div>
-            </div>
-          )}
-          
-          {((isAuthenticated && canReview) || !isAuthenticated) && (
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div>
-                <Input 
-                  placeholder="Your Name" 
-                  {...register("customerName")}
-                  disabled={isAuthenticated}
-                  value={isAuthenticated ? (user?.name || '') : undefined}
-                />
-                {errors.customerName && (
-                  <p className="text-destructive text-sm mt-1">{errors.customerName.message}</p>
-                )}
-              </div>
-              
-              <div>
-                <div className="flex items-center space-x-2 mb-2">
-                  <p className="text-olive font-medium">Your Rating:</p>
-                  <div className="flex">
-                    {[1, 2, 3, 4, 5].map((rating) => (
-                      <button
-                        key={rating}
-                        type="button"
-                        onClick={() => setSelectedRating(rating)}
-                        className="focus:outline-none"
-                      >
-                        <Star 
-                          className={`w-6 h-6 ${selectedRating >= rating ? 'fill-[#DDA15E] text-[#DDA15E]' : 'text-gray-300'}`} 
-                        />
-                      </button>
-                    ))}
-                  </div>
+          ) : (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">Rating</label>
+                <div className="flex space-x-1">
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <button
+                      key={rating}
+                      type="button"
+                      onClick={() => setValue("rating", rating)}
+                      className="focus:outline-none"
+                      aria-label={`Rate ${rating} stars`}
+                    >
+                      <Star 
+                        className={`h-8 w-8 cursor-pointer ${
+                          currentRating >= rating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    </button>
+                  ))}
                 </div>
-              </div>
-              
-              <div>
-                <Textarea 
-                  placeholder="Write your review here" 
-                  className="min-h-[120px]"
-                  {...register("reviewText")}
-                />
-                {errors.reviewText && (
-                  <p className="text-destructive text-sm mt-1">{errors.reviewText.message}</p>
+                {errors.rating && (
+                  <p className="text-sm text-red-500">{errors.rating.message}</p>
                 )}
               </div>
               
-              <Button 
-                type="submit" 
-                className="bg-primary hover:bg-primary/90"
-                disabled={addReviewMutation.isPending}
+              <div className="space-y-2">
+                <label htmlFor="review" className="block text-sm font-medium">Your Review</label>
+                <Textarea
+                  id="review"
+                  placeholder="Share your experience with this product..."
+                  rows={5}
+                  {...register("review")}
+                  aria-invalid={!!errors.review}
+                />
+                {errors.review && (
+                  <p className="text-sm text-red-500">{errors.review.message}</p>
+                )}
+              </div>
+              
+              <Button
+                type="submit"
+                disabled={isSubmitting || mutation.isPending}
+                className="bg-primary hover:bg-primary/90 text-white"
               >
-                {addReviewMutation.isPending ? "Submitting..." : "Submit Review"}
+                {(isSubmitting || mutation.isPending) ? "Submitting..." : "Submit Review"}
               </Button>
             </form>
           )}
         </div>
-      </div>
-      
-      {/* Reviews list */}
-      <div className="space-y-4">
-        <h3 className="text-forest font-bold text-xl mb-6">
-          {reviews.length ? 'Customer Feedback' : 'Be the first to review this product!'}
+      )}
+
+      {/* Display existing reviews */}
+      <div className="space-y-6">
+        <h3 className="text-xl font-bold mb-4">
+          {reviews && Array.isArray(reviews) && reviews.length > 0
+            ? "Customer Reviews"
+            : "No reviews yet"}
         </h3>
         
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-4 bg-muted rounded w-1/4 mb-2"></div>
-                <div className="h-3 bg-muted rounded w-1/6 mb-4"></div>
-                <div className="h-20 bg-muted rounded w-full mb-2"></div>
+        {loadingReviews ? (
+          <div className="animate-pulse space-y-4">
+            <div className="h-20 bg-gray-200 rounded"></div>
+            <div className="h-20 bg-gray-200 rounded"></div>
+          </div>
+        ) : (
+          <div className="divide-y">
+            {reviews && Array.isArray(reviews) && reviews.map((review: any, index: number) => (
+              <div key={index} className="py-4">
+                <div className="flex items-center mb-2">
+                  <div className="flex mr-2">
+                    {renderStars(review.rating)}
+                  </div>
+                  <span className="font-medium">{review.userName || "Customer"}</span>
+                </div>
+                <p className="text-gray-600 italic text-sm mb-2">
+                  {new Date(review.createdAt).toLocaleDateString()}
+                </p>
+                <p className="text-gray-800">{review.review}</p>
               </div>
             ))}
           </div>
-        ) : (
-          <>
-            {reviews.map((review, index) => (
-              <motion.div
-                key={review.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <Card className="mb-4 overflow-hidden">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h4 className="font-semibold text-forest">{review.customerName}</h4>
-                        <div className="flex mt-1">
-                          {renderStars(review.rating)}
-                        </div>
-                      </div>
-                      <div className="text-sm text-olive">
-                        {new Date(review.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </div>
-                    </div>
-                    <p className="text-olive mt-3">{review.reviewText}</p>
-                    {review.verified && (
-                      <div className="mt-3 inline-flex items-center text-xs text-primary bg-primary/10 px-2 py-1 rounded">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        Verified Purchase
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </>
         )}
       </div>
     </div>

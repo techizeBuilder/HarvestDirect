@@ -82,8 +82,13 @@ export default function ContactFormWithStorage() {
   });
 
   // Handle form submission
-  const onSubmit = (data: ContactFormValues) => {
-    mutation.mutate(data);
+  const onSubmit = (data: any) => {
+    // Add the status if it doesn't exist
+    const formData = {
+      ...data,
+      status: data.status || "new"
+    };
+    mutation.mutate(formData as ContactFormValues);
   };
 
   return (
