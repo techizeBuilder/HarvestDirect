@@ -61,8 +61,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Admin Header */}
-      <header className="bg-white border-b px-4 py-3 shadow-sm">
+      {/* Admin Header - Completely independent from main site header */}
+      <header className="bg-white border-b px-4 py-3 shadow-sm z-50 fixed w-full">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
             <Button 
@@ -82,10 +82,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </header>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 pt-[56px]">
         {/* Sidebar Navigation */}
         <aside 
-          className={`bg-white border-r w-64 flex-shrink-0 fixed inset-y-0 mt-[57px] pt-5 transition-all duration-300 md:translate-x-0 ${
+          className={`bg-white border-r w-64 flex-shrink-0 fixed inset-y-0 mt-[56px] pt-5 transition-all duration-300 md:translate-x-0 z-40 ${
             menuOpen ? 'translate-x-0' : '-translate-x-full'
           } md:static`}
         >
@@ -111,11 +111,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 p-6 overflow-auto md:ml-64">
           {/* Backdrop for mobile menu */}
           {menuOpen && (
             <div 
-              className="fixed inset-0 bg-black/50 z-10 md:hidden" 
+              className="fixed inset-0 bg-black/50 z-30 md:hidden" 
               onClick={() => setMenuOpen(false)}
             />
           )}
