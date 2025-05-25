@@ -27,7 +27,7 @@ export default function Account() {
   const [payments, setPayments] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  const [cancelledOrders, setCancelledOrders] = useState<any[]>([]);
+
   const [deliveredOrders, setDeliveredOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -76,12 +76,7 @@ export default function Account() {
     }
   }, [token, activeTab]);
   
-  // Fetch cancelled orders
-  useEffect(() => {
-    if (token && activeTab === 'cancelled-orders') {
-      fetchCancelledOrders();
-    }
-  }, [token, activeTab]);
+
   
   // Fetch delivered orders
   useEffect(() => {
@@ -152,29 +147,6 @@ export default function Account() {
       toast({
         title: 'Error',
         description: 'Failed to fetch order history',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const fetchCancelledOrders = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/orders/cancelled', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      console.log('Cancelled order data:', data);
-      setCancelledOrders(Array.isArray(data.orders) ? data.orders : []);
-    } catch (error) {
-      console.error('Error fetching cancelled orders:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch cancelled orders',
         variant: 'destructive'
       });
     } finally {
@@ -264,10 +236,9 @@ export default function Account() {
         <h1 className="text-3xl font-bold mb-6">My Account</h1>
         
         <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-8 w-full grid grid-cols-6">
+          <TabsList className="mb-8 w-full grid grid-cols-5">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="orders">Order History</TabsTrigger>
-            <TabsTrigger value="cancelled-orders">Cancelled Orders</TabsTrigger>
             <TabsTrigger value="delivered-orders">Delivered Orders</TabsTrigger>
             <TabsTrigger value="payments">Payment History</TabsTrigger>
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
@@ -430,59 +401,7 @@ export default function Account() {
             </Card>
           </TabsContent>
 
-          {/* Cancelled Orders Tab */}
-          <TabsContent value="cancelled-orders">
-            <Card>
-              <CardHeader>
-                <CardTitle>Cancelled Orders</CardTitle>
-                <CardDescription>
-                  View your cancelled orders
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="text-center py-4">Loading cancelled orders...</div>
-                ) : cancelledOrders.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="py-2 px-4 text-left">Order ID</th>
-                          <th className="py-2 px-4 text-left">Date</th>
-                          <th className="py-2 px-4 text-left">Total</th>
-                          <th className="py-2 px-4 text-left">Cancellation Reason</th>
-                          <th className="py-2 px-4 text-left">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {cancelledOrders.map((order: any) => (
-                          <tr key={order.id} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-4">#{order.id}</td>
-                            <td className="py-3 px-4">
-                              {new Date(order.createdAt).toLocaleDateString()}
-                            </td>
-                            <td className="py-3 px-4 font-medium">
-                              ${order.total.toFixed(2)}
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              {order.cancellationReason || 'No reason provided'}
-                            </td>
-                            <td className="py-3 px-4">
-                              <Button variant="ghost" size="sm">View Details</Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    You don't have any cancelled orders.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+
 
           {/* Delivered Orders Tab */}
           <TabsContent value="delivered-orders">
