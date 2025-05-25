@@ -225,8 +225,8 @@ export const getProductCategories = async (req: Request, res: Response) => {
   }
 };
 
-// Get product stock count
-export const getProductStock = async (req: Request, res: Response) => {
+// Get product stock data without sending response
+export const getProductStockData = async (): Promise<any> => {
   try {
     // Count products by stock level
     const lowStockThreshold = 20;
@@ -239,12 +239,23 @@ export const getProductStock = async (req: Request, res: Response) => {
     const lowStock = allProducts.filter(p => p.stockQuantity <= lowStockThreshold && p.stockQuantity > 0).length;
     const outOfStock = allProducts.filter(p => p.stockQuantity === 0).length;
     
-    res.json({
+    return {
       total: allProducts.length,
       inStock,
       lowStock,
       outOfStock
-    });
+    };
+  } catch (error) {
+    console.error('Error fetching product stock counts:', error);
+    throw error;
+  }
+};
+
+// Get product stock count with response
+export const getProductStock = async (req: Request, res: Response) => {
+  try {
+    const stockData = await getProductStockData();
+    res.json(stockData);
   } catch (error) {
     console.error('Error fetching product stock counts:', error);
     res.status(500).json({ message: 'Failed to fetch stock counts', error: String(error) });

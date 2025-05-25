@@ -406,8 +406,8 @@ export const deleteUser = async (req: Request, res: Response) => {
   }
 };
 
-// Get user statistics
-export const getUserStatistics = async (req: Request, res: Response) => {
+// Get user statistics data without sending response
+export const getUserStatisticsData = async (): Promise<any> => {
   try {
     // Count total users
     const [{ count: totalUsers }] = await db
@@ -435,12 +435,23 @@ export const getUserStatistics = async (req: Request, res: Response) => {
       .from(users)
       .where(gte(users.createdAt, thirtyDaysAgo));
     
-    res.json({
+    return {
       totalUsers,
       verifiedUsers,
       adminUsers,
       recentUsers
-    });
+    };
+  } catch (error) {
+    console.error('Error fetching user statistics:', error);
+    throw error;
+  }
+};
+
+// Get user statistics with response
+export const getUserStatistics = async (req: Request, res: Response) => {
+  try {
+    const statistics = await getUserStatisticsData();
+    res.json(statistics);
   } catch (error) {
     console.error('Error fetching user statistics:', error);
     res.status(500).json({ message: 'Failed to fetch user statistics', error: String(error) });

@@ -268,8 +268,8 @@ export const deleteOrder = async (req: Request, res: Response) => {
   }
 };
 
-// Get order statistics
-export const getOrderStatistics = async (req: Request, res: Response) => {
+// Get order statistics data without sending response
+export const getOrderStatisticsData = async (): Promise<any> => {
   try {
     // Get counts by status
     const allOrders = await db.select().from(orders);
@@ -293,7 +293,7 @@ export const getOrderStatistics = async (req: Request, res: Response) => {
     
     const recentOrders = allOrders.filter(o => new Date(o.createdAt) >= thirtyDaysAgo).length;
     
-    res.json({
+    return {
       totalOrders,
       pendingOrders,
       processingOrders,
@@ -302,7 +302,18 @@ export const getOrderStatistics = async (req: Request, res: Response) => {
       cancelledOrders,
       totalRevenue,
       recentOrders
-    });
+    };
+  } catch (error) {
+    console.error('Error fetching order statistics:', error);
+    throw error;
+  }
+};
+
+// Get order statistics with response
+export const getOrderStatistics = async (req: Request, res: Response) => {
+  try {
+    const statistics = await getOrderStatisticsData();
+    res.json(statistics);
   } catch (error) {
     console.error('Error fetching order statistics:', error);
     res.status(500).json({ message: 'Failed to fetch order statistics', error: String(error) });

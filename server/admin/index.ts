@@ -94,16 +94,19 @@ adminRouter.post('/login', async (req: Request, res: Response) => {
 // Admin dashboard statistics
 adminRouter.get('/dashboard', authenticateAdmin, async (req: Request, res: Response) => {
   try {
-    // Get user statistics
-    const userStats = await userController.getUserStatistics(req, res);
+    // Create a modified request object to pass to the controllers
+    const dashboardReq = { ...req, isDashboard: true };
     
-    // Get order statistics
-    const orderStats = await orderController.getOrderStatistics(req, res);
+    // Get user statistics without sending response
+    const userStats = await userController.getUserStatisticsData();
     
-    // Get product stock statistics
-    const productStats = await productController.getProductStock(req, res);
+    // Get order statistics without sending response
+    const orderStats = await orderController.getOrderStatisticsData();
     
-    // Combine all stats
+    // Get product stock statistics without sending response
+    const productStats = await productController.getProductStockData();
+    
+    // Combine all stats into a single response
     res.json({
       users: userStats,
       orders: orderStats,
