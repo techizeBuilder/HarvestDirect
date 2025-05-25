@@ -30,15 +30,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   
   useEffect(() => {
-    // Check if admin is authenticated
-    const isAuthenticated = localStorage.getItem('admin_authenticated') === 'true';
-    if (!isAuthenticated && !location.includes('/admin/login')) {
+    // Check if admin is authenticated using JWT token
+    const token = localStorage.getItem('adminToken');
+    if (!token && !location.includes('/admin/login')) {
       navigate('/admin/login');
     }
   }, [navigate, location]);
 
   const handleLogout = () => {
-    localStorage.removeItem('admin_authenticated');
+    // Remove all admin authentication tokens
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
     navigate('/admin/login');
   };
 
@@ -89,10 +91,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         >
           <nav className="space-y-1 px-2">
             {menuItems.map((item) => (
-              <a
+              <div
                 key={item.path}
-                href={item.path}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md ${
+                onClick={() => {
+                  navigate(item.path);
+                  setMenuOpen(false); // Close menu on mobile when a link is clicked
+                }}
+                className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer ${
                   location === item.path
                     ? 'bg-primary text-primary-foreground'
                     : 'text-gray-700 hover:bg-gray-100'
@@ -100,7 +105,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               >
                 {item.icon}
                 <span>{item.label}</span>
-              </a>
+              </div>
             ))}
           </nav>
         </aside>
