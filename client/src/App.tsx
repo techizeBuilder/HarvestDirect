@@ -38,37 +38,43 @@ function App() {
       <TooltipProvider>
         <AuthProvider>
           <CartProvider>
-            <Layout>
-              <Switch>
-                {/* Main Store Routes */}
-                <Route path="/" component={Home} />
-                <Route path="/products" component={AllProducts} />
-                <Route path="/products/:id" component={ProductDetail} />
-                <Route path="/farmers" component={AllFarmers} />
-                <Route path="/checkout" component={Checkout} />
-                <Route path="/our-story" component={OurStory} />
-                <Route path="/our-process" component={OurProcess} />
-                <Route path="/contact" component={Contact} />
-                <Route path="/login" component={Login} />
-                <Route path="/register" component={Register} />
-                <Route path="/account" component={Account} />
-                <Route path="/payment" component={Payment} />
-                <Route path="/payment-success" component={PaymentSuccess} />
-                
-                {/* Admin Routes */}
-                <Route path="/admin/login" component={AdminLogin} />
-                <Route path="/admin/dashboard" component={AdminDashboard} />
-                <Route path="/admin/products" component={AdminProducts} />
-                <Route path="/admin/orders" component={AdminOrders} />
-                <Route path="/admin/users" component={AdminUsers} />
-                <Route path="/admin/inventory" component={AdminInventory} />
-                <Route path="/admin/discounts" component={AdminDiscounts} />
-                <Route path="/admin/settings" component={AdminSettings} />
-                
-                {/* 404 Route */}
-                <Route component={NotFound} />
-              </Switch>
-            </Layout>
+            <Switch>
+              {/* Admin Routes - Without Main Layout */}
+              <Route path="/admin/login" component={AdminLogin} />
+              <Route path="/admin/dashboard" component={AdminDashboard} />
+              <Route path="/admin/products" component={AdminProducts} />
+              <Route path="/admin/orders" component={AdminOrders} />
+              <Route path="/admin/users" component={AdminUsers} />
+              <Route path="/admin/inventory" component={AdminInventory} />
+              <Route path="/admin/discounts" component={AdminDiscounts} />
+              <Route path="/admin/settings" component={AdminSettings} />
+              
+              {/* Main Store Routes - Wrapped in Layout */}
+              <Route>
+                {() => (
+                  <Layout>
+                    <Switch>
+                      <Route path="/" component={Home} />
+                      <Route path="/products" component={AllProducts} />
+                      <Route path="/products/:id" component={ProductDetail} />
+                      <Route path="/farmers" component={AllFarmers} />
+                      <Route path="/checkout" component={Checkout} />
+                      <Route path="/our-story" component={OurStory} />
+                      <Route path="/our-process" component={OurProcess} />
+                      <Route path="/contact" component={Contact} />
+                      <Route path="/login" component={Login} />
+                      <Route path="/register" component={Register} />
+                      <Route path="/account" component={Account} />
+                      <Route path="/payment" component={Payment} />
+                      <Route path="/payment-success" component={PaymentSuccess} />
+                      
+                      {/* 404 Route */}
+                      <Route component={NotFound} />
+                    </Switch>
+                  </Layout>
+                )}
+              </Route>
+            </Switch>
             <Toaster />
           </CartProvider>
         </AuthProvider>
