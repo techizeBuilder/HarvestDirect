@@ -109,35 +109,36 @@ export default function AdminDashboard() {
     { name: 'Jun', sales: 5500 },
   ];
 
-  // Define content based on loading/error state
-  let content;
-  
-  if (loading) {
-    content = (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <AdminNav />
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+  const renderDashboard = () => {
+    if (loading) {
+      return (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+          <AdminNav />
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
           </div>
         </div>
-      </div>
-    );
-  } else if (error) {
-    content = (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <AdminNav />
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-          <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-md text-red-600 dark:text-red-400">
-            {error}
+      );
+    }
+    
+    if (error) {
+      return (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+          <AdminNav />
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-md text-red-600 dark:text-red-400">
+              {error}
+            </div>
           </div>
         </div>
-      </div>
-    );
-  } else {
-    content = (
+      );
+    }
+    
+    return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <AdminNav />
         
@@ -166,177 +167,184 @@ export default function AdminDashboard() {
               </button>
             </div>
           </div>
-        
-        {/* Stats Overview */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {/* User Stats */}
+          
+          {/* Stats Overview */}
+          {stats && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              {/* User Stats */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold mb-4">User Statistics</h2>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Total Users:</span>
+                    <span className="font-medium">{stats.users.totalUsers}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Verified Users:</span>
+                    <span className="font-medium">{stats.users.verifiedUsers}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Admin Users:</span>
+                    <span className="font-medium">{stats.users.adminUsers}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">New Users (30 days):</span>
+                    <span className="font-medium">{stats.users.recentUsers}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Order Stats */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold mb-4">Order Statistics</h2>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Total Orders:</span>
+                    <span className="font-medium">{stats.orders.totalOrders}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Pending Orders:</span>
+                    <span className="font-medium">{stats.orders.pendingOrders}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Orders (30 days):</span>
+                    <span className="font-medium">{stats.orders.recentOrders}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Total Revenue:</span>
+                    <span className="font-medium">₹{stats.orders.totalRevenue.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Product Stats */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold mb-4">Product Statistics</h2>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Total Products:</span>
+                    <span className="font-medium">{stats.products.total}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">In Stock:</span>
+                    <span className="font-medium">{stats.products.inStock}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Low Stock:</span>
+                    <span className="font-medium">{stats.products.lowStock}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Out of Stock:</span>
+                    <span className="font-medium">{stats.products.outOfStock}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Order Status Chart */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">User Statistics</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Total Users:</span>
-                  <span className="font-medium">{stats.users.totalUsers}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Verified Users:</span>
-                  <span className="font-medium">{stats.users.verifiedUsers}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Admin Users:</span>
-                  <span className="font-medium">{stats.users.adminUsers}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">New Users (30 days):</span>
-                  <span className="font-medium">{stats.users.recentUsers}</span>
-                </div>
+              <h2 className="text-lg font-semibold mb-4">Orders by Status</h2>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={orderStatusData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                        borderColor: '#ccc' 
+                      }} 
+                    />
+                    <Legend />
+                    <Bar dataKey="value" fill="#4f46e5" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
             
-            {/* Order Stats */}
+            {/* Product Stock Chart */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Order Statistics</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Total Orders:</span>
-                  <span className="font-medium">{stats.orders.totalOrders}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Pending Orders:</span>
-                  <span className="font-medium">{stats.orders.pendingOrders}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Orders (30 days):</span>
-                  <span className="font-medium">{stats.orders.recentOrders}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Total Revenue:</span>
-                  <span className="font-medium">₹{stats.orders.totalRevenue.toFixed(2)}</span>
-                </div>
+              <h2 className="text-lg font-semibold mb-4">Product Inventory Status</h2>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={productStockData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                        borderColor: '#ccc' 
+                      }} 
+                    />
+                    <Legend />
+                    <Bar dataKey="value" fill="#10b981" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
             
-            {/* Product Stats */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Product Statistics</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Total Products:</span>
-                  <span className="font-medium">{stats.products.total}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">In Stock:</span>
-                  <span className="font-medium">{stats.products.inStock}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Low Stock:</span>
-                  <span className="font-medium">{stats.products.lowStock}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Out of Stock:</span>
-                  <span className="font-medium">{stats.products.outOfStock}</span>
-                </div>
+            {/* Monthly Sales Chart */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2">
+              <h2 className="text-lg font-semibold mb-4">Monthly Sales</h2>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={monthlySalesData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                        borderColor: '#ccc' 
+                      }} 
+                    />
+                    <Legend />
+                    <Line type="monotone" dataKey="sales" stroke="#4f46e5" activeDot={{ r: 8 }} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>
-        )}
-        
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Order Status Chart */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Orders by Status</h2>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={orderStatusData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-                      borderColor: '#ccc' 
-                    }} 
-                  />
-                  <Legend />
-                  <Bar dataKey="value" fill="#4f46e5" />
-                </BarChart>
-              </ResponsiveContainer>
+          
+          {/* Quick Links */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div 
+              className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setLocation('/admin/products')}
+            >
+              <h3 className="text-lg font-semibold mb-2">Manage Products</h3>
+              <p className="text-gray-600 dark:text-gray-400">Add, edit, or remove products from your inventory</p>
             </div>
-          </div>
-          
-          {/* Product Stock Chart */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Product Inventory Status</h2>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={productStockData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-                      borderColor: '#ccc' 
-                    }} 
-                  />
-                  <Legend />
-                  <Bar dataKey="value" fill="#10b981" />
-                </BarChart>
-              </ResponsiveContainer>
+            
+            <div 
+              className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setLocation('/admin/orders')}
+            >
+              <h3 className="text-lg font-semibold mb-2">Manage Orders</h3>
+              <p className="text-gray-600 dark:text-gray-400">View and update order status, process refunds</p>
             </div>
-          </div>
-          
-          {/* Monthly Sales Chart */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2">
-            <h2 className="text-lg font-semibold mb-4">Monthly Sales</h2>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={monthlySalesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-                      borderColor: '#ccc' 
-                    }} 
-                  />
-                  <Legend />
-                  <Line type="monotone" dataKey="sales" stroke="#4f46e5" activeDot={{ r: 8 }} />
-                </LineChart>
-              </ResponsiveContainer>
+            
+            <div 
+              className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setLocation('/admin/users')}
+            >
+              <h3 className="text-lg font-semibold mb-2">Manage Users</h3>
+              <p className="text-gray-600 dark:text-gray-400">View user details, update roles, and manage accounts</p>
             </div>
-          </div>
-        </div>
-        
-        {/* Quick Links */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div 
-            className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => setLocation('/admin/products')}
-          >
-            <h3 className="text-lg font-semibold mb-2">Manage Products</h3>
-            <p className="text-gray-600 dark:text-gray-400">Add, edit, or remove products from your inventory</p>
-          </div>
-          
-          <div 
-            className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => setLocation('/admin/orders')}
-          >
-            <h3 className="text-lg font-semibold mb-2">Manage Orders</h3>
-            <p className="text-gray-600 dark:text-gray-400">View and update order status, process refunds</p>
-          </div>
-          
-          <div 
-            className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => setLocation('/admin/users')}
-          >
-            <h3 className="text-lg font-semibold mb-2">Manage Users</h3>
-            <p className="text-gray-600 dark:text-gray-400">View user details, update roles, and manage accounts</p>
           </div>
         </div>
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <AdminAuthWrapper>
+      {renderDashboard()}
+    </AdminAuthWrapper>
   );
 }
