@@ -353,7 +353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Password verified, generating token');
         
         // Generate JWT token
-        const token = require('jsonwebtoken').sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+        const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
         
         // Return token and user data without password
         const { password: _, ...userWithoutPassword } = user;
