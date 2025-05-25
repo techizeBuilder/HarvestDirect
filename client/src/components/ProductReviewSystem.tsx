@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ProductReview } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -14,7 +13,7 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 
-interface ProductReviewsProps {
+interface ProductReviewSystemProps {
   productId: number;
 }
 
@@ -26,19 +25,19 @@ const reviewSchema = z.object({
 
 type ReviewFormData = z.infer<typeof reviewSchema>;
 
-export default function ProductReviews({ productId }: ProductReviewsProps) {
+export default function ProductReviewSystem({ productId }: ProductReviewSystemProps) {
   const [selectedRating, setSelectedRating] = useState<number>(5);
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
   
   // Fetch product reviews
-  const { data: reviews = [], isLoading, refetch } = useQuery({
+  const { data: reviews = [], isLoading, refetch } = useQuery<any[]>({
     queryKey: [`/api/products/${productId}/reviews`],
     enabled: !!productId
   });
   
   // Check if user can review this product (has purchased and received it)
-  const { data: canReview = false, isLoading: isCheckingReviewEligibility } = useQuery({
+  const { data: canReview = false, isLoading: isCheckingReviewEligibility } = useQuery<boolean>({
     queryKey: [`/api/products/${productId}/can-review`],
     enabled: !!productId && isAuthenticated,
   });
@@ -47,7 +46,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ReviewFormData>({
     resolver: zodResolver(reviewSchema),
     defaultValues: {
-      customerName: '',
+      customerName: user?.name || '',
       reviewText: '',
       rating: 5
     }
@@ -64,6 +63,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
           rating: data.rating,
           productId: productId,
           userId: user?.id,
+          orderId: 1, // This would come from the actual order in a real implementation
           verified: true
         })
       });
@@ -164,55 +164,57 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
           
           {((isAuthenticated && canReview) || !isAuthenticated) && (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <Input 
-                placeholder="Your Name" 
-                {...register("customerName")}
-              />
-              {errors.customerName && (
-                <p className="text-destructive text-sm mt-1">{errors.customerName.message}</p>
-              )}
-            </div>
-            
-            <div>
-              <div className="flex items-center space-x-2 mb-2">
-                <p className="text-olive font-medium">Your Rating:</p>
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <button
-                      key={rating}
-                      type="button"
-                      onClick={() => setSelectedRating(rating)}
-                      className="focus:outline-none"
-                    >
-                      <Star 
-                        className={`w-6 h-6 ${selectedRating >= rating ? 'fill-[#DDA15E] text-[#DDA15E]' : 'text-gray-300'}`} 
-                      />
-                    </button>
-                  ))}
+              <div>
+                <Input 
+                  placeholder="Your Name" 
+                  {...register("customerName")}
+                  disabled={isAuthenticated}
+                  value={isAuthenticated ? (user?.name || '') : undefined}
+                />
+                {errors.customerName && (
+                  <p className="text-destructive text-sm mt-1">{errors.customerName.message}</p>
+                )}
+              </div>
+              
+              <div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <p className="text-olive font-medium">Your Rating:</p>
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((rating) => (
+                      <button
+                        key={rating}
+                        type="button"
+                        onClick={() => setSelectedRating(rating)}
+                        className="focus:outline-none"
+                      >
+                        <Star 
+                          className={`w-6 h-6 ${selectedRating >= rating ? 'fill-[#DDA15E] text-[#DDA15E]' : 'text-gray-300'}`} 
+                        />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div>
-              <Textarea 
-                placeholder="Write your review here" 
-                className="min-h-[120px]"
-                {...register("reviewText")}
-              />
-              {errors.reviewText && (
-                <p className="text-destructive text-sm mt-1">{errors.reviewText.message}</p>
-              )}
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="bg-primary hover:bg-primary/90"
-              disabled={addReviewMutation.isPending}
-            >
-              {addReviewMutation.isPending ? "Submitting..." : "Submit Review"}
-            </Button>
-          </form>
+              
+              <div>
+                <Textarea 
+                  placeholder="Write your review here" 
+                  className="min-h-[120px]"
+                  {...register("reviewText")}
+                />
+                {errors.reviewText && (
+                  <p className="text-destructive text-sm mt-1">{errors.reviewText.message}</p>
+                )}
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="bg-primary hover:bg-primary/90"
+                disabled={addReviewMutation.isPending}
+              >
+                {addReviewMutation.isPending ? "Submitting..." : "Submit Review"}
+              </Button>
+            </form>
           )}
         </div>
       </div>
