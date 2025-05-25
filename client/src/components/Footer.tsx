@@ -109,34 +109,34 @@ export default function Footer() {
             <h4 className="text-white font-bold text-lg mb-6 border-b border-white/20 pb-2">Customer Care</h4>
             <ul className="space-y-4">
               <li>
-                <Link href="/#contact" className="text-white/90 hover:text-[#DDA15E] transition-all duration-300 flex items-center">
+                <Link href="/contact" className="text-white/90 hover:text-[#DDA15E] transition-all duration-300 flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-[#DDA15E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17l9.2-9.2M17 17V7H7"></path></svg>
                   Contact Us
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-white/90 hover:text-[#DDA15E] transition-all duration-300 flex items-center">
+                <Link href="/faqs" className="text-white/90 hover:text-[#DDA15E] transition-all duration-300 flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-[#DDA15E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17l9.2-9.2M17 17V7H7"></path></svg>
                   FAQs
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-white/90 hover:text-[#DDA15E] transition-all duration-300 flex items-center">
+                <Link href="/shipping-returns" className="text-white/90 hover:text-[#DDA15E] transition-all duration-300 flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-[#DDA15E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17l9.2-9.2M17 17V7H7"></path></svg>
                   Shipping & Returns
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-white/90 hover:text-[#DDA15E] transition-all duration-300 flex items-center">
+                <Link href="/track-order" className="text-white/90 hover:text-[#DDA15E] transition-all duration-300 flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-[#DDA15E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17l9.2-9.2M17 17V7H7"></path></svg>
                   Track Your Order
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-white/90 hover:text-[#DDA15E] transition-all duration-300 flex items-center">
+                <Link href="/privacy-policy" className="text-white/90 hover:text-[#DDA15E] transition-all duration-300 flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-[#DDA15E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17l9.2-9.2M17 17V7H7"></path></svg>
                   Privacy Policy
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
