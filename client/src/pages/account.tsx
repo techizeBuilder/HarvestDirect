@@ -24,8 +24,11 @@ export default function Account() {
   const [, navigate] = useLocation();
   const { user, isAuthenticated, token, updateProfile, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
-  const [payments, setPayments] = useState([]);
-  const [subscriptions, setSubscriptions] = useState([]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [cancelledOrders, setCancelledOrders] = useState<any[]>([]);
+  const [deliveredOrders, setDeliveredOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -65,6 +68,27 @@ export default function Account() {
       fetchSubscriptions();
     }
   }, [token, activeTab]);
+  
+  // Fetch order history
+  useEffect(() => {
+    if (token && activeTab === 'orders') {
+      fetchOrders();
+    }
+  }, [token, activeTab]);
+  
+  // Fetch cancelled orders
+  useEffect(() => {
+    if (token && activeTab === 'cancelled-orders') {
+      fetchCancelledOrders();
+    }
+  }, [token, activeTab]);
+  
+  // Fetch delivered orders
+  useEffect(() => {
+    if (token && activeTab === 'delivered-orders') {
+      fetchDeliveredOrders();
+    }
+  }, [token, activeTab]);
 
   const fetchPayments = async () => {
     try {
@@ -76,7 +100,7 @@ export default function Account() {
       });
       const data = await response.json();
       console.log('Payment data:', data);
-      setPayments(Array.isArray(data) ? data : []);
+      setPayments(Array.isArray(data.payments) ? data.payments : []);
     } catch (error) {
       console.error('Error fetching payments:', error);
       toast({
@@ -99,12 +123,81 @@ export default function Account() {
       });
       const data = await response.json();
       console.log('Subscription data:', data);
-      setSubscriptions(Array.isArray(data) ? data : []);
+      setSubscriptions(Array.isArray(data.subscriptions) ? data.subscriptions : []);
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch subscription details',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const fetchOrders = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/orders/history', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      console.log('Order data:', data);
+      setOrders(Array.isArray(data.orders) ? data.orders : []);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch order history',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const fetchCancelledOrders = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/orders/cancelled', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      console.log('Cancelled order data:', data);
+      setCancelledOrders(Array.isArray(data.orders) ? data.orders : []);
+    } catch (error) {
+      console.error('Error fetching cancelled orders:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch cancelled orders',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const fetchDeliveredOrders = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/orders/delivered', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      console.log('Delivered order data:', data);
+      setDeliveredOrders(Array.isArray(data.orders) ? data.orders : []);
+    } catch (error) {
+      console.error('Error fetching delivered orders:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch delivered orders',
         variant: 'destructive'
       });
     } finally {
@@ -171,8 +264,11 @@ export default function Account() {
         <h1 className="text-3xl font-bold mb-6">My Account</h1>
         
         <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-8 w-full grid grid-cols-3">
+          <TabsList className="mb-8 w-full grid grid-cols-6">
             <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="orders">Order History</TabsTrigger>
+            <TabsTrigger value="cancelled-orders">Cancelled Orders</TabsTrigger>
+            <TabsTrigger value="delivered-orders">Delivered Orders</TabsTrigger>
             <TabsTrigger value="payments">Payment History</TabsTrigger>
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
           </TabsList>
@@ -273,6 +369,180 @@ export default function Account() {
             </Card>
           </TabsContent>
           
+          {/* Order History Tab */}
+          <TabsContent value="orders">
+            <Card>
+              <CardHeader>
+                <CardTitle>Order History</CardTitle>
+                <CardDescription>
+                  Track all your previous orders
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="text-center py-4">Loading orders...</div>
+                ) : orders.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="py-2 px-4 text-left">Order ID</th>
+                          <th className="py-2 px-4 text-left">Date</th>
+                          <th className="py-2 px-4 text-left">Total</th>
+                          <th className="py-2 px-4 text-left">Status</th>
+                          <th className="py-2 px-4 text-left">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orders.map((order: any) => (
+                          <tr key={order.id} className="border-b hover:bg-gray-50">
+                            <td className="py-3 px-4">#{order.id}</td>
+                            <td className="py-3 px-4">
+                              {new Date(order.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="py-3 px-4 font-medium">
+                              ${order.total.toFixed(2)}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className={`inline-block px-2 py-1 rounded text-xs ${
+                                order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {order.status}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <Button variant="ghost" size="sm">View Details</Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    You haven't placed any orders yet.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Cancelled Orders Tab */}
+          <TabsContent value="cancelled-orders">
+            <Card>
+              <CardHeader>
+                <CardTitle>Cancelled Orders</CardTitle>
+                <CardDescription>
+                  View your cancelled orders
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="text-center py-4">Loading cancelled orders...</div>
+                ) : cancelledOrders.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="py-2 px-4 text-left">Order ID</th>
+                          <th className="py-2 px-4 text-left">Date</th>
+                          <th className="py-2 px-4 text-left">Total</th>
+                          <th className="py-2 px-4 text-left">Cancellation Reason</th>
+                          <th className="py-2 px-4 text-left">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cancelledOrders.map((order: any) => (
+                          <tr key={order.id} className="border-b hover:bg-gray-50">
+                            <td className="py-3 px-4">#{order.id}</td>
+                            <td className="py-3 px-4">
+                              {new Date(order.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="py-3 px-4 font-medium">
+                              ${order.total.toFixed(2)}
+                            </td>
+                            <td className="py-3 px-4 text-sm">
+                              {order.cancellationReason || 'No reason provided'}
+                            </td>
+                            <td className="py-3 px-4">
+                              <Button variant="ghost" size="sm">View Details</Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    You don't have any cancelled orders.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Delivered Orders Tab */}
+          <TabsContent value="delivered-orders">
+            <Card>
+              <CardHeader>
+                <CardTitle>Delivered Orders</CardTitle>
+                <CardDescription>
+                  View your successfully delivered orders
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="text-center py-4">Loading delivered orders...</div>
+                ) : deliveredOrders.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="py-2 px-4 text-left">Order ID</th>
+                          <th className="py-2 px-4 text-left">Date</th>
+                          <th className="py-2 px-4 text-left">Total</th>
+                          <th className="py-2 px-4 text-left">Delivery Date</th>
+                          <th className="py-2 px-4 text-left">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {deliveredOrders.map((order: any) => (
+                          <tr key={order.id} className="border-b hover:bg-gray-50">
+                            <td className="py-3 px-4">#{order.id}</td>
+                            <td className="py-3 px-4">
+                              {new Date(order.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="py-3 px-4 font-medium">
+                              ${order.total.toFixed(2)}
+                            </td>
+                            <td className="py-3 px-4">
+                              {order.deliveredAt ? 
+                                new Date(order.deliveredAt).toLocaleDateString() : 
+                                'N/A'}
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex space-x-2">
+                                <Button variant="ghost" size="sm">View Details</Button>
+                                <Button variant="outline" size="sm">Buy Again</Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    You don't have any delivered orders yet.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="subscriptions">
             <Card>
               <CardHeader>
