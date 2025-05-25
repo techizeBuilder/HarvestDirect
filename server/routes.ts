@@ -468,33 +468,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(500).json({ message: "Razorpay API keys not configured" });
         }
         
-        razorpay = new Razorpay({
-          key_id: razorpayKeyId,
-          key_secret: razorpayKeySecret
-        });
+        try {
+          razorpay = new Razorpay({
+            key_id: razorpayKeyId,
+            key_secret: razorpayKeySecret
+          });
+          console.log("Razorpay initialized successfully for payment");
+        } catch (initError) {
+          console.error("Failed to initialize Razorpay instance:", initError);
+          return res.status(500).json({ message: "Failed to initialize payment gateway", error: String(initError) });
+        }
       }
       
       const user = (req as any).user;
       const { amount, currency = 'INR' } = req.body;
       
+      if (!amount || isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount specified", error: "Amount must be a positive number" });
+      }
+      
       // Create Razorpay order
       const options = {
-        amount: amount * 100, // Razorpay expects amount in smallest currency unit (paise)
+        amount: Math.round(amount * 100), // Razorpay expects amount in smallest currency unit (paise)
         currency,
         receipt: `receipt_order_${Date.now()}`,
         payment_capture: 1
       };
       
-      const order = await razorpay.orders.create(options);
+      console.log("Creating Razorpay order with options:", options);
       
-      res.json({
-        orderId: order.id,
-        amount: order.amount,
-        currency: order.currency,
-        keyId: process.env.RAZORPAY_KEY_ID
-      });
+      try {
+        const order = await razorpay.orders.create(options);
+        console.log("Razorpay order created:", order);
+        
+        res.json({
+          orderId: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          keyId: process.env.RAZORPAY_KEY_ID
+        });
+      } catch (orderError) {
+        console.error("Failed to create Razorpay order:", orderError);
+        return res.status(500).json({ message: "Failed to create payment order", error: String(orderError) });
+      }
     } catch (error) {
-      res.status(500).json({ message: "Failed to initialize payment" });
+      console.error('Payment initialization error:', error);
+      res.status(500).json({ message: "Failed to initialize payment", error: error instanceof Error ? error.message : String(error) });
     }
   });
   

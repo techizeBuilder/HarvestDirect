@@ -78,8 +78,29 @@ export default function Payment() {
 
     try {
       setIsLoading(true);
+      
+      // Make sure Razorpay is loaded
+      if (typeof window.Razorpay === 'undefined') {
+        // Try loading it again
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        document.body.appendChild(script);
+        
+        // Wait for script to load
+        await new Promise((resolve) => {
+          script.onload = resolve;
+          // If script fails to load in 5 seconds, continue anyway
+          setTimeout(resolve, 5000);
+        });
+        
+        // Check again
+        if (typeof window.Razorpay === 'undefined') {
+          throw new Error('Razorpay SDK failed to load. Please refresh the page and try again.');
+        }
+      }
+      
       // Initialize payment with the server
-      const response = await apiRequest('/api/payments/initialize', {
+      const response = await fetch('/api/payments/initialize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,10 +114,12 @@ export default function Payment() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to initialize payment');
+        console.error('Payment initialization failed:', errorData);
+        throw new Error(errorData.error || errorData.message || 'Failed to initialize payment');
       }
 
       const data = await response.json();
+      console.log('Payment initialization successful:', data);
       
       // Configure Razorpay options
       const options = {
@@ -163,9 +186,18 @@ export default function Payment() {
         }
       };
 
-      // Create and open Razorpay payment form
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
+      try {
+        // Create and open Razorpay payment form
+        const razorpay = new window.Razorpay(options);
+        razorpay.open();
+      } catch (razorpayError) {
+        console.error('Razorpay widget error:', razorpayError);
+        toast({
+          title: 'Payment Error',
+          description: 'Could not open payment window. Please try again.',
+          variant: 'destructive'
+        });
+      }
       
     } catch (error) {
       console.error('Payment initialization error:', error);
