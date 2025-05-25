@@ -1,9 +1,8 @@
 // Script to create an admin user
-const { Pool } = require('@neondatabase/serverless');
-const { drizzle } = require('drizzle-orm/neon-serverless');
-const { eq } = require('drizzle-orm');
-const ws = require('ws');
-const neonConfig = require('@neondatabase/serverless').neonConfig;
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { eq } from 'drizzle-orm';
+import ws from 'ws';
 
 // Configure neon for WebSocket support
 neonConfig.webSocketConstructor = ws;
