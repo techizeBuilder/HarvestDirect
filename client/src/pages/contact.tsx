@@ -2,58 +2,16 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { ParallaxSection } from "@/components/ui/parallax-section";
 import { useAnimations } from "@/hooks/use-animations";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
-
-const contactFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  subject: z.string().min(5, "Subject must be at least 5 characters"),
-  message: z.string().min(10, "Message must be at least 10 characters long")
-});
-
-type ContactFormData = z.infer<typeof contactFormSchema>;
+import ContactFormWithStorage from "@/components/ContactFormWithStorage";
 
 export default function Contact() {
   // Set up animations
   const { setupScrollAnimation } = useAnimations();
-  const { toast } = useToast();
 
   useEffect(() => {
     setupScrollAnimation();
   }, [setupScrollAnimation]);
-
-  // Form setup
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<ContactFormData>({
-    resolver: zodResolver(contactFormSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      subject: '',
-      message: ''
-    }
-  });
-
-  const onSubmit = async (data: ContactFormData) => {
-    // In a real application, this would send data to an API
-    console.log("Form submitted:", data);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Message sent!",
-      description: "We'll get back to you as soon as possible.",
-    });
-    
-    reset();
-  };
 
   return (
     <>
@@ -93,68 +51,7 @@ export default function Contact() {
                 Whether you have a question about our products, farmers, or ordering process, we're here to help. Fill out the form below and we'll respond as soon as possible.
               </p>
               
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div>
-                  <label htmlFor="name" className="block text-forest font-medium mb-2">Your Name</label>
-                  <Input 
-                    id="name"
-                    placeholder="Enter your name" 
-                    className="w-full"
-                    {...register("name")}
-                  />
-                  {errors.name && (
-                    <p className="text-destructive text-sm mt-1">{errors.name.message}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <label htmlFor="email" className="block text-forest font-medium mb-2">Email Address</label>
-                  <Input 
-                    id="email"
-                    type="email" 
-                    placeholder="Enter your email" 
-                    className="w-full"
-                    {...register("email")}
-                  />
-                  {errors.email && (
-                    <p className="text-destructive text-sm mt-1">{errors.email.message}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <label htmlFor="subject" className="block text-forest font-medium mb-2">Subject</label>
-                  <Input 
-                    id="subject"
-                    placeholder="Enter subject" 
-                    className="w-full"
-                    {...register("subject")}
-                  />
-                  {errors.subject && (
-                    <p className="text-destructive text-sm mt-1">{errors.subject.message}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <label htmlFor="message" className="block text-forest font-medium mb-2">Message</label>
-                  <Textarea 
-                    id="message"
-                    placeholder="Type your message here" 
-                    className="w-full min-h-[150px]"
-                    {...register("message")}
-                  />
-                  {errors.message && (
-                    <p className="text-destructive text-sm mt-1">{errors.message.message}</p>
-                  )}
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="bg-primary hover:bg-primary/90 text-white px-8 py-3"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Sending..." : "Send Message"}
-                </Button>
-              </form>
+              <ContactFormWithStorage />
             </div>
             
             {/* Contact Info */}

@@ -1,49 +1,50 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, Phone, SendIcon, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { insertContactMessageSchema } from "@shared/schema";
 
-// Form validation schema
+// Create a more specific validation schema for the contact form
 const contactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  phone: z.string().optional(),
-  subject: z.string().min(3, "Subject must be at least 3 characters"),
-  message: z.string().min(10, "Message must be at least 10 characters")
+  subject: z.string().min(5, "Subject must be at least 5 characters"),
+  message: z.string().min(10, "Message must be at least 10 characters long"),
+  status: z.string().default("new")
 });
 
+// Infer the type from our schema
 type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 export default function ContactFormWithStorage() {
+  const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
-  const [submitted, setSubmitted] = useState(false);
 
-  // Form setup
+  // Set up the form with validation
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors }
-  } = useForm<ContactFormValues>({
+    formState: { errors, isSubmitting }
+  } = useForm({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
       name: "",
       email: "",
-      phone: "",
       subject: "",
-      message: ""
+      message: "",
+      status: "new" // Default status for new messages
     }
   });
 
-  // Submit form mutation
-  const submitContactForm = useMutation({
+  // Set up the mutation to send the form data to the API
+  const mutation = useMutation({
     mutationFn: async (data: ContactFormValues) => {
       return apiRequest("/api/contact", {
         method: "POST",
@@ -51,152 +52,131 @@ export default function ContactFormWithStorage() {
       });
     },
     onSuccess: () => {
+      // Show success message
       toast({
         title: "Message sent!",
         description: "We've received your message and will get back to you soon.",
+        variant: "default"
       });
+      
+      // Reset the form
       reset();
-      setSubmitted(true);
+      
+      // Show success state
+      setIsSuccess(true);
+      
+      // Hide success state after 5 seconds
+      setTimeout(() => {
+        setIsSuccess(false);
+      }, 5000);
     },
-    onError: () => {
+    onError: (error) => {
+      // Show error message
       toast({
-        title: "Something went wrong",
-        description: "Your message could not be sent. Please try again.",
+        title: "Message failed to send",
+        description: "There was a problem sending your message. Please try again.",
         variant: "destructive"
       });
+      console.error("Contact form error:", error);
     }
   });
 
+  // Handle form submission
   const onSubmit = (data: ContactFormValues) => {
-    submitContactForm.mutate(data);
+    mutation.mutate(data);
   };
 
   return (
-    <div className="rounded-lg overflow-hidden bg-white shadow-md">
-      <div className="p-6 md:p-8">
-        {submitted ? (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <SendIcon className="h-8 w-8 text-primary" />
-            </div>
-            <h3 className="font-heading text-forest text-xl font-bold mb-2">Thank You!</h3>
-            <p className="text-olive mb-6">
-              Your message has been sent successfully. We'll get back to you as soon as possible.
-            </p>
-            <Button 
-              onClick={() => setSubmitted(false)}
-              variant="outline"
-            >
-              Send Another Message
-            </Button>
-          </div>
-        ) : (
-          <>
-            <h3 className="font-heading text-forest text-xl font-bold mb-6">Send Us a Message</h3>
-            
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              <div>
-                <label htmlFor="name" className="block text-forest font-medium mb-1">
-                  Your Name *
-                </label>
-                <Input 
-                  id="name"
-                  type="text"
-                  placeholder="Enter your name"
-                  {...register("name")}
-                  className={errors.name ? "border-destructive" : ""}
-                />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label htmlFor="email" className="block text-forest font-medium mb-1">
-                    Email Address *
-                  </label>
-                  <div className="relative">
-                    <Input 
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      {...register("email")}
-                      className={`pl-10 ${errors.email ? "border-destructive" : ""}`}
-                    />
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  </div>
-                  {errors.email && (
-                    <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <label htmlFor="phone" className="block text-forest font-medium mb-1">
-                    Phone Number (Optional)
-                  </label>
-                  <div className="relative">
-                    <Input 
-                      id="phone"
-                      type="tel"
-                      placeholder="Enter your phone number"
-                      {...register("phone")}
-                    />
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <label htmlFor="subject" className="block text-forest font-medium mb-1">
-                  Subject *
-                </label>
-                <Input 
-                  id="subject"
-                  type="text"
-                  placeholder="What is this regarding?"
-                  {...register("subject")}
-                  className={errors.subject ? "border-destructive" : ""}
-                />
-                {errors.subject && (
-                  <p className="mt-1 text-sm text-destructive">{errors.subject.message}</p>
-                )}
-              </div>
-              
-              <div>
-                <label htmlFor="message" className="block text-forest font-medium mb-1">
-                  Message *
-                </label>
-                <Textarea 
-                  id="message"
-                  placeholder="How can we help you?"
-                  rows={5}
-                  {...register("message")}
-                  className={errors.message ? "border-destructive" : ""}
-                />
-                {errors.message && (
-                  <p className="mt-1 text-sm text-destructive">{errors.message.message}</p>
-                )}
-              </div>
-              
-              <Button 
-                type="submit"
-                className="w-full md:w-auto"
-                disabled={submitContactForm.isPending}
-              >
-                {submitContactForm.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending Message...
-                  </>
-                ) : (
-                  <>Send Message</>
-                )}
-              </Button>
-            </form>
-          </>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {isSuccess ? (
+        <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 mb-6">
+          <p className="font-medium">Thank you for contacting us!</p>
+          <p>Your message has been sent successfully. We'll get back to you as soon as possible.</p>
+        </div>
+      ) : null}
+      
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-2">
+          <label htmlFor="name" className="text-sm font-medium text-gray-700">
+            Your Name
+          </label>
+          <Input
+            id="name"
+            placeholder="John Doe"
+            {...register("name")}
+            aria-invalid={!!errors.name}
+          />
+          {errors.name && (
+            <p className="text-sm text-red-500">{errors.name.message}</p>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-sm font-medium text-gray-700">
+            Email Address
+          </label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            {...register("email")}
+            aria-invalid={!!errors.email}
+          />
+          {errors.email && (
+            <p className="text-sm text-red-500">{errors.email.message}</p>
+          )}
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <label htmlFor="subject" className="text-sm font-medium text-gray-700">
+          Subject
+        </label>
+        <Input
+          id="subject"
+          placeholder="How can we help you?"
+          {...register("subject")}
+          aria-invalid={!!errors.subject}
+        />
+        {errors.subject && (
+          <p className="text-sm text-red-500">{errors.subject.message}</p>
         )}
       </div>
-    </div>
+      
+      <div className="space-y-2">
+        <label htmlFor="message" className="text-sm font-medium text-gray-700">
+          Message
+        </label>
+        <Textarea
+          id="message"
+          placeholder="Please provide details about your inquiry..."
+          rows={6}
+          {...register("message")}
+          aria-invalid={!!errors.message}
+        />
+        {errors.message && (
+          <p className="text-sm text-red-500">{errors.message.message}</p>
+        )}
+      </div>
+      
+      <div className="flex justify-between">
+        <Button
+          type="submit"
+          disabled={isSubmitting || mutation.isPending}
+          className="bg-primary hover:bg-primary/90 text-white"
+        >
+          {(isSubmitting || mutation.isPending) ? "Sending..." : "Send Message"}
+        </Button>
+        
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => reset()}
+          disabled={isSubmitting || mutation.isPending}
+        >
+          Reset
+        </Button>
+      </div>
+    </form>
   );
 }
