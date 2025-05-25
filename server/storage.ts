@@ -12,8 +12,9 @@ import {
   User, InsertUser,
   Payment, InsertPayment,
   Subscription, InsertSubscription,
+  ContactMessage, InsertContactMessage,
   products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews,
-  users, payments, subscriptions, subscriptionStatusEnum
+  users, payments, subscriptions, subscriptionStatusEnum, contactMessages, orders, orderItems
 } from '@shared/schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
@@ -49,6 +50,14 @@ export interface IStorage {
   // Product Reviews
   getProductReviews(productId: number): Promise<ProductReview[]>;
   addProductReview(review: InsertProductReview): Promise<ProductReview>;
+  canUserReviewProduct(userId: number, productId: number): Promise<boolean>;
+  getUserProductReviews(userId: number): Promise<ProductReview[]>;
+  
+  // Contact Messages
+  addContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
+  getAllContactMessages(): Promise<ContactMessage[]>;
+  getContactMessageById(id: number): Promise<ContactMessage | undefined>;
+  updateContactMessageStatus(id: number, status: string): Promise<ContactMessage>;
 
   // User Authentication
   createUser(user: InsertUser): Promise<User>;

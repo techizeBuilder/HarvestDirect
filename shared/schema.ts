@@ -143,6 +143,8 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
 export const productReviews = pgTable("product_reviews", {
   id: serial("id").primaryKey(),
   productId: integer("product_id").notNull(),
+  userId: integer("user_id").notNull(),
+  orderId: integer("order_id").notNull(),
   customerName: text("customer_name").notNull(),
   rating: doublePrecision("rating").notNull(),
   reviewText: text("review_text").notNull(),
@@ -153,6 +155,26 @@ export const productReviews = pgTable("product_reviews", {
 export const insertProductReviewSchema = createInsertSchema(productReviews).omit({
   id: true,
   createdAt: true
+});
+
+// Contact Messages Schema
+export const contactMessages = pgTable("contact_messages", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  status: text("status").notNull().default("unread"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({
+  id: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true
 });
 
 // User Schema
@@ -249,6 +271,9 @@ export type Payment = typeof payments.$inferSelect;
 
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
+
+export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
+export type ContactMessage = typeof contactMessages.$inferSelect;
 
 // Cart with items
 export interface CartWithItems extends Cart {
