@@ -49,6 +49,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { icon: <Package className="h-5 w-5" />, label: 'Products', path: '/admin/products' },
     { icon: <ShoppingCart className="h-5 w-5" />, label: 'Orders', path: '/admin/orders' },
     { icon: <Users className="h-5 w-5" />, label: 'Users', path: '/admin/users' },
+    { icon: <Users className="h-5 w-5" />, label: 'Farmers', path: '/admin/farmers' },
     { icon: <Box className="h-5 w-5" />, label: 'Inventory', path: '/admin/inventory' },
     { icon: <Tag className="h-5 w-5" />, label: 'Discounts', path: '/admin/discounts' },
     { icon: <Settings className="h-5 w-5" />, label: 'Settings', path: '/admin/settings' },

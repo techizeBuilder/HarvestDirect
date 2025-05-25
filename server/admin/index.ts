@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import * as productController from './products';
 import * as orderController from './orders';
 import * as userController from './users';
+import * as farmerController from './farmers';
 import { users } from '@shared/schema';
 import { db } from '../db';
 import { eq } from 'drizzle-orm';
@@ -144,5 +145,14 @@ adminRouter.put('/users/:id', authenticateAdmin, userController.updateUser);
 adminRouter.patch('/users/:id/password', authenticateAdmin, userController.changeUserPassword);
 adminRouter.delete('/users/:id', authenticateAdmin, userController.deleteUser);
 adminRouter.get('/user-statistics', authenticateAdmin, userController.getUserStatistics);
+
+// Farmer routes
+adminRouter.get('/farmers', authenticateAdmin, farmerController.getAllFarmers);
+adminRouter.get('/farmers/:id', authenticateAdmin, farmerController.getFarmerById);
+adminRouter.post('/farmers', authenticateAdmin, farmerController.createFarmer);
+adminRouter.put('/farmers/:id', authenticateAdmin, farmerController.updateFarmer);
+adminRouter.patch('/farmers/:id/featured', authenticateAdmin, farmerController.toggleFarmerFeatured);
+adminRouter.delete('/farmers/:id', authenticateAdmin, farmerController.deleteFarmer);
+adminRouter.get('/featured-farmers', authenticateAdmin, farmerController.getFeaturedFarmers);
 
 export default adminRouter;
