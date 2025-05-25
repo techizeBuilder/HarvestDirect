@@ -109,11 +109,16 @@ export const insertNewsletterSubscriptionSchema = createInsertSchema(newsletterS
 // Order Schema
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   sessionId: text("session_id").notNull(),
   total: doublePrecision("total").notNull(),
   status: text("status").notNull().default("pending"),
   shippingAddress: text("shipping_address").notNull(),
+  paymentMethod: text("payment_method").notNull().default("razorpay"),
+  cancellationReason: text("cancellation_reason"),
+  deliveredAt: timestamp("delivered_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({

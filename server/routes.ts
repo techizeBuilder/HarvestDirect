@@ -620,6 +620,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get all user orders
+  app.get(`${apiPrefix}/orders/history`, authenticate, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      // Sample data for demonstration purposes
+      const sampleOrders = [
+        {
+          id: 1001,
+          userId: user.id,
+          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+          total: 129.99,
+          status: 'processing',
+          items: [
+            { productName: 'Mountain Coffee Beans', quantity: 2, price: 49.99 },
+            { productName: 'Organic Spice Mix', quantity: 1, price: 30.01 }
+          ]
+        },
+        {
+          id: 1002,
+          userId: user.id,
+          createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days ago
+          total: 75.50,
+          status: 'delivered',
+          deliveredAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
+          items: [
+            { productName: 'Fresh Valley Honey', quantity: 3, price: 25.50 }
+          ]
+        },
+        {
+          id: 1003,
+          userId: user.id,
+          createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000), // 21 days ago
+          total: 45.95,
+          status: 'cancelled',
+          cancellationReason: 'Changed my mind',
+          items: [
+            { productName: 'Handcrafted Cheese', quantity: 1, price: 45.95 }
+          ]
+        }
+      ];
+      
+      res.json({ orders: sampleOrders });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch order history" });
+    }
+  });
+  
+  // Get cancelled orders
+  app.get(`${apiPrefix}/orders/cancelled`, authenticate, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      // Sample data for demonstration purposes
+      const cancelledOrders = [
+        {
+          id: 1003,
+          userId: user.id,
+          createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000), // 21 days ago
+          total: 45.95,
+          status: 'cancelled',
+          cancellationReason: 'Changed my mind',
+          items: [
+            { productName: 'Handcrafted Cheese', quantity: 1, price: 45.95 }
+          ]
+        },
+        {
+          id: 1005,
+          userId: user.id,
+          createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000), // 45 days ago
+          total: 95.80,
+          status: 'cancelled',
+          cancellationReason: 'Found a better deal elsewhere',
+          items: [
+            { productName: 'Organic Spice Mix', quantity: 2, price: 30.01 },
+            { productName: 'Fresh Valley Honey', quantity: 1, price: 35.78 }
+          ]
+        }
+      ];
+      
+      res.json({ orders: cancelledOrders });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch cancelled orders" });
+    }
+  });
+  
+  // Get delivered orders
+  app.get(`${apiPrefix}/orders/delivered`, authenticate, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      // Sample data for demonstration purposes
+      const deliveredOrders = [
+        {
+          id: 1002,
+          userId: user.id,
+          createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days ago
+          total: 75.50,
+          status: 'delivered',
+          deliveredAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
+          items: [
+            { productName: 'Fresh Valley Honey', quantity: 3, price: 25.50 }
+          ]
+        },
+        {
+          id: 1004,
+          userId: user.id,
+          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+          total: 125.45,
+          status: 'delivered',
+          deliveredAt: new Date(Date.now() - 27 * 24 * 60 * 60 * 1000), // 27 days ago
+          items: [
+            { productName: 'Mountain Coffee Beans', quantity: 1, price: 49.99 },
+            { productName: 'Handcrafted Cheese', quantity: 1, price: 45.95 },
+            { productName: 'Organic Tea Sampler', quantity: 1, price: 29.51 }
+          ]
+        },
+        {
+          id: 1006,
+          userId: user.id,
+          createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), // 60 days ago
+          total: 187.25,
+          status: 'delivered',
+          deliveredAt: new Date(Date.now() - 55 * 24 * 60 * 60 * 1000), // 55 days ago
+          items: [
+            { productName: 'Handcrafted Cheese', quantity: 2, price: 91.90 },
+            { productName: 'Mountain Coffee Beans', quantity: 1, price: 49.99 },
+            { productName: 'Fresh Valley Honey', quantity: 1, price: 35.78 },
+            { productName: 'Organic Spice Mix', quantity: 1, price: 9.58 }
+          ]
+        }
+      ];
+      
+      res.json({ orders: deliveredOrders });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch delivered orders" });
+    }
+  });
+  
   // Cancel subscription
   app.post(`${apiPrefix}/subscriptions/:id/cancel`, authenticate, async (req, res) => {
     try {
