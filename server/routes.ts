@@ -13,6 +13,7 @@ import {
   insertPaymentSchema,
   insertSubscriptionSchema
 } from "@shared/schema";
+import adminRouter from './admin';
 
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -65,6 +66,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   app.use(getSessionId);
+
+  // Register admin routes
+  app.use(`${apiPrefix}/admin`, adminRouter);
 
   // Get all products
   app.get(`${apiPrefix}/products`, async (req, res) => {

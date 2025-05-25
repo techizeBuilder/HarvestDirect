@@ -1,213 +1,328 @@
-import { useEffect, useState } from 'react';
-import AdminLayout from '@/components/admin/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, ShoppingCart, Users, DollarSign, ArrowUpRight, ArrowDownRight, Package } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  BarChart, 
+  LineChart, 
+  Bar, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from 'recharts';
 
-interface StatCardProps {
-  title: string;
-  value: string;
-  icon: React.ReactNode;
-  description: string;
-  trend: 'up' | 'down' | 'none';
-  percentage?: string;
-}
+// Admin navigation component
+import AdminNav from '../../components/admin/AdminNav';
 
-// Sample data for demo purposes
-const SAMPLE_DATA = {
-  totalOrders: 158,
-  totalUsers: 2457,
-  totalRevenue: 24650.75,
-  totalProducts: 124,
-  recentOrders: [
-    { id: 'ORD-7291', customer: 'Sarah Johnson', date: '2025-05-24', total: '$124.95', status: 'Delivered' },
-    { id: 'ORD-7290', customer: 'Michael Davis', date: '2025-05-24', total: '$75.50', status: 'Processing' },
-    { id: 'ORD-7289', customer: 'Emma Wilson', date: '2025-05-23', total: '$249.99', status: 'Shipped' },
-    { id: 'ORD-7288', customer: 'James Smith', date: '2025-05-22', total: '$36.25', status: 'Pending' },
-    { id: 'ORD-7287', customer: 'Olivia Brown', date: '2025-05-22', total: '$178.00', status: 'Delivered' },
-  ],
-  lowStockProducts: [
-    { id: 1, name: 'Mountain Coffee Beans', stock: 5, minStock: 10 },
-    { id: 3, name: 'Organic Spice Mix', stock: 8, minStock: 15 },
-    { id: 7, name: 'Fresh Valley Honey', stock: 3, minStock: 10 },
-  ]
-};
-
-function StatCard({ title, value, icon, description, trend, percentage }: StatCardProps) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <div className="bg-primary/10 p-2 rounded-full text-primary">{icon}</div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <div className="flex items-center text-sm mt-1">
-          {trend === 'up' && (
-            <>
-              <ArrowUpRight className="mr-1 h-4 w-4 text-green-600" />
-              <span className="text-green-600">{percentage}</span>
-            </>
-          )}
-          {trend === 'down' && (
-            <>
-              <ArrowDownRight className="mr-1 h-4 w-4 text-red-600" />
-              <span className="text-red-600">{percentage}</span>
-            </>
-          )}
-          <span className="text-muted-foreground ml-1">{description}</span>
-        </div>
-      </CardContent>
-    </Card>
-  );
+interface DashboardStats {
+  users: {
+    totalUsers: number;
+    verifiedUsers: number;
+    adminUsers: number;
+    recentUsers: number;
+  };
+  orders: {
+    totalOrders: number;
+    pendingOrders: number;
+    processingOrders: number;
+    shippedOrders: number;
+    deliveredOrders: number;
+    cancelledOrders: number;
+    totalRevenue: number;
+    recentOrders: number;
+  };
+  products: {
+    total: number;
+    inStock: number;
+    lowStock: number;
+    outOfStock: number;
+  };
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState(SAMPLE_DATA);
+  const [, navigate] = useNavigate();
+  const { toast } = useToast();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // In a real application, you would fetch data from your API here
-    // For now, we're using the sample data defined above
-  }, []);
+    // Check if admin is logged in
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      navigate('/admin/login');
+      return;
+    }
 
-  return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Overview of your store's performance</p>
-        </div>
+    // Fetch dashboard statistics
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/admin/dashboard', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
 
-        {/* Stats Grid */}
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Total Orders"
-            value={stats.totalOrders.toString()}
-            icon={<ShoppingCart className="h-4 w-4" />}
-            description="from last month"
-            trend="up"
-            percentage="12%"
-          />
-          <StatCard
-            title="Total Customers"
-            value={stats.totalUsers.toString()}
-            icon={<Users className="h-4 w-4" />}
-            description="from last month"
-            trend="up"
-            percentage="8%"
-          />
-          <StatCard
-            title="Total Revenue"
-            value={`$${stats.totalRevenue.toLocaleString()}`}
-            icon={<DollarSign className="h-4 w-4" />}
-            description="from last month"
-            trend="up"
-            percentage="15%"
-          />
-          <StatCard
-            title="Total Products"
-            value={stats.totalProducts.toString()}
-            icon={<Package className="h-4 w-4" />}
-            description="from last month"
-            trend="up"
-            percentage="3%"
-          />
-        </div>
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminUser');
+            navigate('/admin/login');
+            throw new Error('Session expired. Please login again.');
+          }
+          throw new Error('Failed to fetch dashboard data');
+        }
 
-        {/* Recent Orders */}
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">Recent Orders</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="py-2 px-3 text-left font-medium">Order ID</th>
-                      <th className="py-2 px-3 text-left font-medium">Customer</th>
-                      <th className="py-2 px-3 text-left font-medium">Date</th>
-                      <th className="py-2 px-3 text-left font-medium">Amount</th>
-                      <th className="py-2 px-3 text-left font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stats.recentOrders.map((order) => (
-                      <tr key={order.id} className="border-b hover:bg-muted/50">
-                        <td className="py-2 px-3">{order.id}</td>
-                        <td className="py-2 px-3">{order.customer}</td>
-                        <td className="py-2 px-3">{order.date}</td>
-                        <td className="py-2 px-3">{order.total}</td>
-                        <td className="py-2 px-3">
-                          <span 
-                            className={`inline-block px-2 py-1 text-xs rounded-full
-                              ${order.status === 'Delivered' ? 'bg-green-100 text-green-800' : 
-                                order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
-                                order.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-gray-100 text-gray-800'}`
-                            }
-                          >
-                            {order.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-4 text-center">
-                <a href="/admin/orders" className="text-primary hover:underline text-sm">
-                  View all orders
-                </a>
-              </div>
-            </CardContent>
-          </Card>
+        const data = await response.json();
+        setStats(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        toast({
+          title: 'Error',
+          description: err instanceof Error ? err.message : 'Failed to fetch dashboard data',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-          {/* Low Stock Alert */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">Low Stock Alert</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="py-2 px-3 text-left font-medium">Product</th>
-                      <th className="py-2 px-3 text-left font-medium">Current Stock</th>
-                      <th className="py-2 px-3 text-left font-medium">Min. Stock</th>
-                      <th className="py-2 px-3 text-left font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stats.lowStockProducts.map((product) => (
-                      <tr key={product.id} className="border-b hover:bg-muted/50">
-                        <td className="py-2 px-3">{product.name}</td>
-                        <td className="py-2 px-3">{product.stock}</td>
-                        <td className="py-2 px-3">{product.minStock}</td>
-                        <td className="py-2 px-3">
-                          <span 
-                            className={`inline-block px-2 py-1 text-xs rounded-full ${
-                              product.stock === 0 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                            }`}
-                          >
-                            {product.stock === 0 ? 'Out of Stock' : 'Low Stock'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-4 text-center">
-                <a href="/admin/inventory" className="text-primary hover:underline text-sm">
-                  Manage inventory
-                </a>
-              </div>
-            </CardContent>
-          </Card>
+    fetchStats();
+  }, [navigate, toast]);
+
+  // Sample data for charts
+  const orderStatusData = stats ? [
+    { name: 'Pending', value: stats.orders.pendingOrders },
+    { name: 'Processing', value: stats.orders.processingOrders },
+    { name: 'Shipped', value: stats.orders.shippedOrders },
+    { name: 'Delivered', value: stats.orders.deliveredOrders },
+    { name: 'Cancelled', value: stats.orders.cancelledOrders },
+  ] : [];
+
+  const productStockData = stats ? [
+    { name: 'In Stock', value: stats.products.inStock },
+    { name: 'Low Stock', value: stats.products.lowStock },
+    { name: 'Out of Stock', value: stats.products.outOfStock },
+  ] : [];
+
+  // Monthly sales data (this would typically come from the backend)
+  const monthlySalesData = [
+    { name: 'Jan', sales: 4000 },
+    { name: 'Feb', sales: 3000 },
+    { name: 'Mar', sales: 5000 },
+    { name: 'Apr', sales: 4500 },
+    { name: 'May', sales: 6000 },
+    { name: 'Jun', sales: 5500 },
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <AdminNav />
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
         </div>
       </div>
-    </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <AdminNav />
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+          <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-md text-red-600 dark:text-red-400">
+            {error}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <AdminNav />
+      
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+        
+        {/* Stats Overview */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* User Stats */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">User Statistics</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Total Users:</span>
+                  <span className="font-medium">{stats.users.totalUsers}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Verified Users:</span>
+                  <span className="font-medium">{stats.users.verifiedUsers}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Admin Users:</span>
+                  <span className="font-medium">{stats.users.adminUsers}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">New Users (30 days):</span>
+                  <span className="font-medium">{stats.users.recentUsers}</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Order Stats */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Order Statistics</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Total Orders:</span>
+                  <span className="font-medium">{stats.orders.totalOrders}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Pending Orders:</span>
+                  <span className="font-medium">{stats.orders.pendingOrders}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Orders (30 days):</span>
+                  <span className="font-medium">{stats.orders.recentOrders}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Total Revenue:</span>
+                  <span className="font-medium">₹{stats.orders.totalRevenue.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Product Stats */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Product Statistics</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Total Products:</span>
+                  <span className="font-medium">{stats.products.total}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">In Stock:</span>
+                  <span className="font-medium">{stats.products.inStock}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Low Stock:</span>
+                  <span className="font-medium">{stats.products.lowStock}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Out of Stock:</span>
+                  <span className="font-medium">{stats.products.outOfStock}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Order Status Chart */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Orders by Status</h2>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={orderStatusData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                      borderColor: '#ccc' 
+                    }} 
+                  />
+                  <Legend />
+                  <Bar dataKey="value" fill="#4f46e5" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          
+          {/* Product Stock Chart */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Product Inventory Status</h2>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={productStockData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                      borderColor: '#ccc' 
+                    }} 
+                  />
+                  <Legend />
+                  <Bar dataKey="value" fill="#10b981" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          
+          {/* Monthly Sales Chart */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 lg:col-span-2">
+            <h2 className="text-lg font-semibold mb-4">Monthly Sales</h2>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlySalesData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                      borderColor: '#ccc' 
+                    }} 
+                  />
+                  <Legend />
+                  <Line type="monotone" dataKey="sales" stroke="#4f46e5" activeDot={{ r: 8 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+        
+        {/* Quick Links */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate('/admin/products')}
+          >
+            <h3 className="text-lg font-semibold mb-2">Manage Products</h3>
+            <p className="text-gray-600 dark:text-gray-400">Add, edit, or remove products from your inventory</p>
+          </div>
+          
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate('/admin/orders')}
+          >
+            <h3 className="text-lg font-semibold mb-2">Manage Orders</h3>
+            <p className="text-gray-600 dark:text-gray-400">View and update order status, process refunds</p>
+          </div>
+          
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate('/admin/users')}
+          >
+            <h3 className="text-lg font-semibold mb-2">Manage Users</h3>
+            <p className="text-gray-600 dark:text-gray-400">View user details, update roles, and manage accounts</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

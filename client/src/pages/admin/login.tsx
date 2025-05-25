@@ -1,145 +1,136 @@
 import { useState } from 'react';
-import { useLocation } from 'wouter';
-import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import Layout from '@/components/Layout';
-import { Lock, User } from 'lucide-react';
+import { useLocation } from 'wouter';
 
-const adminLoginSchema = z.object({
-  username: z.string().min(1, { message: 'Username is required' }),
-  password: z.string().min(1, { message: 'Password is required' }),
+// Form schema
+const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
-type AdminLoginFormData = z.infer<typeof adminLoginSchema>;
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function AdminLogin() {
-  const [, navigate] = useLocation();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const form = useForm<AdminLoginFormData>({
-    resolver: zodResolver(adminLoginSchema),
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: '',
+      email: '',
       password: '',
     },
   });
 
-  const onSubmit = async (data: AdminLoginFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
-    setError(null);
-    
     try {
-      // Check for hardcoded admin credentials
-      if (data.username === 'admin' && data.password === 'admin123') {
-        // Store admin session
-        localStorage.setItem('admin_authenticated', 'true');
-        
-        // Show success message
-        toast({
-          title: 'Login successful',
-          description: 'Welcome to the admin dashboard',
-        });
-        
-        // Redirect to admin dashboard
-        navigate('/admin/dashboard');
-      } else {
-        setError('Invalid username or password');
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Login failed');
       }
-    } catch (err) {
-      setError('An error occurred during login');
-      console.error('Admin login error:', err);
+
+      // Store admin token in localStorage
+      localStorage.setItem('adminToken', result.token);
+      localStorage.setItem('adminUser', JSON.stringify(result.user));
+
+      toast({
+        title: 'Login successful',
+        description: 'Welcome to the admin panel',
+      });
+
+      // Redirect to admin dashboard
+      setLocation('/admin/dashboard');
+    } catch (error) {
+      toast({
+        title: 'Login failed',
+        description: error instanceof Error ? error.message : 'An error occurred',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Layout>
-      <div className="container max-w-md mx-auto py-10">
-        <Card className="w-full">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Admin Login</CardTitle>
-            <CardDescription className="text-center">
-              Enter your admin credentials to access the dashboard
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <span className="absolute left-2.5 top-2.5 text-muted-foreground">
-                            <User className="h-4 w-4" />
-                          </span>
-                          <Input 
-                            placeholder="admin" 
-                            className="pl-8"
-                            {...field} 
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <span className="absolute left-2.5 top-2.5 text-muted-foreground">
-                            <Lock className="h-4 w-4" />
-                          </span>
-                          <Input 
-                            type="password" 
-                            placeholder="••••••••" 
-                            className="pl-8"
-                            {...field} 
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {error && (
-                  <div className="bg-red-50 p-3 rounded-md border border-red-200">
-                    <p className="text-red-600 text-sm">{error}</p>
-                  </div>
-                )}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Logging in...' : 'Login to Admin Panel'}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-          <CardFooter className="flex justify-center">
-            <div className="text-sm text-center text-muted-foreground">
-              <a href="/" className="text-primary hover:underline">
-                Return to main website
-              </a>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">Admin Login</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Enter your credentials to access the admin panel
+          </p>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium mb-1">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                {...form.register('email')}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                placeholder="admin@example.com"
+              />
+              {form.formState.errors.email && (
+                <p className="mt-1 text-sm text-red-600">
+                  {form.formState.errors.email.message}
+                </p>
+              )}
             </div>
-          </CardFooter>
-        </Card>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium mb-1">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                {...form.register('password')}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                placeholder="••••••••"
+              />
+              {form.formState.errors.password && (
+                <p className="mt-1 text-sm text-red-600">
+                  {form.formState.errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-2 px-4 bg-primary text-white font-medium rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Logging in...' : 'Login'}
+              </button>
+            </div>
+
+            <div className="text-center text-sm">
+              <p className="text-gray-600 dark:text-gray-400">
+                Not an admin? <a href="/" className="text-primary hover:underline">Return to site</a>
+              </p>
+            </div>
+          </form>
+        </div>
       </div>
-    </Layout>
+    </div>
   );
 }
