@@ -33,7 +33,7 @@ export default function Contact() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-cream text-lg max-w-3xl mx-auto text-shadow"
+            className="text-white text-lg max-w-3xl mx-auto text-shadow-strong"
           >
             Have questions, suggestions, or feedback? We'd love to hear from you. Our team is here to help.
           </motion.p>

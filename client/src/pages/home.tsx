@@ -101,10 +101,10 @@ export default function Home() {
           }}
         ></div>
         
-        {/* Decorative overlay elements */}
-        <div className="absolute inset-0 bg-gradient-to-r from-forest/70 to-transparent z-10"></div>
-        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/40 to-transparent z-10"></div>
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/40 to-transparent z-10"></div>
+        {/* Decorative overlay elements with improved contrast */}
+        <div className="absolute inset-0 bg-gradient-to-r from-forest/80 to-black/50 z-10"></div>
+        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/60 to-transparent z-10"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
         
         {/* Left-aligned content for modern asymmetric layout */}
         <div className="container mx-auto px-4 lg:px-8 relative z-20 flex flex-col md:flex-row items-center">
@@ -114,15 +114,15 @@ export default function Home() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <h1 className="font-heading text-white text-4xl md:text-5xl lg:text-7xl font-bold mb-4 leading-tight text-shadow-lg">
-                From <span className="text-secondary">Soil</span> to <span className="text-secondary">Soul</span>
+              <h1 className="font-heading text-white text-4xl md:text-5xl lg:text-7xl font-bold mb-4 leading-tight text-shadow-strong">
+                From <span className="text-secondary font-extrabold">Soil</span> to <span className="text-secondary font-extrabold">Soul</span>
               </h1>
               
-              <h2 className="font-heading text-white text-2xl md:text-3xl lg:text-4xl font-semibold mb-6 text-shadow-lg">
+              <h2 className="font-heading text-white text-2xl md:text-3xl lg:text-4xl font-semibold mb-6 text-shadow-strong">
                 Pure Nature, Direct to Your Table
               </h2>
               
-              <p className="text-cream text-lg max-w-xl mb-8 text-shadow">
+              <p className="text-white text-lg max-w-xl mb-8 text-shadow-strong">
                 Experience the authentic flavors of traditionally grown, chemical-free products sourced directly from the farmers who nurture them with generations of wisdom.
               </p>
               
@@ -316,10 +316,10 @@ export default function Home() {
       >
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <p className="font-accent text-cream text-3xl md:text-4xl mb-6">
+            <p className="font-accent text-white text-3xl md:text-4xl mb-6 text-shadow-strong">
               "The care of the earth is our most ancient and most worthy responsibility."
             </p>
-            <p className="text-white text-lg">— Traditional Farming Wisdom</p>
+            <p className="text-white text-lg text-shadow-strong font-medium">— Traditional Farming Wisdom</p>
           </div>
         </div>
       </ParallaxSection>
