@@ -18,15 +18,15 @@
   --primary: 92 26% 35%; /* #5A6F43 primary */
   --primary-foreground: 211 100% 99%; /* white text */
   
-  --secondary: 35 65% 62%; /* #DDA15E secondary */
+  --secondary: 35 65% 52%; /* Darker #C08A41 secondary for better contrast */
   --secondary-foreground: 24 9.8% 10%; /* dark text */
   
-  --accent: 359 45% 51%; /* #BC4749 accent */
+  --accent: 359 45% 46%; /* Darker #A93C3E accent for better contrast */
   --accent-foreground: 60 9.1% 97.8%; /* light text */
   
   /* UI element colors */
   --muted: 47 36% 94%; /* #FEFAE0 cream */
-  --muted-foreground: 84 23% 32%; /* #606C38 olive */
+  --muted-foreground: 84 23% 22%; /* Darker #404828 olive for better contrast */
   
   --destructive: 359 45% 51%; /* #BC4749 error */
   --destructive-foreground: 60 9.1% 97.8%; /* light text */
@@ -57,25 +57,25 @@
 
 .dark {
   --background: 84 42% 15%; /* #283618 forest */
-  --foreground: 47 36% 94%; /* #FEFAE0 cream */
+  --foreground: 47 36% 97%; /* #FFFDF0 brighter cream for better contrast */
   
   --card: 84 42% 20%; /* darker forest */
-  --card-foreground: 47 36% 94%; /* #FEFAE0 cream */
+  --card-foreground: 47 36% 97%; /* #FFFDF0 brighter cream */
   
   --popover: 84 42% 20%; /* darker forest */
-  --popover-foreground: 47 36% 94%; /* #FEFAE0 cream */
+  --popover-foreground: 47 36% 97%; /* #FFFDF0 brighter cream */
   
-  --primary: 92 26% 35%; /* #5A6F43 primary */
+  --primary: 92 26% 40%; /* #657A4D slightly brighter primary for dark mode */
   --primary-foreground: 211 100% 99%; /* white text */
   
-  --secondary: 35 65% 62%; /* #DDA15E secondary */
+  --secondary: 35 65% 52%; /* #C08A41 darker secondary for better contrast */
   --secondary-foreground: 24 9.8% 10%; /* dark text */
   
-  --accent: 359 45% 51%; /* #BC4749 accent */
+  --accent: 359 45% 56%; /* #C55355 brighter accent for dark mode */
   --accent-foreground: 60 9.1% 97.8%; /* light text */
   
   --muted: 84 23% 25%; /* darker olive */
-  --muted-foreground: 47 36% 80%; /* lighter cream */
+  --muted-foreground: 47 36% 90%; /* brighter cream for better contrast */
   
   --destructive: 359 45% 51%; /* #BC4749 error */
   --destructive-foreground: 60 9.1% 97.8%; /* light text */
@@ -130,7 +130,11 @@
 
 @layer utilities {
   .text-shadow {
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+  }
+  
+  .text-shadow-strong {
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
   }
   
   .animate-reveal-down {

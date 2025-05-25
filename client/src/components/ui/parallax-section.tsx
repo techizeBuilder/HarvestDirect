@@ -11,7 +11,7 @@ interface ParallaxSectionProps {
 
 export function ParallaxSection({
   backgroundUrl,
-  opacity = 0.4,
+  opacity = 0.6,  // Increased opacity for better text contrast
   children,
   className = "",
   overlayColor = "bg-forest"
@@ -48,7 +48,7 @@ export function ParallaxSection({
           y
         }}
       />
-      <div className={`absolute inset-0 ${overlayColor} bg-opacity-${opacity * 100}`} />
+      <div className={`absolute inset-0 bg-black bg-opacity-50 ${overlayColor} opacity-${opacity * 100}`} />
       <div className="relative z-10">
         {children}
       </div>
