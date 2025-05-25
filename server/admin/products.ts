@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '../db';
-import { products, insertProductSchema, Product } from '@shared/schema';
-import { eq, like, desc, asc } from 'drizzle-orm';
+import { products, insertProductSchema, Product, ProductCategory } from '@shared/schema';
+import { eq, like, desc, asc, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 // GET all products with pagination, sorting and filtering
@@ -20,56 +20,65 @@ export const getAllProducts = async (req: Request, res: Response) => {
     const limitNumber = parseInt(limit);
     const offset = (pageNumber - 1) * limitNumber;
 
-    let query = db.select().from(products);
+    // Base query for products
+    let productsQuery = db.select().from(products);
 
-    // Apply search filter if provided
+    // Apply filters
     if (search) {
-      query = query.where(like(products.name, `%${search}%`));
+      productsQuery = productsQuery.where(like(products.name, `%${search}%`));
+    }
+    
+    if (category) {
+      productsQuery = productsQuery.where(eq(products.category, category));
     }
 
-    // Apply category filter if provided
-    if (category) {
-      query = query.where(eq(products.category, category));
+    // Count total products with the same filters
+    let countResult;
+    if (search || category) {
+      let countQuery = db.select({ count: sql`count(*)` }).from(products);
+      
+      if (search) {
+        countQuery = countQuery.where(like(products.name, `%${search}%`));
+      }
+      
+      if (category) {
+        countQuery = countQuery.where(eq(products.category, category));
+      }
+      
+      const countRows = await countQuery;
+      countResult = countRows[0]?.count ? Number(countRows[0].count) : 0;
+    } else {
+      const countRows = await db.select({ count: sql`count(*)` }).from(products);
+      countResult = countRows[0]?.count ? Number(countRows[0].count) : 0;
     }
-
-    // Count total records for pagination
-    let countQuery = db.select({ count: db.sql`count(*)` }).from(products);
-    if (search) {
-      countQuery = countQuery.where(like(products.name, `%${search}%`));
-    }
-    if (category) {
-      countQuery = countQuery.where(eq(products.category, category));
-    }
-    const [countResult] = await countQuery;
-    const count = Number(countResult?.count || '0');
 
     // Apply sorting
-    const sortColumn = products[sort as keyof typeof products];
-    if (sortColumn) {
-      if (order === 'asc') {
-        query = query.orderBy(asc(sortColumn));
+    if (sort && products[sort as keyof typeof products]) {
+      const sortColumn = products[sort as keyof typeof products];
+      if (order.toLowerCase() === 'asc') {
+        productsQuery = productsQuery.orderBy(asc(sortColumn));
       } else {
-        query = query.orderBy(desc(sortColumn));
+        productsQuery = productsQuery.orderBy(desc(sortColumn));
       }
     } else {
-      // Default sorting by id if the provided sort column doesn't exist
-      query = query.orderBy(desc(products.id));
+      // Default sort by id descending
+      productsQuery = productsQuery.orderBy(desc(products.id));
     }
 
     // Apply pagination
-    query = query.limit(limitNumber).offset(offset);
+    productsQuery = productsQuery.limit(limitNumber).offset(offset);
 
     // Execute query
-    const productsList = await query;
+    const productsList = await productsQuery;
 
-    // Return products with pagination metadata
+    // Return paginated result
     res.json({
       products: productsList,
       pagination: {
-        total: Number(count),
+        total: countResult,
         page: pageNumber,
         limit: limitNumber,
-        totalPages: Math.ceil(Number(count) / limitNumber)
+        totalPages: Math.ceil(countResult / limitNumber)
       }
     });
   } catch (error) {
@@ -78,11 +87,16 @@ export const getAllProducts = async (req: Request, res: Response) => {
   }
 };
 
-// GET a single product by ID
+// GET product by ID
 export const getProductById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const [product] = await db.select().from(products).where(eq(products.id, parseInt(id)));
+    const productId = parseInt(id);
+
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, productId));
 
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
@@ -95,80 +109,76 @@ export const getProductById = async (req: Request, res: Response) => {
   }
 };
 
-// POST create a new product
+// CREATE product
 export const createProduct = async (req: Request, res: Response) => {
   try {
-    // Validate request body against schema
-    const validatedData = insertProductSchema.parse(req.body);
+    // Validate request body
+    const productData = insertProductSchema.parse(req.body);
 
-    // Insert product into database
-    const [newProduct] = await db.insert(products).values(validatedData).returning();
+    // Insert product
+    const [newProduct] = await db
+      .insert(products)
+      .values(productData)
+      .returning();
 
-    res.status(201).json({
-      message: 'Product created successfully',
-      product: newProduct
-    });
+    res.status(201).json(newProduct);
   } catch (error) {
     console.error('Error creating product:', error);
-    
-    // Check if it's a validation error
     if (error instanceof z.ZodError) {
       return res.status(400).json({ 
-        message: 'Invalid product data', 
+        message: 'Validation error', 
         errors: error.errors 
       });
     }
-    
     res.status(500).json({ message: 'Failed to create product', error: String(error) });
   }
 };
 
-// PUT update an existing product
+// UPDATE product
 export const updateProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
-    // Validate request body against schema
-    const validatedData = insertProductSchema.parse(req.body);
+    const productId = parseInt(id);
 
-    // Update product in database
+    // Validate request body
+    const productData = insertProductSchema.parse(req.body);
+
+    // Update product
     const [updatedProduct] = await db
       .update(products)
-      .set(validatedData)
-      .where(eq(products.id, parseInt(id)))
+      .set(productData)
+      .where(eq(products.id, productId))
       .returning();
 
     if (!updatedProduct) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    res.json({
-      message: 'Product updated successfully',
-      product: updatedProduct
-    });
+    res.json(updatedProduct);
   } catch (error) {
     console.error('Error updating product:', error);
-    
-    // Check if it's a validation error
     if (error instanceof z.ZodError) {
       return res.status(400).json({ 
-        message: 'Invalid product data', 
+        message: 'Validation error', 
         errors: error.errors 
       });
     }
-    
     res.status(500).json({ message: 'Failed to update product', error: String(error) });
   }
 };
 
-// PATCH toggle product featured status
+// TOGGLE featured status
 export const toggleProductFeatured = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
+    const productId = parseInt(id);
+
     // Get current product
-    const [product] = await db.select().from(products).where(eq(products.id, parseInt(id)));
-    
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, productId));
+
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -177,38 +187,36 @@ export const toggleProductFeatured = async (req: Request, res: Response) => {
     const [updatedProduct] = await db
       .update(products)
       .set({ featured: !product.featured })
-      .where(eq(products.id, parseInt(id)))
+      .where(eq(products.id, productId))
       .returning();
 
-    res.json({
-      message: `Product ${updatedProduct.featured ? 'featured' : 'unfeatured'} successfully`,
-      product: updatedProduct
-    });
+    res.json(updatedProduct);
   } catch (error) {
     console.error('Error toggling product featured status:', error);
-    res.status(500).json({ message: 'Failed to update product', error: String(error) });
+    res.status(500).json({ 
+      message: 'Failed to toggle product featured status', 
+      error: String(error) 
+    });
   }
 };
 
-// DELETE a product
+// DELETE product
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
-    // Delete product from database
+    const productId = parseInt(id);
+
+    // Delete product
     const [deletedProduct] = await db
       .delete(products)
-      .where(eq(products.id, parseInt(id)))
+      .where(eq(products.id, productId))
       .returning();
 
     if (!deletedProduct) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    res.json({
-      message: 'Product deleted successfully',
-      product: deletedProduct
-    });
+    res.json({ message: 'Product deleted successfully', product: deletedProduct });
   } catch (error) {
     console.error('Error deleting product:', error);
     res.status(500).json({ message: 'Failed to delete product', error: String(error) });
@@ -220,82 +228,153 @@ export const getProductCategories = async (req: Request, res: Response) => {
   try {
     // Get unique categories from products table
     const categoriesResult = await db
-      .selectDistinct({ category: products.category })
-      .from(products);
+      .select({ category: products.category })
+      .from(products)
+      .groupBy(products.category);
     
-    const categories = categoriesResult.map(row => row.category);
+    const categories = categoriesResult.map(c => c.category);
     
-    res.json({ categories });
+    // Include default categories from schema
+    const allCategories = [
+      ...Object.values(ProductCategory),
+      ...categories.filter(c => !Object.values(ProductCategory).includes(c))
+    ];
+    
+    // Remove duplicates
+    const uniqueCategories = [...new Set(allCategories)];
+    
+    res.json({ categories: uniqueCategories });
   } catch (error) {
     console.error('Error fetching product categories:', error);
-    res.status(500).json({ message: 'Failed to fetch categories', error: String(error) });
+    res.status(500).json({ 
+      message: 'Failed to fetch product categories', 
+      error: String(error) 
+    });
   }
 };
 
-// Get product stock data without sending response
+// GET product stock data for dashboard
 export const getProductStockData = async (): Promise<any> => {
   try {
-    // Count products by stock level
-    const lowStockThreshold = 20;
-    
-    // Get all products
-    const allProducts = await db.select().from(products);
-    
-    // Count products by stock status
-    const inStock = allProducts.filter(p => p.stockQuantity > lowStockThreshold).length;
-    const lowStock = allProducts.filter(p => p.stockQuantity <= lowStockThreshold && p.stockQuantity > 0).length;
-    const outOfStock = allProducts.filter(p => p.stockQuantity === 0).length;
-    
+    // Get total products count
+    const [totalResult] = await db
+      .select({ count: sql`count(*)` })
+      .from(products);
+    const totalProducts = Number(totalResult?.count || '0');
+
+    // Get out of stock products count
+    const [outOfStockResult] = await db
+      .select({ count: sql`count(*)` })
+      .from(products)
+      .where(eq(products.stockQuantity, 0));
+    const outOfStock = Number(outOfStockResult?.count || '0');
+
+    // Get low stock products count (less than 10)
+    const [lowStockResult] = await db
+      .select({ count: sql`count(*)` })
+      .from(products)
+      .where(sql`${products.stockQuantity} > 0 AND ${products.stockQuantity} < 10`);
+    const lowStock = Number(lowStockResult?.count || '0');
+
+    // Get in stock products count
+    const inStock = totalProducts - outOfStock;
+
+    // Get average stock level
+    const [avgStockResult] = await db
+      .select({ avg: sql`AVG(${products.stockQuantity})` })
+      .from(products);
+    const avgStock = Number(avgStockResult?.avg || '0').toFixed(2);
+
+    // Get top 5 categories by product count
+    const topCategories = await db
+      .select({
+        category: products.category,
+        count: sql`count(*)`,
+      })
+      .from(products)
+      .groupBy(products.category)
+      .orderBy(sql`count(*) DESC`)
+      .limit(5);
+
+    // Return stock data
     return {
-      total: allProducts.length,
+      totalProducts,
       inStock,
+      outOfStock,
       lowStock,
-      outOfStock
+      avgStock,
+      stockStatus: {
+        inStock: Math.round((inStock / totalProducts) * 100),
+        outOfStock: Math.round((outOfStock / totalProducts) * 100),
+        lowStock: Math.round((lowStock / totalProducts) * 100),
+      },
+      topCategories: topCategories.map(c => ({
+        category: c.category,
+        count: Number(c.count)
+      }))
     };
   } catch (error) {
-    console.error('Error fetching product stock counts:', error);
-    throw error;
+    console.error('Error getting product stock data:', error);
+    return {
+      totalProducts: 0,
+      inStock: 0,
+      outOfStock: 0,
+      lowStock: 0,
+      avgStock: 0,
+      stockStatus: {
+        inStock: 0,
+        outOfStock: 0,
+        lowStock: 0,
+      },
+      topCategories: []
+    };
   }
 };
 
-// Get product stock count with response
+// GET product stock data for dashboard (API endpoint)
 export const getProductStock = async (req: Request, res: Response) => {
   try {
     const stockData = await getProductStockData();
     res.json(stockData);
   } catch (error) {
-    console.error('Error fetching product stock counts:', error);
-    res.status(500).json({ message: 'Failed to fetch stock counts', error: String(error) });
+    console.error('Error getting product stock data:', error);
+    res.status(500).json({ 
+      message: 'Failed to get product stock data', 
+      error: String(error) 
+    });
   }
 };
 
-// Update product stock
+// UPDATE product stock
 export const updateProductStock = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const productId = parseInt(id);
     const { stockQuantity } = req.body;
-    
+
     if (typeof stockQuantity !== 'number' || stockQuantity < 0) {
-      return res.status(400).json({ message: 'Invalid stock quantity' });
+      return res.status(400).json({ 
+        message: 'Stock quantity must be a non-negative number' 
+      });
     }
-    
-    // Update product stock in database
+
+    // Update product stock
     const [updatedProduct] = await db
       .update(products)
       .set({ stockQuantity })
-      .where(eq(products.id, parseInt(id)))
+      .where(eq(products.id, productId))
       .returning();
 
     if (!updatedProduct) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    res.json({
-      message: 'Product stock updated successfully',
-      product: updatedProduct
-    });
+    res.json(updatedProduct);
   } catch (error) {
     console.error('Error updating product stock:', error);
-    res.status(500).json({ message: 'Failed to update product stock', error: String(error) });
+    res.status(500).json({ 
+      message: 'Failed to update product stock', 
+      error: String(error) 
+    });
   }
 };
