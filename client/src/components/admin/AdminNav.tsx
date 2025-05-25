@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'wouter';
+import { useLocation } from 'wouter';
 import { 
   Users, 
   Package, 
@@ -13,7 +13,6 @@ import {
 
 export default function AdminNav() {
   const [, setLocation] = useLocation();
-  const [currentPath] = useLocation();
   const [username, setUsername] = useState<string>('Admin');
 
   useEffect(() => {
@@ -36,68 +35,14 @@ export default function AdminNav() {
     setLocation('/admin/login');
   };
 
-  const isActive = (path: string) => {
-    return currentPath === path;
-  };
-
+  // Hidden admin navigation - this component now just renders a top bar 
+  // with the admin welcome and logout button but no navigation links
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow-md">
+    <div className="bg-white dark:bg-gray-800 shadow-md fixed top-0 left-0 right-0 z-10">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center space-x-2">
             <span className="text-xl font-bold text-primary">FarmConnect Admin</span>
-          </div>
-
-          <div className="hidden md:flex items-center space-x-4">
-            <Link href="/admin/dashboard">
-              <a className={`flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 
-                ${isActive('/admin/dashboard') ? 'bg-primary/10 text-primary dark:bg-primary/20' : 'text-gray-700 dark:text-gray-300'}`}>
-                <Home size={18} />
-                <span>Dashboard</span>
-              </a>
-            </Link>
-            <Link href="/admin/products">
-              <a className={`flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 
-                ${isActive('/admin/products') ? 'bg-primary/10 text-primary dark:bg-primary/20' : 'text-gray-700 dark:text-gray-300'}`}>
-                <Package size={18} />
-                <span>Products</span>
-              </a>
-            </Link>
-            <Link href="/admin/orders">
-              <a className={`flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 
-                ${isActive('/admin/orders') ? 'bg-primary/10 text-primary dark:bg-primary/20' : 'text-gray-700 dark:text-gray-300'}`}>
-                <ShoppingCart size={18} />
-                <span>Orders</span>
-              </a>
-            </Link>
-            <Link href="/admin/users">
-              <a className={`flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 
-                ${isActive('/admin/users') ? 'bg-primary/10 text-primary dark:bg-primary/20' : 'text-gray-700 dark:text-gray-300'}`}>
-                <Users size={18} />
-                <span>Users</span>
-              </a>
-            </Link>
-            <Link href="/admin/analytics">
-              <a className={`flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 
-                ${isActive('/admin/analytics') ? 'bg-primary/10 text-primary dark:bg-primary/20' : 'text-gray-700 dark:text-gray-300'}`}>
-                <BarChart size={18} />
-                <span>Analytics</span>
-              </a>
-            </Link>
-            <Link href="/admin/discounts">
-              <a className={`flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 
-                ${isActive('/admin/discounts') ? 'bg-primary/10 text-primary dark:bg-primary/20' : 'text-gray-700 dark:text-gray-300'}`}>
-                <Tag size={18} />
-                <span>Discounts</span>
-              </a>
-            </Link>
-            <Link href="/admin/settings">
-              <a className={`flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 
-                ${isActive('/admin/settings') ? 'bg-primary/10 text-primary dark:bg-primary/20' : 'text-gray-700 dark:text-gray-300'}`}>
-                <Settings size={18} />
-                <span>Settings</span>
-              </a>
-            </Link>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -114,6 +59,6 @@ export default function AdminNav() {
           </div>
         </div>
       </div>
-    </nav>
+    </div>
   );
 }

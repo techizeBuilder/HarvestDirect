@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import AdminNav from '../../components/admin/AdminNav';
+import AdminAuthWrapper from '../../components/admin/AdminAuthWrapper';
 import { 
   BarChart, 
   LineChart, 
@@ -14,9 +15,6 @@ import {
   Legend, 
   ResponsiveContainer 
 } from 'recharts';
-
-// Import required components
-import { Link } from 'wouter';
 
 interface DashboardStats {
   users: {
@@ -51,16 +49,14 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if admin is logged in
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      setLocation('/admin/login');
-      return;
-    }
-
     // Fetch dashboard statistics
     const fetchStats = async () => {
       try {
+        const token = localStorage.getItem('adminToken');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+        
         const response = await fetch('/api/admin/dashboard', {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -68,12 +64,6 @@ export default function AdminDashboard() {
         });
 
         if (!response.ok) {
-          if (response.status === 401 || response.status === 403) {
-            localStorage.removeItem('adminToken');
-            localStorage.removeItem('adminUser');
-            setLocation('/admin/login');
-            throw new Error('Session expired. Please login again.');
-          }
           throw new Error('Failed to fetch dashboard data');
         }
 
@@ -92,7 +82,7 @@ export default function AdminDashboard() {
     };
 
     fetchStats();
-  }, [setLocation, toast]);
+  }, [toast]);
 
   // Sample data for charts
   const orderStatusData = stats ? [
@@ -119,8 +109,11 @@ export default function AdminDashboard() {
     { name: 'Jun', sales: 5500 },
   ];
 
+  // Define content based on loading/error state
+  let content;
+  
   if (loading) {
-    return (
+    content = (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <AdminNav />
         <div className="container mx-auto px-4 py-8">
@@ -131,10 +124,8 @@ export default function AdminDashboard() {
         </div>
       </div>
     );
-  }
-
-  if (error) {
-    return (
+  } else if (error) {
+    content = (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <AdminNav />
         <div className="container mx-auto px-4 py-8">
@@ -145,14 +136,36 @@ export default function AdminDashboard() {
         </div>
       </div>
     );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <AdminNav />
-      
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+  } else {
+    content = (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <AdminNav />
+        
+        <div className="container mx-auto px-4 py-16 mt-8">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+            
+            <div className="flex space-x-3">
+              <button 
+                onClick={() => setLocation('/admin/products')} 
+                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
+              >
+                Products
+              </button>
+              <button 
+                onClick={() => setLocation('/admin/orders')} 
+                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
+              >
+                Orders
+              </button>
+              <button 
+                onClick={() => setLocation('/admin/users')} 
+                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
+              >
+                Users
+              </button>
+            </div>
+          </div>
         
         {/* Stats Overview */}
         {stats && (
