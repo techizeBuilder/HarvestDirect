@@ -133,7 +133,7 @@ export default function ProductDetail() {
               
               <div className="flex items-center space-x-4 mb-8">
                 <span className="text-forest text-3xl font-bold">
-                  ${product?.price ? product.price.toFixed(2) : "0.00"}
+                  ₹{product?.price ? product.price.toFixed(2) : "0.00"}
                 </span>
                 <div className="text-sm text-olive bg-background/80 px-3 py-1 rounded">
                   In Stock: {product?.stockQuantity || 0}

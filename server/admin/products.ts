@@ -33,20 +33,27 @@ export const getAllProducts = async (req: Request, res: Response) => {
     }
 
     // Count total records for pagination
-    const totalQuery = db.select({ count: db.fn.count() }).from(products);
+    let countQuery = db.select({ count: db.sql`count(*)` }).from(products);
     if (search) {
-      totalQuery.where(like(products.name, `%${search}%`));
+      countQuery = countQuery.where(like(products.name, `%${search}%`));
     }
     if (category) {
-      totalQuery.where(eq(products.category, category));
+      countQuery = countQuery.where(eq(products.category, category));
     }
-    const [{ count }] = await totalQuery as [{ count: number }];
+    const [countResult] = await countQuery;
+    const count = Number(countResult?.count || '0');
 
     // Apply sorting
-    if (order === 'asc') {
-      query = query.orderBy(asc(products[sort as keyof typeof products]));
+    const sortColumn = products[sort as keyof typeof products];
+    if (sortColumn) {
+      if (order === 'asc') {
+        query = query.orderBy(asc(sortColumn));
+      } else {
+        query = query.orderBy(desc(sortColumn));
+      }
     } else {
-      query = query.orderBy(desc(products[sort as keyof typeof products]));
+      // Default sorting by id if the provided sort column doesn't exist
+      query = query.orderBy(desc(products.id));
     }
 
     // Apply pagination
