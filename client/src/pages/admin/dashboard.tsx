@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
+import AdminNav from '../../components/admin/AdminNav';
 import { 
   BarChart, 
   LineChart, 
@@ -14,8 +15,8 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 
-// Admin navigation component
-import AdminNav from '../../components/admin/AdminNav';
+// Import required components
+import { Link } from 'wouter';
 
 interface DashboardStats {
   users: {
@@ -43,7 +44,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
-  const [, navigate] = useNavigate();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +54,7 @@ export default function AdminDashboard() {
     // Check if admin is logged in
     const token = localStorage.getItem('adminToken');
     if (!token) {
-      navigate('/admin/login');
+      setLocation('/admin/login');
       return;
     }
 
@@ -70,7 +71,7 @@ export default function AdminDashboard() {
           if (response.status === 401 || response.status === 403) {
             localStorage.removeItem('adminToken');
             localStorage.removeItem('adminUser');
-            navigate('/admin/login');
+            setLocation('/admin/login');
             throw new Error('Session expired. Please login again.');
           }
           throw new Error('Failed to fetch dashboard data');
@@ -91,7 +92,7 @@ export default function AdminDashboard() {
     };
 
     fetchStats();
-  }, [navigate, toast]);
+  }, [setLocation, toast]);
 
   // Sample data for charts
   const orderStatusData = stats ? [
@@ -300,7 +301,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div 
             className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => navigate('/admin/products')}
+            onClick={() => setLocation('/admin/products')}
           >
             <h3 className="text-lg font-semibold mb-2">Manage Products</h3>
             <p className="text-gray-600 dark:text-gray-400">Add, edit, or remove products from your inventory</p>
@@ -308,7 +309,7 @@ export default function AdminDashboard() {
           
           <div 
             className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => navigate('/admin/orders')}
+            onClick={() => setLocation('/admin/orders')}
           >
             <h3 className="text-lg font-semibold mb-2">Manage Orders</h3>
             <p className="text-gray-600 dark:text-gray-400">View and update order status, process refunds</p>
@@ -316,7 +317,7 @@ export default function AdminDashboard() {
           
           <div 
             className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => navigate('/admin/users')}
+            onClick={() => setLocation('/admin/users')}
           >
             <h3 className="text-lg font-semibold mb-2">Manage Users</h3>
             <p className="text-gray-600 dark:text-gray-400">View user details, update roles, and manage accounts</p>
