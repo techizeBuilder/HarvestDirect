@@ -11,7 +11,9 @@ import {
   insertNewsletterSubscriptionSchema,
   insertUserSchema,
   insertPaymentSchema,
-  insertSubscriptionSchema
+  insertSubscriptionSchema,
+  insertProductReviewSchema,
+  insertContactMessageSchema
 } from "@shared/schema";
 import adminRouter from './admin';
 
@@ -805,6 +807,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to cancel subscription" });
+    }
+  });
+
+  // Product Review System for Delivered Orders
+  // Get product reviews
+  app.get(`${apiPrefix}/products/:id/reviews`, async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const reviews = await storage.getProductReviews(productId);
+      res.json(reviews);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch product reviews" });
+    }
+  });
+  
+  // Check if user can review a product (has purchased and received it)
+  app.get(`${apiPrefix}/products/:id/can-review`, authenticate, async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const userId = (req as any).user.id;
+      
+      const canReview = await storage.canUserReviewProduct(userId, productId);
+      res.json(canReview);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check review eligibility" });
+    }
+  });
+  
+  // Add product review
+  app.post(`${apiPrefix}/products/:id/reviews`, async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const reviewData = req.body;
+      
+      // Validate the review data
+      const validatedData = insertProductReviewSchema.parse({
+        ...reviewData,
+        productId
+      });
+      
+      const newReview = await storage.addProductReview(validatedData);
+      res.status(201).json(newReview);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to add product review" });
+    }
+  });
+  
+  // Contact Form Handling
+  // Submit contact form
+  app.post(`${apiPrefix}/contact`, async (req, res) => {
+    try {
+      const contactData = req.body;
+      
+      // Validate the contact form data
+      const validatedData = insertContactMessageSchema.parse(contactData);
+      
+      const newContactMessage = await storage.addContactMessage(validatedData);
+      res.status(201).json({ 
+        message: "Contact message submitted successfully", 
+        id: newContactMessage.id 
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to submit contact message" });
+    }
+  });
+  
+  // Admin routes for managing contact messages (protected)
+  app.get(`${apiPrefix}/admin/contact-messages`, authenticate, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      
+      // Only allow admins to access this endpoint
+      if (user.role !== 'admin') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const messages = await storage.getAllContactMessages();
+      res.json(messages);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch contact messages" });
+    }
+  });
+  
+  // Update contact message status (mark as read, in progress, resolved, etc.)
+  app.patch(`${apiPrefix}/admin/contact-messages/:id`, authenticate, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      
+      // Only allow admins to access this endpoint
+      if (user.role !== 'admin') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const messageId = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (!status || typeof status !== 'string') {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      
+      const updatedMessage = await storage.updateContactMessageStatus(messageId, status);
+      res.json(updatedMessage);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update contact message status" });
     }
   });
 

@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { ParallaxSection } from "@/components/ui/parallax-section";
 import { ProductGallery } from "@/components/ui/product-gallery";
 import ProductCard from "@/components/ProductCard";
-import ProductReviews from "@/components/ProductReviews";
+import ProductReviewSystem from "@/components/ProductReviewSystem";
 import { useAnimations } from "@/hooks/use-animations";
 
 export default function ProductDetail() {
@@ -269,7 +269,7 @@ export default function ProductDetail() {
             Customer Reviews
           </h2>
           
-          <ProductReviews productId={productId} />
+          <ProductReviewSystem productId={productId} />
         </div>
       </section>
       
