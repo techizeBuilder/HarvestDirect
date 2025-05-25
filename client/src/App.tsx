@@ -26,6 +26,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProducts from "@/pages/admin/products";
 import AdminOrders from "@/pages/admin/orders";
 import AdminUsers from "@/pages/admin/users";
+import AdminFarmers from "@/pages/admin/farmers";
 import AdminInventory from "@/pages/admin/inventory";
 import AdminDiscounts from "@/pages/admin/discounts";
 import AdminSettings from "@/pages/admin/settings";
@@ -49,6 +50,7 @@ function App() {
               <Route path="/admin/products" component={AdminProducts} />
               <Route path="/admin/orders" component={AdminOrders} />
               <Route path="/admin/users" component={AdminUsers} />
+              <Route path="/admin/farmers" component={AdminFarmers} />
               <Route path="/admin/inventory" component={AdminInventory} />
               <Route path="/admin/discounts" component={AdminDiscounts} />
               <Route path="/admin/settings" component={AdminSettings} />
