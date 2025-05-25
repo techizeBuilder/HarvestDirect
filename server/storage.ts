@@ -91,6 +91,7 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private payments: Map<number, Payment>;
   private subscriptions: Map<number, Subscription>;
+  private contactMessages: Map<number, ContactMessage>;
   
   private currentCartItemId: number;
   private currentNewsletterSubscriptionId: number;
@@ -98,6 +99,7 @@ export class MemStorage implements IStorage {
   private currentUserId: number;
   private currentPaymentId: number;
   private currentSubscriptionId: number;
+  private currentContactMessageId: number;
 
   constructor() {
     this.products = new Map();
@@ -110,6 +112,7 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.payments = new Map();
     this.subscriptions = new Map();
+    this.contactMessages = new Map();
     
     this.currentCartItemId = 1;
     this.currentNewsletterSubscriptionId = 1;
@@ -117,6 +120,7 @@ export class MemStorage implements IStorage {
     this.currentUserId = 1;
     this.currentPaymentId = 1;
     this.currentSubscriptionId = 1;
+    this.currentContactMessageId = 1;
     
     // Initialize with seed data
     this.initializeProducts();
@@ -390,6 +394,8 @@ export class MemStorage implements IStorage {
     const newReview: ProductReview = {
       id: this.currentProductReviewId++,
       productId: review.productId,
+      userId: review.userId,
+      orderId: review.orderId,
       customerName: review.customerName,
       rating: review.rating,
       reviewText: review.reviewText,
@@ -399,6 +405,71 @@ export class MemStorage implements IStorage {
     
     this.productReviews.set(newReview.id, newReview);
     return newReview;
+  }
+  
+  async canUserReviewProduct(userId: number, productId: number): Promise<boolean> {
+    // Check if user has already reviewed this product
+    const hasReviewed = Array.from(this.productReviews.values())
+      .some(review => review.userId === userId && review.productId === productId);
+    
+    if (hasReviewed) {
+      return false; // User has already reviewed this product
+    }
+    
+    // In a real app, we would check if the user has purchased this product
+    // and if the order status is "delivered" - here we'll simulate this logic
+    const userOrders = Array.from(this.payments.values())
+      .filter(payment => payment.userId === userId && payment.status === "completed");
+    
+    // For demo purposes, if the user has any completed payment, they can review any product
+    return userOrders.length > 0;
+  }
+  
+  async getUserProductReviews(userId: number): Promise<ProductReview[]> {
+    return Array.from(this.productReviews.values())
+      .filter(review => review.userId === userId);
+  }
+  
+  async addContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
+    const newMessage: ContactMessage = {
+      id: this.currentContactMessageId++,
+      name: message.name,
+      email: message.email,
+      phone: message.phone,
+      subject: message.subject,
+      message: message.message,
+      status: "unread",
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    this.contactMessages.set(newMessage.id, newMessage);
+    return newMessage;
+  }
+  
+  async getAllContactMessages(): Promise<ContactMessage[]> {
+    return Array.from(this.contactMessages.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
+  async getContactMessageById(id: number): Promise<ContactMessage | undefined> {
+    return this.contactMessages.get(id);
+  }
+  
+  async updateContactMessageStatus(id: number, status: string): Promise<ContactMessage> {
+    const message = this.contactMessages.get(id);
+    if (!message) {
+      throw new Error(`Contact message with ID ${id} not found`);
+    }
+    
+    const updatedMessage: ContactMessage = {
+      ...message,
+      status,
+      updatedAt: new Date()
+    };
+    
+    this.contactMessages.set(id, updatedMessage);
+    return updatedMessage;
   }
 
   // User Authentication methods
@@ -644,6 +715,67 @@ export class DatabaseStorage implements IStorage {
       .values(review)
       .returning();
     return newReview;
+  }
+  
+  async canUserReviewProduct(userId: number, productId: number): Promise<boolean> {
+    // User can review a product if they have an order with status "delivered" containing this product
+    // and they haven't already reviewed it
+    
+    // 1. Check if user has already reviewed this product
+    const existingReviews = await db.select()
+      .from(productReviews)
+      .where(and(
+        eq(productReviews.userId, userId),
+        eq(productReviews.productId, productId)
+      ));
+    
+    if (existingReviews.length > 0) {
+      return false; // User has already reviewed this product
+    }
+    
+    // 2. Check if user has purchased this product and it has been delivered
+    const deliveredOrders = await db.select({
+      orderId: orders.id
+    })
+    .from(orders)
+    .innerJoin(orderItems, eq(orders.id, orderItems.orderId))
+    .where(and(
+      eq(orders.userId, userId),
+      eq(orderItems.productId, productId),
+      eq(orders.status, "delivered") // Only delivered orders qualify for review
+    ));
+    
+    return deliveredOrders.length > 0;
+  }
+  
+  async getUserProductReviews(userId: number): Promise<ProductReview[]> {
+    const reviews = await db.select().from(productReviews).where(eq(productReviews.userId, userId));
+    return reviews;
+  }
+  
+  async addContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
+    const [newMessage] = await db.insert(contactMessages).values(message).returning();
+    return newMessage;
+  }
+  
+  async getAllContactMessages(): Promise<ContactMessage[]> {
+    const messages = await db.select().from(contactMessages).orderBy(contactMessages.createdAt);
+    return messages;
+  }
+  
+  async getContactMessageById(id: number): Promise<ContactMessage | undefined> {
+    const [message] = await db.select().from(contactMessages).where(eq(contactMessages.id, id));
+    return message;
+  }
+  
+  async updateContactMessageStatus(id: number, status: string): Promise<ContactMessage> {
+    const [updatedMessage] = await db
+      .update(contactMessages)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(contactMessages.id, id))
+      .returning();
+    
+    return updatedMessage;
   }
 
   async getCart(sessionId: string): Promise<CartWithItems> {
