@@ -66,6 +66,10 @@ export default function FarmerManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentFarmer, setCurrentFarmer] = useState<Farmer | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [uploadMethod, setUploadMethod] = useState<"url" | "upload">("url");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const queryClient = useQueryClient();
 
@@ -74,9 +78,54 @@ export default function FarmerManagement() {
     data: farmers = [], 
     isLoading,
     refetch 
-  } = useQuery({ 
+  } = useQuery<Farmer[]>({ 
     queryKey: ['/api/admin/farmers'],
   });
+
+  // Image handling functions
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "Error",
+          description: "Image size must be less than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setImagePreview(result);
+        // Set the image URL for both forms
+        addForm.setValue("imageUrl", result);
+        editForm.setValue("imageUrl", result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const convertImageToBase64 = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const clearImageSelection = () => {
+    setSelectedImage(null);
+    setImagePreview("");
+    addForm.setValue("imageUrl", "");
+    editForm.setValue("imageUrl", "");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   // Add farmer mutation
   const addFarmerMutation = useMutation({
