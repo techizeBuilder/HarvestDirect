@@ -46,10 +46,14 @@ export const farmers = pgTable("farmers", {
   location: text("location").notNull(),
   imageUrl: text("image_url").notNull(),
   featured: boolean("featured").default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const insertFarmerSchema = createInsertSchema(farmers).omit({
-  id: true
+  id: true,
+  createdAt: true,
+  updatedAt: true
 });
 
 // Cart Schema
