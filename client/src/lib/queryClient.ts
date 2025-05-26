@@ -11,8 +11,27 @@ export async function apiRequest(
   url: string,
   options?: RequestInit,
 ): Promise<Response> {
+  // Get admin token if this is an admin request
+  const isAdminRequest = url.includes('/admin/');
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  // Add existing headers if any
+  if (options?.headers) {
+    Object.assign(headers, options.headers);
+  }
+  
+  if (isAdminRequest) {
+    const adminToken = localStorage.getItem('adminToken');
+    if (adminToken) {
+      headers['Authorization'] = `Bearer ${adminToken}`;
+    }
+  }
+
   const res = await fetch(url, {
     ...options,
+    headers,
     credentials: "include",
   });
 
@@ -25,7 +44,19 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const url = queryKey[0] as string;
+    const isAdminRequest = url.includes('/admin/');
+    const headers: Record<string, string> = {};
+    
+    if (isAdminRequest) {
+      const adminToken = localStorage.getItem('adminToken');
+      if (adminToken) {
+        headers['Authorization'] = `Bearer ${adminToken}`;
+      }
+    }
+
+    const res = await fetch(url, {
+      headers,
       credentials: "include",
     });
 
