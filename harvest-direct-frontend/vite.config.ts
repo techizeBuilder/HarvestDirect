@@ -8,21 +8,23 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@assets': path.resolve(__dirname, './src/assets'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@pages': path.resolve(__dirname, './src/pages'),
+      '@lib': path.resolve(__dirname, './src/lib'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
     },
   },
   server: {
     port: 5173,
-    host: true,
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
-        secure: false,
-      }
-    }
+      },
+    },
   },
   build: {
     outDir: 'dist',
-    assetsDir: 'assets',
+    sourcemap: true,
   },
 })
