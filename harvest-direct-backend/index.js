@@ -29,6 +29,21 @@ app.get('/health', (req, res) => {
   });
 });
 
+// API base route
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'Harvest Direct API is running!',
+    version: '1.0.0',
+    endpoints: {
+      products: '/api/products',
+      farmers: '/api/farmers',
+      cart: '/api/cart',
+      testimonials: '/api/testimonials',
+      admin: '/api/admin'
+    }
+  });
+});
+
 // Sample data for testing
 const sampleProducts = [
   {
