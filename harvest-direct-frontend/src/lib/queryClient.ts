@@ -7,10 +7,16 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// API base URL - use environment variable or fallback to deployed backend
+const API_BASE = import.meta.env?.VITE_API_URL || 'https://farmfreshbackend-x7th.onrender.com';
+
 export async function apiRequest(
   url: string,
   options?: RequestInit,
 ): Promise<Response> {
+  // Build full URL if it's a relative path
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
+  
   // Get admin token if this is an admin request
   const isAdminRequest = url.includes('/admin/');
   const headers: Record<string, string> = {
@@ -29,7 +35,7 @@ export async function apiRequest(
     }
   }
 
-  const res = await fetch(url, {
+  const res = await fetch(fullUrl, {
     ...options,
     headers,
     credentials: "include",
@@ -45,6 +51,9 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = queryKey[0] as string;
+    // Build full URL if it's a relative path
+    const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
+    
     const isAdminRequest = url.includes('/admin/');
     const headers: Record<string, string> = {};
     
@@ -55,7 +64,7 @@ export const getQueryFn: <T>(options: {
       }
     }
 
-    const res = await fetch(url, {
+    const res = await fetch(fullUrl, {
       headers,
       credentials: "include",
     });
