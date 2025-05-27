@@ -6,9 +6,9 @@
     "node": ">=18.0.0"
   },
   "description": "Backend API server for Harvest Direct e-commerce platform",
-  "main": "./index.js",
+  "main": "src/dist/index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node src/dist/index.js",
     "dev": "nodemon index.js",
     "build": "echo 'Build completed - No build step needed for Node.js'",
     "db:push": "drizzle-kit push",
