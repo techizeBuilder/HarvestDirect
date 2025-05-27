@@ -2,8 +2,11 @@
   "name": "harvest-direct-backend",
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "description": "Backend API server for Harvest Direct e-commerce platform",
-  "main": "index.js",
+  "main": "./index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
