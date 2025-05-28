@@ -1,0 +1,40 @@
+{
+  "name": "harvest-direct-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Harvest Direct E-commerce Platform",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "build": "echo 'No build step required for Node.js'",
+    "test": "echo 'Tests not implemented yet'"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "drizzle-orm": "^0.39.1",
+    "drizzle-zod": "^0.7.0",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "jsonwebtoken": "^9.0.2",
+    "razorpay": "^2.9.6",
+    "ws": "^8.18.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "drizzle-kit": "^0.30.4"
+  },
+  "keywords": [
+    "ecommerce",
+    "agriculture",
+    "farmers",
+    "marketplace",
+    "nodejs",
+    "express"
+  ],
+  "author": "Harvest Direct Team",
+  "license": "MIT"
+}
