@@ -5,7 +5,6 @@ import { useAnimations } from "@/hooks/use-animations";
 import { Truck, Leaf, Package, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { CheckIcon } from "@/components/ui/CheckIcon";
 
 export default function OurProcess() {
   // Set up animations
@@ -98,15 +97,21 @@ export default function OurProcess() {
                 </p>
                 <ul className="text-olive space-y-2">
                   <li className="flex items-start">
-                    <CheckIcon />
+                    <svg className="h-5 w-5 text-secondary mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
                     <span>Focus on chemical-free growing practices</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckIcon />
+                    <svg className="h-5 w-5 text-secondary mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
                     <span>Evaluation of soil health and growing environment</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckIcon />
+                    <svg className="h-5 w-5 text-secondary mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
                     <span>Assessment of traditional knowledge and practices</span>
                   </li>
                 </ul>
@@ -127,15 +132,21 @@ export default function OurProcess() {
                 </p>
                 <ul className="text-olive space-y-2">
                   <li className="flex items-start">
-                    <CheckIcon />
+                    <svg className="h-5 w-5 text-secondary mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
                     <span>Careful hand-harvesting of many products</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckIcon />
+                    <svg className="h-5 w-5 text-secondary mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
                     <span>Processing within hours of harvest when possible</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckIcon />
+                    <svg className="h-5 w-5 text-secondary mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
                     <span>Traditional processing methods that preserve nutrition</span>
                   </li>
                 </ul>
@@ -156,15 +167,21 @@ export default function OurProcess() {
                 </p>
                 <ul className="text-olive space-y-2">
                   <li className="flex items-start">
-                    <CheckIcon />
+                    <svg className="h-5 w-5 text-secondary mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
                     <span>Visual inspection for quality indicators</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckIcon />
+                    <svg className="h-5 w-5 text-secondary mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
                     <span>Sample testing for purity and taste</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckIcon />
+                    <svg className="h-5 w-5 text-secondary mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
                     <span>Verification of harvesting and processing methods</span>
                   </li>
                 </ul>
@@ -185,15 +202,21 @@ export default function OurProcess() {
                 </p>
                 <ul className="text-olive space-y-2">
                   <li className="flex items-start">
-                    <CheckIcon />
+                    <svg className="h-5 w-5 text-secondary mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
                     <span>Minimal, eco-friendly packaging</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckIcon />
+                    <svg className="h-5 w-5 text-secondary mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
                     <span>Carbon-offset shipping options</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckIcon />
+                    <svg className="h-5 w-5 text-secondary mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
                     <span>Careful handling to ensure products arrive in perfect condition</span>
                   </li>
                 </ul>
