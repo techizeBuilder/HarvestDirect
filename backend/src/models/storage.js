@@ -21,9 +21,8 @@ export class DatabaseStorage {
       return result;
     } catch (error) {
       console.error('Database error in getAllProducts:', error);
-      // Return seed data from file as fallback
-      const { productData } = await import('../data/productData.js');
-      return productData;
+      // Return empty array if database is not accessible
+      return [];
     }
   }
 
