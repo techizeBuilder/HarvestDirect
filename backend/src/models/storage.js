@@ -9,6 +9,7 @@ import { productData } from '../data/productData.js';
 import { farmerData } from '../data/farmerData.js';
 import { db } from '../config/db.js';
 import { eq, and, isNotNull, sql } from 'drizzle-orm';
+import { MemoryStorage } from './memoryStorage.js';
 
 // Storage interface with CRUD methods
 export class DatabaseStorage {
@@ -401,4 +402,22 @@ export class DatabaseStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// Initialize storage with fallback to memory storage
+let storage;
+
+async function initializeStorage() {
+  try {
+    // Try database storage first
+    storage = new DatabaseStorage();
+    console.log('DatabaseStorage initialized successfully');
+  } catch (error) {
+    console.warn('Database connection failed, using memory storage:', error.message);
+    storage = new MemoryStorage();
+  }
+  return storage;
+}
+
+// Initialize immediately with memory storage as fallback
+storage = new MemoryStorage();
+
+export { storage };
