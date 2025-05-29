@@ -33,9 +33,14 @@ export default function Login() {
 
   const onSubmit = async (data: LoginFormData) => {
     setError(null);
+    console.log('Starting login process...');
     const success = await login(data.email, data.password);
+    console.log('Login result:', success);
     if (success) {
+      console.log('Login successful, navigating to /account');
       navigate('/account');
+    } else {
+      setError('Login failed. Please check your credentials.');
     }
   };
 
