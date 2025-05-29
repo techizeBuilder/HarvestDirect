@@ -20,7 +20,7 @@ import { getSessionId } from './middlewares/session.js';
 // Create Express router for API routes
 const app = express.Router();
 
-// Note: JSON parsing middleware is handled by main server
+// Remove duplicate middleware since main server handles it
 
 // Logging middleware
 app.use((req, res, next) => {

@@ -9,6 +9,7 @@ import { farmerData } from './data/farmerData.js';
 export async function initializeDatabase() {
   try {
     console.log('Initializing database with seed data...');
+    console.log('Using database URL:', process.env.DATABASE_URL ? 'Set' : 'Not set');
 
     // Check if products already exist
     const existingProducts = await db.select().from(products);

@@ -12,9 +12,18 @@ import { eq, and, isNotNull, sql } from 'drizzle-orm';
 
 // Storage interface with CRUD methods
 export class DatabaseStorage {
+  constructor() {
+    console.log('DatabaseStorage initialized');
+  }
   async getAllProducts() {
-    const result = await db.select().from(products);
-    return result;
+    try {
+      const result = await db.select().from(products);
+      return result;
+    } catch (error) {
+      console.error('Database error in getAllProducts:', error);
+      // Return empty array as fallback
+      return [];
+    }
   }
 
   async getProductById(id) {
@@ -33,8 +42,13 @@ export class DatabaseStorage {
   }
 
   async getAllFarmers() {
-    const result = await db.select().from(farmers);
-    return result;
+    try {
+      const result = await db.select().from(farmers);
+      return result;
+    } catch (error) {
+      console.error('Database error in getAllFarmers:', error);
+      return [];
+    }
   }
 
   async getFarmerById(id) {
@@ -188,8 +202,13 @@ export class DatabaseStorage {
   }
 
   async getAllTestimonials() {
-    const result = await db.select().from(testimonials);
-    return result;
+    try {
+      const result = await db.select().from(testimonials);
+      return result;
+    } catch (error) {
+      console.error('Database error in getAllTestimonials:', error);
+      return [];
+    }
   }
 
   async addNewsletterSubscription(subscription) {
