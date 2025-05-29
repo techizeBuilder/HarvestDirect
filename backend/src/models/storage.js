@@ -402,13 +402,22 @@ export class DatabaseStorage {
   }
 }
 
-// Use memory storage as fallback when database fails
+// Initialize storage with fallback to memory storage
 let storage;
-try {
-  storage = new DatabaseStorage();
-} catch (error) {
-  console.warn('Database connection failed, falling back to memory storage:', error.message);
-  storage = new MemoryStorage();
+
+async function initializeStorage() {
+  try {
+    // Try database storage first
+    storage = new DatabaseStorage();
+    console.log('DatabaseStorage initialized successfully');
+  } catch (error) {
+    console.warn('Database connection failed, using memory storage:', error.message);
+    storage = new MemoryStorage();
+  }
+  return storage;
 }
+
+// Initialize immediately with memory storage as fallback
+storage = new MemoryStorage();
 
 export { storage };
