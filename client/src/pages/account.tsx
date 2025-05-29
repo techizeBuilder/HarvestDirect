@@ -235,10 +235,19 @@ export default function Account() {
       <div className="container mx-auto py-10">
         <h1 className="text-3xl font-bold mb-6">My Account</h1>
         
+        <div className="mb-6">
+          <Button 
+            onClick={() => navigate('/order-history')} 
+            variant="outline" 
+            className="mb-4"
+          >
+            View Order History
+          </Button>
+        </div>
+        
         <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-8 w-full grid grid-cols-5">
+          <TabsList className="mb-8 w-full grid grid-cols-4">
             <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="orders">Order History</TabsTrigger>
             <TabsTrigger value="delivered-orders">Delivered Orders</TabsTrigger>
             <TabsTrigger value="payments">Payment History</TabsTrigger>
             <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>

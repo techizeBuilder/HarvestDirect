@@ -523,16 +523,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Verify payment
+  // Verify payment and create order
   app.post(`${apiPrefix}/payments/verify`, authenticate, async (req, res) => {
     try {
       const user = (req as any).user;
+      const sessionId = (req as any).sessionId;
       const { 
         razorpayPaymentId, 
         razorpayOrderId, 
         razorpaySignature,
         amount,
-        currency = 'INR'
+        currency = 'INR',
+        shippingAddress
       } = req.body;
       
       // Verify the payment signature
@@ -546,20 +548,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid payment signature" });
       }
       
-      // Record the payment
+      // Get the current cart
+      const cart = await storage.getCart(sessionId);
+      
+      if (!cart.items || cart.items.length === 0) {
+        return res.status(400).json({ message: "No items in cart to create order" });
+      }
+      
+      // Create the order
+      const order = await storage.createOrder({
+        userId: user.id,
+        sessionId,
+        paymentId: razorpayPaymentId,
+        total: amount / 100, // Convert back to main currency unit
+        status: 'confirmed',
+        shippingAddress: shippingAddress || 'No address provided',
+        paymentMethod: 'razorpay'
+      });
+      
+      // Create order items
+      for (const item of cart.items) {
+        await storage.createOrderItem({
+          orderId: order.id,
+          productId: item.product.id,
+          quantity: item.quantity,
+          price: item.product.price
+        });
+      }
+      
+      // Record the payment with order reference
       const payment = await storage.createPayment({
         userId: user.id,
+        orderId: order.id,
         razorpayPaymentId,
-        amount: amount / 100, // Convert back to main currency unit
+        amount: amount / 100,
         currency,
         status: 'completed'
       });
       
+      // Clear the cart after successful order creation
+      // Note: We'll implement cart clearing separately
+      
       res.json({ 
-        message: "Payment successful", 
-        payment 
+        message: "Payment successful and order created", 
+        payment,
+        order
       });
     } catch (error) {
+      console.error('Payment verification error:', error);
       res.status(500).json({ message: "Payment verification failed" });
     }
   });
@@ -649,44 +685,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/orders/history`, authenticate, async (req, res) => {
     try {
       const user = (req as any).user;
-      // Sample data for demonstration purposes
-      const sampleOrders = [
-        {
-          id: 1001,
-          userId: user.id,
-          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-          total: 129.99,
-          status: 'processing',
-          items: [
-            { productName: 'Mountain Coffee Beans', quantity: 2, price: 49.99 },
-            { productName: 'Organic Spice Mix', quantity: 1, price: 30.01 }
-          ]
-        },
-        {
-          id: 1002,
-          userId: user.id,
-          createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days ago
-          total: 75.50,
-          status: 'delivered',
-          deliveredAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
-          items: [
-            { productName: 'Fresh Valley Honey', quantity: 3, price: 25.50 }
-          ]
-        },
-        {
-          id: 1003,
-          userId: user.id,
-          createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000), // 21 days ago
-          total: 45.95,
-          status: 'cancelled',
-          cancellationReason: 'Changed my mind',
-          items: [
-            { productName: 'Handcrafted Cheese', quantity: 1, price: 45.95 }
-          ]
-        }
-      ];
+      const orders = await storage.getOrdersByUserId(user.id);
       
-      res.json({ orders: sampleOrders });
+      // Fetch order items for each order
+      const ordersWithItems = await Promise.all(
+        orders.map(async (order) => {
+          const items = await storage.getOrderItemsByOrderId(order.id);
+          return {
+            ...order,
+            items
+          };
+        })
+      );
+      
+      res.json({ orders: ordersWithItems });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch order history" });
     }

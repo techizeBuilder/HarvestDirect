@@ -13,6 +13,7 @@ import Contact from "@/pages/contact";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Account from "@/pages/account";
+import OrderHistory from "@/pages/order-history";
 import Payment from "@/pages/payment";
 import PaymentSuccess from "@/pages/payment-success";
 import FAQs from "@/pages/faqs";
@@ -71,6 +72,7 @@ function App() {
                       <Route path="/login" component={Login} />
                       <Route path="/register" component={Register} />
                       <Route path="/account" component={Account} />
+                      <Route path="/order-history" component={OrderHistory} />
                       <Route path="/payment" component={Payment} />
                       <Route path="/payment-success" component={PaymentSuccess} />
                       
