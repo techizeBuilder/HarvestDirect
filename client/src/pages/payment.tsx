@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -18,6 +19,7 @@ export default function Payment() {
   const location = useLocation();
   const [, navigate] = useLocation();
   const { isAuthenticated, token, user } = useAuth();
+  const { sessionId } = useCart();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [orderDetails, setOrderDetails] = useState<{
@@ -136,14 +138,16 @@ export default function Payment() {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'x-session-id': sessionId
               },
               body: JSON.stringify({
                 razorpayPaymentId: response.razorpay_payment_id,
                 razorpayOrderId: response.razorpay_order_id,
                 razorpaySignature: response.razorpay_signature,
                 amount: data.amount,
-                currency: data.currency
+                currency: data.currency,
+                shippingAddress: 'Default address' // You can get this from form data if needed
               })
             });
 
