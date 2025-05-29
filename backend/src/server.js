@@ -2,6 +2,10 @@ import { createServer } from 'http';
 import app from './app.js';
 import { testConnection, closePool } from './config/db.js';
 import { initializeDatabase } from './initDb.js';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config({ path: './backend/.env' });
 
 // Set port from environment or default
 const PORT = process.env.PORT || 5000;

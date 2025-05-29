@@ -1,5 +1,4 @@
 import express from 'express';
-import { createServer } from 'http';
 
 // Import routes
 import adminAuthRoutes from './routes/admin/authRoutes.js';
@@ -18,12 +17,10 @@ import {
 import { storage } from './models/storage.js';
 import { getSessionId } from './middlewares/session.js';
 
-// Create Express app
-const app = express();
+// Create Express router for API routes
+const app = express.Router();
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Note: JSON parsing middleware is handled by main server
 
 // Logging middleware
 app.use((req, res, next) => {
@@ -59,26 +56,23 @@ app.use((req, res, next) => {
 // Session middleware for all requests
 app.use(getSessionId);
 
-// API route prefix
-const apiPrefix = '/api';
-
 // Admin routes
-app.use(`${apiPrefix}/admin`, adminAuthRoutes);
-app.use(`${apiPrefix}/admin/products`, adminProductRoutes);
-app.use(`${apiPrefix}/admin/users`, adminUserRoutes);
+app.use('/admin', adminAuthRoutes);
+app.use('/admin/products', adminProductRoutes);
+app.use('/admin/users', adminUserRoutes);
 
 // User routes
-app.use(`${apiPrefix}/auth`, userAuthRoutes);
-app.use(`${apiPrefix}/products`, userProductRoutes);
-app.use(`${apiPrefix}/cart`, userCartRoutes);
+app.use('/auth', userAuthRoutes);
+app.use('/products', userProductRoutes);
+app.use('/cart', userCartRoutes);
 
 // Additional public endpoints
-app.get(`${apiPrefix}/farmers`, getAllFarmers);
-app.get(`${apiPrefix}/farmers/featured`, getFeaturedFarmers);
-app.get(`${apiPrefix}/farmers/:id`, getFarmerById);
+app.get('/farmers', getAllFarmers);
+app.get('/farmers/featured', getFeaturedFarmers);
+app.get('/farmers/:id', getFarmerById);
 
 // Additional API endpoints from original routes
-app.get(`${apiPrefix}/testimonials`, async (req, res) => {
+app.get('/testimonials', async (req, res) => {
   try {
     const testimonials = await storage.getAllTestimonials();
     res.json(testimonials);
@@ -87,7 +81,7 @@ app.get(`${apiPrefix}/testimonials`, async (req, res) => {
   }
 });
 
-app.post(`${apiPrefix}/newsletter-subscription`, async (req, res) => {
+app.post('/newsletter-subscription', async (req, res) => {
   try {
     const subscription = await storage.addNewsletterSubscription(req.body);
     res.json({ message: "Subscription successful", subscription });
@@ -96,7 +90,7 @@ app.post(`${apiPrefix}/newsletter-subscription`, async (req, res) => {
   }
 });
 
-app.get(`${apiPrefix}/product-reviews/:productId`, async (req, res) => {
+app.get('/product-reviews/:productId', async (req, res) => {
   try {
     const productId = parseInt(req.params.productId);
     const reviews = await storage.getProductReviews(productId);
@@ -106,7 +100,7 @@ app.get(`${apiPrefix}/product-reviews/:productId`, async (req, res) => {
   }
 });
 
-app.post(`${apiPrefix}/contact`, async (req, res) => {
+app.post('/contact', async (req, res) => {
   try {
     const message = await storage.addContactMessage(req.body);
     res.json({ message: "Message sent successfully", contactMessage: message });

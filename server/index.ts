@@ -3,9 +3,15 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./initDb";
 
+// Import the new backend app structure
+import backendApp from "../backend/src/app.js";
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Use the new backend structure for API routes
+app.use('/api', backendApp);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -46,7 +52,11 @@ app.use((req, res, next) => {
     log('Error initializing database: ' + error);
   }
   
-  const server = await registerRoutes(app);
+  // Comment out old routes for now
+  // const server = await registerRoutes(app);
+  
+  // Create server directly
+  const server = require('http').createServer(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
