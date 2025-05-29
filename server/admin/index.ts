@@ -155,4 +155,33 @@ adminRouter.patch('/farmers/:id/featured', authenticateAdmin, farmerController.t
 adminRouter.delete('/farmers/:id', authenticateAdmin, farmerController.deleteFarmer);
 adminRouter.get('/featured-farmers', authenticateAdmin, farmerController.getFeaturedFarmers);
 
+// Newsletter routes
+adminRouter.get('/newsletter-subscriptions', authenticateAdmin, async (req: Request, res: Response) => {
+  try {
+    const { storage } = req.app.locals;
+    const subscriptions = await storage.getAllNewsletterSubscriptions();
+    res.json({ subscriptions });
+  } catch (error) {
+    console.error('Error fetching newsletter subscriptions:', error);
+    res.status(500).json({ message: 'Failed to fetch newsletter subscriptions' });
+  }
+});
+
+adminRouter.delete('/newsletter-subscriptions/:id', authenticateAdmin, async (req: Request, res: Response) => {
+  try {
+    const { storage } = req.app.locals;
+    const { id } = req.params;
+    const success = await storage.deleteNewsletterSubscription(parseInt(id));
+    
+    if (success) {
+      res.json({ message: 'Newsletter subscription deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'Newsletter subscription not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting newsletter subscription:', error);
+    res.status(500).json({ message: 'Failed to delete newsletter subscription' });
+  }
+});
+
 export default adminRouter;

@@ -50,6 +50,9 @@ export interface IStorage {
 
   // Newsletter
   addNewsletterSubscription(subscription: InsertNewsletterSubscription): Promise<NewsletterSubscription>;
+  getAllNewsletterSubscriptions(): Promise<NewsletterSubscription[]>;
+  getNewsletterSubscriptionById(id: number): Promise<NewsletterSubscription | undefined>;
+  deleteNewsletterSubscription(id: number): Promise<boolean>;
   
   // Product Reviews
   getProductReviews(productId: number): Promise<ProductReview[]>;
@@ -394,6 +397,20 @@ export class MemStorage implements IStorage {
 
     this.newsletterSubscriptions.set(newSubscription.id, newSubscription);
     return newSubscription;
+  }
+
+  async getAllNewsletterSubscriptions(): Promise<NewsletterSubscription[]> {
+    return Array.from(this.newsletterSubscriptions.values()).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getNewsletterSubscriptionById(id: number): Promise<NewsletterSubscription | undefined> {
+    return this.newsletterSubscriptions.get(id);
+  }
+
+  async deleteNewsletterSubscription(id: number): Promise<boolean> {
+    return this.newsletterSubscriptions.delete(id);
   }
   
   // Product Review methods
@@ -994,6 +1011,20 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return newSubscription;
+  }
+
+  async getAllNewsletterSubscriptions(): Promise<NewsletterSubscription[]> {
+    return await db.select().from(newsletterSubscriptions).orderBy(desc(newsletterSubscriptions.createdAt));
+  }
+
+  async getNewsletterSubscriptionById(id: number): Promise<NewsletterSubscription | undefined> {
+    const [subscription] = await db.select().from(newsletterSubscriptions).where(eq(newsletterSubscriptions.id, id));
+    return subscription;
+  }
+
+  async deleteNewsletterSubscription(id: number): Promise<boolean> {
+    const result = await db.delete(newsletterSubscriptions).where(eq(newsletterSubscriptions.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   // User Authentication methods
