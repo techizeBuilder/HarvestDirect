@@ -37,8 +37,8 @@ export default function Login() {
     const success = await login(data.email, data.password);
     console.log('Login result:', success);
     if (success) {
-      console.log('Login successful, navigating to /account');
-      navigate('/account');
+      console.log('Login successful, navigating to home page');
+      navigate('/');
     } else {
       setError('Login failed. Please check your credentials.');
     }
