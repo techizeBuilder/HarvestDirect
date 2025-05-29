@@ -3,7 +3,7 @@ import * as crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { 
   products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews,
-  users, payments, subscriptions, contactMessages, orders, orderItems
+  users, payments, subscriptions, contactMessages
 } from "../../../shared/schema.ts";
 import { productData } from '../data/productData.js';
 import { farmerData } from '../data/farmerData.js';

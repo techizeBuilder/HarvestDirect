@@ -1,5 +1,5 @@
 import express from "express";
-import { setupVite, serveStatic, log } from "../../server/vite.ts";
+import { setupVite, serveStatic, log } from "./vite.ts";
 import { initializeDatabase } from "./initDb.js";
 import dotenv from 'dotenv';
 
