@@ -1,4 +1,4 @@
-import { storage } from "../../storage.js";
+import { storage } from "../../models/storage.js";
 import bcrypt from "bcrypt";
 import { generateToken } from "../../utils/jwt.js";
 
@@ -44,15 +44,13 @@ export const register = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Registration successful',
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        },
-        token
-      }
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
+      token
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -98,15 +96,13 @@ export const login = async (req, res) => {
     res.json({
       success: true,
       message: 'Login successful',
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        },
-        token
-      }
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
+      token
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -126,13 +122,11 @@ export const getProfile = async (req, res) => {
     
     res.json({
       success: true,
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        }
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
       }
     });
   } catch (error) {
@@ -140,43 +134,6 @@ export const getProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get profile'
-    });
-  }
-};
-
-/**
- * Update user profile
- */
-export const updateProfile = async (req, res) => {
-  try {
-    const updateData = req.body;
-    const userId = req.user.id;
-    
-    const user = await storage.updateUser(userId, updateData);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Profile updated successfully',
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Update profile error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update profile'
     });
   }
 };

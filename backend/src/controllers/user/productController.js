@@ -1,4 +1,4 @@
-import { storage } from "../../storage.js";
+import { storage } from "../../models/storage.js";
 
 /**
  * Get all products (public view)
@@ -6,14 +6,10 @@ import { storage } from "../../storage.js";
 export const getAllProducts = async (req, res) => {
   try {
     const products = await storage.getAllProducts();
-    res.json({
-      success: true,
-      data: { products }
-    });
+    res.json(products);
   } catch (error) {
     console.error('Get all products error:', error);
     res.status(500).json({
-      success: false,
       message: 'Failed to fetch products'
     });
   }
@@ -26,30 +22,18 @@ export const getProductById = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid product ID'
-      });
+      return res.status(400).json({ message: 'Invalid product ID' });
     }
 
     const product = await storage.getProductById(id);
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
+      return res.status(404).json({ message: 'Product not found' });
     }
 
-    res.json({
-      success: true,
-      data: { product }
-    });
+    res.json(product);
   } catch (error) {
     console.error('Get product by ID error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch product'
-    });
+    res.status(500).json({ message: 'Failed to fetch product' });
   }
 };
 
@@ -59,16 +43,10 @@ export const getProductById = async (req, res) => {
 export const getFeaturedProducts = async (req, res) => {
   try {
     const products = await storage.getFeaturedProducts();
-    res.json({
-      success: true,
-      data: { products }
-    });
+    res.json(products);
   } catch (error) {
     console.error('Get featured products error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch featured products'
-    });
+    res.status(500).json({ message: 'Failed to fetch featured products' });
   }
 };
 
@@ -79,17 +57,10 @@ export const getProductsByCategory = async (req, res) => {
   try {
     const { category } = req.params;
     const products = await storage.getProductsByCategory(category);
-    
-    res.json({
-      success: true,
-      data: { products }
-    });
+    res.json(products);
   } catch (error) {
     console.error('Get products by category error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch products by category'
-    });
+    res.status(500).json({ message: 'Failed to fetch products by category' });
   }
 };
 
@@ -99,16 +70,10 @@ export const getProductsByCategory = async (req, res) => {
 export const getAllFarmers = async (req, res) => {
   try {
     const farmers = await storage.getAllFarmers();
-    res.json({
-      success: true,
-      data: { farmers }
-    });
+    res.json(farmers);
   } catch (error) {
     console.error('Get all farmers error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch farmers'
-    });
+    res.status(500).json({ message: 'Failed to fetch farmers' });
   }
 };
 
@@ -118,16 +83,10 @@ export const getAllFarmers = async (req, res) => {
 export const getFeaturedFarmers = async (req, res) => {
   try {
     const farmers = await storage.getFeaturedFarmers();
-    res.json({
-      success: true,
-      data: { farmers }
-    });
+    res.json(farmers);
   } catch (error) {
     console.error('Get featured farmers error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch featured farmers'
-    });
+    res.status(500).json({ message: 'Failed to fetch featured farmers' });
   }
 };
 
@@ -138,29 +97,17 @@ export const getFarmerById = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid farmer ID'
-      });
+      return res.status(400).json({ message: 'Invalid farmer ID' });
     }
 
     const farmer = await storage.getFarmerById(id);
     if (!farmer) {
-      return res.status(404).json({
-        success: false,
-        message: 'Farmer not found'
-      });
+      return res.status(404).json({ message: 'Farmer not found' });
     }
 
-    res.json({
-      success: true,
-      data: { farmer }
-    });
+    res.json(farmer);
   } catch (error) {
     console.error('Get farmer by ID error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch farmer'
-    });
+    res.status(500).json({ message: 'Failed to fetch farmer' });
   }
 };

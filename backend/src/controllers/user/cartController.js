@@ -1,4 +1,4 @@
-import { storage } from "../../storage.js";
+import { storage } from "../../models/storage.js";
 
 /**
  * Get cart
@@ -7,17 +7,10 @@ export const getCart = async (req, res) => {
   try {
     const sessionId = req.sessionId;
     const cart = await storage.getCart(sessionId);
-    
-    res.json({
-      success: true,
-      data: { cart }
-    });
+    res.json(cart);
   } catch (error) {
     console.error('Get cart error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch cart'
-    });
+    res.status(500).json({ message: 'Failed to fetch cart' });
   }
 };
 
@@ -30,25 +23,14 @@ export const addToCart = async (req, res) => {
     const { productId, quantity = 1 } = req.body;
     
     if (!productId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Product ID is required'
-      });
+      return res.status(400).json({ message: 'Product ID is required' });
     }
 
     const cart = await storage.addToCart(sessionId, productId, quantity);
-    
-    res.json({
-      success: true,
-      message: 'Item added to cart',
-      data: { cart }
-    });
+    res.json(cart);
   } catch (error) {
     console.error('Add to cart error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to add item to cart'
-    });
+    res.status(500).json({ message: 'Failed to add item to cart' });
   }
 };
 
@@ -62,25 +44,14 @@ export const updateCartItem = async (req, res) => {
     const { quantity } = req.body;
     
     if (!productId || quantity === undefined) {
-      return res.status(400).json({
-        success: false,
-        message: 'Product ID and quantity are required'
-      });
+      return res.status(400).json({ message: 'Product ID and quantity are required' });
     }
 
     const cart = await storage.updateCartItem(sessionId, parseInt(productId), quantity);
-    
-    res.json({
-      success: true,
-      message: 'Cart item updated',
-      data: { cart }
-    });
+    res.json(cart);
   } catch (error) {
     console.error('Update cart item error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update cart item'
-    });
+    res.status(500).json({ message: 'Failed to update cart item' });
   }
 };
 
@@ -93,24 +64,13 @@ export const removeFromCart = async (req, res) => {
     const { productId } = req.params;
     
     if (!productId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Product ID is required'
-      });
+      return res.status(400).json({ message: 'Product ID is required' });
     }
 
     const cart = await storage.removeFromCart(sessionId, parseInt(productId));
-    
-    res.json({
-      success: true,
-      message: 'Item removed from cart',
-      data: { cart }
-    });
+    res.json(cart);
   } catch (error) {
     console.error('Remove from cart error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to remove item from cart'
-    });
+    res.status(500).json({ message: 'Failed to remove item from cart' });
   }
 };

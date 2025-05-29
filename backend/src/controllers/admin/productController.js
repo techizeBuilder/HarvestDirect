@@ -1,14 +1,17 @@
-import { storage } from "../../storage.js";
+import { storage } from "../../models/storage.js";
+import { products } from "../../../../shared/schema.js";
+import { db } from "../../config/db.js";
+import { eq } from "drizzle-orm";
 
 /**
  * Get all products (admin view)
  */
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await storage.getAllProducts();
+    const allProducts = await storage.getAllProducts();
     res.json({
       success: true,
-      data: { products }
+      data: { products: allProducts }
     });
   } catch (error) {
     console.error('Get all products error:', error);
@@ -59,12 +62,13 @@ export const getProductById = async (req, res) => {
 export const createProduct = async (req, res) => {
   try {
     const productData = req.body;
-    const product = await storage.createProduct(productData);
+    
+    const [newProduct] = await db.insert(products).values(productData).returning();
 
     res.status(201).json({
       success: true,
       message: 'Product created successfully',
-      data: { product }
+      data: { product: newProduct }
     });
   } catch (error) {
     console.error('Create product error:', error);
@@ -83,8 +87,13 @@ export const updateProduct = async (req, res) => {
     const id = parseInt(req.params.id);
     const updateData = req.body;
 
-    const product = await storage.updateProduct(id, updateData);
-    if (!product) {
+    const [updatedProduct] = await db
+      .update(products)
+      .set(updateData)
+      .where(eq(products.id, id))
+      .returning();
+
+    if (!updatedProduct) {
       return res.status(404).json({ 
         success: false,
         message: 'Product not found' 
@@ -94,7 +103,7 @@ export const updateProduct = async (req, res) => {
     res.json({
       success: true,
       message: 'Product updated successfully',
-      data: { product }
+      data: { product: updatedProduct }
     });
   } catch (error) {
     console.error('Update product error:', error);
@@ -112,8 +121,9 @@ export const deleteProduct = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     
-    const success = await storage.deleteProduct(id);
-    if (!success) {
+    const result = await db.delete(products).where(eq(products.id, id));
+    
+    if (result.rowCount === 0) {
       return res.status(404).json({ 
         success: false,
         message: 'Product not found' 

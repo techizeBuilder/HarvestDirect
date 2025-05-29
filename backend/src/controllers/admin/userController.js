@@ -1,4 +1,7 @@
-import { storage } from "../../storage.js";
+import { storage } from "../../models/storage.js";
+import { users } from "../../../../shared/schema.js";
+import { db } from "../../config/db.js";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 /**
@@ -6,10 +9,17 @@ import bcrypt from "bcrypt";
  */
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await storage.getAllUsers();
+    const allUsers = await storage.getAllUsers();
+    
+    // Remove password from response
+    const safeUsers = allUsers.map(user => {
+      const { password, ...safeUser } = user;
+      return safeUser;
+    });
+
     res.json({
       success: true,
-      data: { users }
+      data: { users: safeUsers }
     });
   } catch (error) {
     console.error('Get all users error:', error);
@@ -41,9 +51,12 @@ export const getUserById = async (req, res) => {
       });
     }
 
+    // Remove password from response
+    const { password, ...safeUser } = user;
+
     res.json({
       success: true,
-      data: { user }
+      data: { user: safeUser }
     });
   } catch (error) {
     console.error('Get user by ID error:', error);
@@ -84,11 +97,14 @@ export const createUser = async (req, res) => {
     };
 
     const user = await storage.createUser(userData);
+    
+    // Remove password from response
+    const { password: _, ...safeUser } = user;
 
     res.status(201).json({
       success: true,
       message: 'User created successfully',
-      data: { user }
+      data: { user: safeUser }
     });
   } catch (error) {
     console.error('Create user error:', error);
@@ -123,10 +139,13 @@ export const updateUser = async (req, res) => {
       });
     }
 
+    // Remove password from response
+    const { password, ...safeUser } = user;
+
     res.json({
       success: true,
       message: 'User updated successfully',
-      data: { user }
+      data: { user: safeUser }
     });
   } catch (error) {
     console.error('Update user error:', error);

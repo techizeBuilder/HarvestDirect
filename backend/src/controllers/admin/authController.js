@@ -1,4 +1,4 @@
-import { users } from "../../../shared/schema.js";
+import { users } from "../../../../shared/schema.js";
 import { db } from "../../config/db.js";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -45,15 +45,13 @@ export const adminLogin = async (req, res) => {
     res.json({
       success: true,
       message: 'Login successful',
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        },
-        token
-      }
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
+      token
     });
   } catch (error) {
     console.error('Admin login error:', error);
@@ -65,28 +63,31 @@ export const adminLogin = async (req, res) => {
 };
 
 /**
- * Get admin profile
+ * Get admin dashboard data
  */
-export const getAdminProfile = async (req, res) => {
+export const getDashboardData = async (req, res) => {
   try {
-    const user = req.user;
+    // Get user statistics
+    const userStats = await db.select().from(users);
     
+    // Get basic dashboard data
+    const dashboardData = {
+      users: {
+        total: userStats.length,
+        admins: userStats.filter(u => u.role === 'admin').length,
+        regularUsers: userStats.filter(u => u.role === 'user').length
+      }
+    };
+
     res.json({
       success: true,
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        }
-      }
+      data: dashboardData
     });
   } catch (error) {
-    console.error('Get admin profile error:', error);
+    console.error('Dashboard error:', error);
     res.status(500).json({ 
       success: false,
-      message: 'Failed to get profile' 
+      message: 'Failed to fetch dashboard data' 
     });
   }
 };
