@@ -1,6 +1,10 @@
 import express from "express";
-import { setupVite, serveStatic, log } from "./vite.ts";
+import { setupVite, serveStatic, log } from "../../server/vite.ts";
 import { initializeDatabase } from "./initDb.js";
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 // Import the backend app
 import backendApp from "./app.js";
@@ -77,88 +81,7 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });
-
-    // Handle server errors
-    server.on('error', (error) => {
-      if (error.syscall !== 'listen') {
-        throw error;
-      }
-
-      const bind = typeof PORT === 'string' ? 'Pipe ' + PORT : 'Port ' + PORT;
-
-      switch (error.code) {
-        case 'EACCES':
-          console.error(`${bind} requires elevated privileges`);
-          process.exit(1);
-          break;
-        case 'EADDRINUSE':
-          console.error(`${bind} is already in use`);
-          process.exit(1);
-          break;
-        default:
-          throw error;
-      }
-    });
-
-  } catch (error) {
-    console.error('Failed to start server:', error.message);
-    process.exit(1);
-  }
-};
-
-/**
- * Graceful shutdown
- */
-const gracefulShutdown = async (signal) => {
-  console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
-
-  if (server) {
-    server.close(async () => {
-      console.log('HTTP server closed');
-      
-      try {
-        await closePool();
-        console.log('Database connections closed');
-        console.log('Graceful shutdown completed');
-        process.exit(0);
-      } catch (error) {
-        console.error('Error during shutdown:', error);
-        process.exit(1);
-      }
-    });
-
-    // Force close after 10 seconds
-    setTimeout(() => {
-      console.error('Forcing shutdown after timeout');
-      process.exit(1);
-    }, 10000);
-  } else {
-    process.exit(0);
-  }
-};
-
-// Handle shutdown signals
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  gracefulShutdown('UNCAUGHT_EXCEPTION');
-});
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  gracefulShutdown('UNHANDLED_REJECTION');
-});
-
-// Start the server
-startServer();
+})().catch(console.error);
