@@ -2,6 +2,20 @@ import { pgTable, text, integer, decimal, boolean, timestamp, uuid, json } from 
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
+// Enums
+export const ProductCategory = {
+  COFFEE_TEA: 'coffee_tea',
+  SPICES_HERBS: 'spices_herbs',
+  GRAINS_CEREALS: 'grains_cereals',
+  FRUITS: 'fruits',
+  VEGETABLES: 'vegetables',
+  DAIRY: 'dairy',
+  NUTS_SEEDS: 'nuts_seeds',
+  HONEY_SWEETENERS: 'honey_sweeteners',
+  OILS_VINEGARS: 'oils_vinegars',
+  PRESERVES_JAMS: 'preserves_jams'
+} as const;
+
 // Users table
 export const users = pgTable('users', {
   id: integer('id').primaryKey().generatedByDefaultAsIdentity(),

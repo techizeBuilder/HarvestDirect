@@ -53,7 +53,8 @@ app.use((req, res, next) => {
     await initializeDatabase();
     log('Database initialized successfully with seed data');
   } catch (error) {
-    log('Error initializing database: ' + error);
+    log('Warning: Database initialization failed - ' + error.message);
+    log('Backend will continue running without initial data');
   }
   
   // Create server directly
