@@ -757,51 +757,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/orders/delivered`, authenticate, async (req, res) => {
     try {
       const user = (req as any).user;
-      // Sample data for demonstration purposes
-      const deliveredOrders = [
-        {
-          id: 1002,
-          userId: user.id,
-          createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days ago
-          total: 75.50,
-          status: 'delivered',
-          deliveredAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
-          items: [
-            { productName: 'Fresh Valley Honey', quantity: 3, price: 25.50 }
-          ]
-        },
-        {
-          id: 1004,
-          userId: user.id,
-          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
-          total: 125.45,
-          status: 'delivered',
-          deliveredAt: new Date(Date.now() - 27 * 24 * 60 * 60 * 1000), // 27 days ago
-          items: [
-            { productName: 'Mountain Coffee Beans', quantity: 1, price: 49.99 },
-            { productName: 'Handcrafted Cheese', quantity: 1, price: 45.95 },
-            { productName: 'Organic Tea Sampler', quantity: 1, price: 29.51 }
-          ]
-        },
-        {
-          id: 1006,
-          userId: user.id,
-          createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), // 60 days ago
-          total: 187.25,
-          status: 'delivered',
-          deliveredAt: new Date(Date.now() - 55 * 24 * 60 * 60 * 1000), // 55 days ago
-          items: [
-            { productName: 'Handcrafted Cheese', quantity: 2, price: 91.90 },
-            { productName: 'Mountain Coffee Beans', quantity: 1, price: 49.99 },
-            { productName: 'Fresh Valley Honey', quantity: 1, price: 35.78 },
-            { productName: 'Organic Spice Mix', quantity: 1, price: 9.58 }
-          ]
-        }
-      ];
       
-      res.json({ orders: deliveredOrders });
+      // Get delivered orders from database
+      const deliveredOrders = await storage.getOrdersByUserId(user.id);
+      const filteredDeliveredOrders = deliveredOrders.filter(order => order.status === 'delivered');
+      
+      // Fetch order items for each delivered order with rating status
+      const ordersWithItems = await Promise.all(
+        filteredDeliveredOrders.map(async (order) => {
+          const items = await storage.getOrderItemsByOrderId(order.id);
+          
+          // Check if user has already rated each product in this order
+          const itemsWithRatingStatus = await Promise.all(
+            items.map(async (item) => {
+              const canRate = await storage.canUserReviewProduct(user.id, item.productId);
+              const hasRated = !canRate; // If can't rate, means already rated
+              return {
+                ...item,
+                canRate,
+                hasRated
+              };
+            })
+          );
+          
+          return {
+            ...order,
+            items: itemsWithRatingStatus
+          };
+        })
+      );
+      
+      res.json({ orders: ordersWithItems });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch delivered orders" });
+    }
+  });
+
+  // Submit product rating for delivered order
+  app.post(`${apiPrefix}/orders/:orderId/rate-product`, authenticate, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { orderId } = req.params;
+      const { productId, rating, reviewText } = req.body;
+      
+      // Validate input
+      if (!productId || !rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ message: "Invalid product ID or rating" });
+      }
+      
+      // Check if order exists and belongs to user
+      const order = await storage.getOrderById(parseInt(orderId));
+      if (!order || order.userId !== user.id) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Check if order is delivered
+      if (order.status !== 'delivered') {
+        return res.status(400).json({ message: "Can only rate products from delivered orders" });
+      }
+      
+      // Check if user can rate this product (hasn't rated it before)
+      const canRate = await storage.canUserReviewProduct(user.id, productId);
+      if (!canRate) {
+        return res.status(400).json({ message: "You have already rated this product" });
+      }
+      
+      // Create the review
+      const review = await storage.addProductReview({
+        productId,
+        userId: user.id,
+        orderId: parseInt(orderId),
+        customerName: user.name,
+        rating,
+        reviewText: reviewText || '',
+        verified: true // Mark as verified since it's from a delivered order
+      });
+      
+      res.json({ message: "Rating submitted successfully", review });
+    } catch (error) {
+      console.error('Rating submission error:', error);
+      res.status(500).json({ message: "Failed to submit rating" });
     }
   });
   
