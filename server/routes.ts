@@ -587,7 +587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Clear the cart after successful order creation
-      // Note: We'll implement cart clearing separately
+      await storage.clearCart(sessionId);
       
       res.json({ 
         message: "Payment successful and order created", 

@@ -43,6 +43,7 @@ export interface IStorage {
   addToCart(sessionId: string, productId: number, quantity: number): Promise<CartWithItems>;
   updateCartItem(sessionId: string, productId: number, quantity: number): Promise<CartWithItems>;
   removeFromCart(sessionId: string, productId: number): Promise<CartWithItems>;
+  clearCart(sessionId: string): Promise<void>;
 
   // Testimonials
   getAllTestimonials(): Promise<Testimonial[]>;
@@ -700,6 +701,10 @@ export class MemStorage implements IStorage {
   async updateOrderStatus(id: number, status: string): Promise<Order> {
     throw new Error("Order status update not implemented in MemStorage");
   }
+
+  async clearCart(sessionId: string): Promise<void> {
+    throw new Error("Cart clearing not implemented in MemStorage");
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -923,6 +928,21 @@ export class DatabaseStorage implements IStorage {
       .where(eq(carts.id, cart.id));
 
     return this.buildCartWithItems(cart);
+  }
+
+  async clearCart(sessionId: string): Promise<void> {
+    // Get cart
+    const [cart] = await db.select().from(carts).where(eq(carts.sessionId, sessionId));
+    
+    if (cart) {
+      // Delete all cart items
+      await db.delete(cartItems).where(eq(cartItems.cartId, cart.id));
+      
+      // Update cart's updatedAt timestamp
+      await db.update(carts)
+        .set({ updatedAt: new Date() })
+        .where(eq(carts.id, cart.id));
+    }
   }
 
   private async buildCartWithItems(cart: Cart): Promise<CartWithItems> {
