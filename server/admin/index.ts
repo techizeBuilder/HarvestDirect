@@ -5,6 +5,7 @@ import * as userController from './users';
 import * as farmerController from './farmers';
 import { users } from '@shared/schema';
 import { db } from '../db';
+import { storage } from '../storage';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -158,7 +159,6 @@ adminRouter.get('/featured-farmers', authenticateAdmin, farmerController.getFeat
 // Newsletter routes
 adminRouter.get('/newsletter-subscriptions', authenticateAdmin, async (req: Request, res: Response) => {
   try {
-    const { storage } = req.app.locals;
     const subscriptions = await storage.getAllNewsletterSubscriptions();
     res.json({ subscriptions });
   } catch (error) {
@@ -169,7 +169,6 @@ adminRouter.get('/newsletter-subscriptions', authenticateAdmin, async (req: Requ
 
 adminRouter.delete('/newsletter-subscriptions/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
-    const { storage } = req.app.locals;
     const { id } = req.params;
     const success = await storage.deleteNewsletterSubscription(parseInt(id));
     

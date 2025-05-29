@@ -87,12 +87,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
       <div className="flex flex-1 pt-[56px]">
         {/* Sidebar Navigation */}
-        <aside 
-          className={`bg-white border-r w-64 flex-shrink-0 fixed inset-y-0 mt-[56px] pt-5 transition-all duration-300 md:translate-x-0 z-40 ${
-            menuOpen ? 'translate-x-0' : '-translate-x-full'
-          } md:static`}
-        >
-          <nav className="space-y-1 px-2">
+        <aside className="bg-white border-r w-64 flex-shrink-0 hidden md:block">
+          <nav className="space-y-1 px-2 pt-5">
             {menuItems.map((item) => (
               <div
                 key={item.path}
@@ -114,7 +110,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-auto md:ml-64">
+        <main className="flex-1 p-6 overflow-auto">
           {/* Backdrop for mobile menu */}
           {menuOpen && (
             <div 
