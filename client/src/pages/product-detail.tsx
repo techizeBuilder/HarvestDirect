@@ -10,6 +10,7 @@ import { ParallaxSection } from "@/components/ui/parallax-section";
 import { ProductGallery } from "@/components/ui/product-gallery";
 import ProductCard from "@/components/ProductCard";
 import ProductReviewSystem from "@/components/ProductReviewSystem";
+import SocialShare from "@/components/SocialShare";
 import { useAnimations } from "@/hooks/use-animations";
 
 export default function ProductDetail() {
@@ -153,7 +154,7 @@ export default function ProductDetail() {
               </div>
               
               {farmer && (
-                <div className="bg-muted p-4 rounded-lg">
+                <div className="bg-muted p-4 rounded-lg mb-6">
                   <h3 className="font-heading text-forest text-lg font-bold mb-2">
                     Grown by {farmer.name}
                   </h3>
@@ -171,6 +172,18 @@ export default function ProductDetail() {
                       Learn more about our farmers
                     </Button>
                   </Link>
+                </div>
+              )}
+
+              {/* Social Media Sharing */}
+              {product && (
+                <div className="border-t pt-6">
+                  <SocialShare
+                    url={`${window.location.origin}/products/${product.id}`}
+                    title={`Check out ${product.name} from Farm to Table`}
+                    description={product.description}
+                    imageUrl={product.imageUrl}
+                  />
                 </div>
               )}
             </motion.div>
