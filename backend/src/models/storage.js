@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
+import bcrypt from 'bcrypt';
 import { 
   products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews,
   users, payments, subscriptions, contactMessages, orders, orderItems
@@ -281,6 +282,103 @@ export class DatabaseStorage {
       .where(eq(subscriptions.id, id))
       .returning();
     return result;
+  }
+
+  // Additional methods for missing functionality
+  async getAllContactMessages() {
+    const result = await db.select().from(contactMessages);
+    return result;
+  }
+
+  async getContactMessageById(id) {
+    const result = await db.select().from(contactMessages).where(eq(contactMessages.id, id));
+    return result[0];
+  }
+
+  async updateContactMessageStatus(id, status) {
+    const [result] = await db.update(contactMessages)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(contactMessages.id, id))
+      .returning();
+    return result;
+  }
+
+  async canUserReviewProduct(userId, productId) {
+    // For now, allow all authenticated users to review products
+    // In a real system, you might check if the user has purchased the product
+    return true;
+  }
+
+  async getUserProductReviews(userId) {
+    const result = await db.select().from(productReviews).where(eq(productReviews.userId, userId));
+    return result;
+  }
+
+  async verifyUserEmail(token) {
+    // Find user with verification token
+    const [user] = await db.select().from(users).where(eq(users.emailVerificationToken, token));
+    
+    if (!user) {
+      return false;
+    }
+
+    // Update user as verified
+    await db.update(users)
+      .set({ 
+        emailVerified: true, 
+        emailVerificationToken: null,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, user.id));
+
+    return true;
+  }
+
+  async resetPasswordRequest(email) {
+    const user = await this.getUserByEmail(email);
+    if (!user) {
+      return false;
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
+
+    await db.update(users)
+      .set({ 
+        passwordResetToken: resetToken,
+        passwordResetExpiry: resetTokenExpiry,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, user.id));
+
+    return true;
+  }
+
+  async resetPassword(token, newPassword) {
+    const [user] = await db.select().from(users)
+      .where(and(
+        eq(users.passwordResetToken, token),
+        sql`${users.passwordResetExpiry} > ${new Date()}`
+      ));
+
+    if (!user) {
+      return false;
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    await db.update(users)
+      .set({ 
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpiry: null,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, user.id));
+
+    return true;
   }
 }
 
