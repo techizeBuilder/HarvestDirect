@@ -59,7 +59,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const fetchCart = async (id: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/cart?sessionId=${id}`);
+      const response = await fetch(`/api/cart`, {
+        headers: {
+          'x-session-id': id
+        }
+      });
       const data = await response.json();
       
       console.log("Fetched cart data:", data);
@@ -95,11 +99,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-session-id": sessionId
         },
         body: JSON.stringify({
           productId,
-          quantity,
-          sessionId
+          quantity
         })
       });
       
@@ -125,16 +129,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     
     setIsLoading(true);
     try {
-      const response = await fetch("/api/cart/items", {
-        method: "PATCH",
+      const response = await fetch(`/api/cart/items/${productId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          "x-session-id": sessionId
         },
-        body: JSON.stringify({
-          productId,
-          quantity,
-          sessionId
-        })
+        body: JSON.stringify({ quantity })
       });
       
       const data = await response.json();
@@ -152,8 +153,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const removeFromCart = async (productId: number) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/cart/items?sessionId=${sessionId}&productId=${productId}`, {
-        method: "DELETE"
+      const response = await fetch(`/api/cart/items/${productId}`, {
+        method: "DELETE",
+        headers: {
+          "x-session-id": sessionId
+        }
       });
       
       const data = await response.json();
@@ -171,8 +175,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/cart?sessionId=${sessionId}`, {
-        method: "DELETE"
+      const response = await fetch(`/api/cart`, {
+        method: "DELETE",
+        headers: {
+          "x-session-id": sessionId
+        }
       });
       
       if (response.ok) {
