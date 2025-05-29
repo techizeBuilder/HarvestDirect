@@ -1,8 +1,7 @@
 import { db } from './config/db.js';
 import { products, farmers, testimonials } from '../../shared/schema.js';
-import { productData } from './productData.js';
-import { farmerData } from './farmerData.js';
-import { eq, sql } from 'drizzle-orm';
+import { productData } from './data/productData.js';
+import { farmerData } from './data/farmerData.js';
 
 /**
  * Initialize the database with seed data
@@ -25,11 +24,7 @@ export async function initializeDatabase() {
     const existingFarmers = await db.select().from(farmers);
     if (existingFarmers.length === 0) {
       console.log('Seeding farmers...');
-      await db.insert(farmers).values(farmerData.map(farmer => ({
-        ...farmer,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })));
+      await db.insert(farmers).values(farmerData);
       console.log(`Inserted ${farmerData.length} farmers`);
     } else {
       console.log(`Found ${existingFarmers.length} existing farmers, skipping farmer seeding.`);

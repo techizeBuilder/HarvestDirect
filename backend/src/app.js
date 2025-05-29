@@ -1,6 +1,5 @@
 import express from 'express';
 import { createServer } from 'http';
-import { v4 as uuidv4 } from 'uuid';
 
 // Import routes
 import adminAuthRoutes from './routes/admin/authRoutes.js';
@@ -10,18 +9,14 @@ import userAuthRoutes from './routes/user/authRoutes.js';
 import userProductRoutes from './routes/user/productRoutes.js';
 import userCartRoutes from './routes/user/cartRoutes.js';
 
-// Import controllers
+// Import controllers for additional endpoints
 import { 
-  getAllProducts, 
-  getProductById, 
-  getFeaturedProducts, 
-  getProductsByCategory,
-  getAllFarmers,
-  getFeaturedFarmers,
-  getFarmerById
+  getAllFarmers, 
+  getFeaturedFarmers, 
+  getFarmerById 
 } from './controllers/user/productController.js';
-import { getCart, addToCart, updateCartItem, removeFromCart } from './controllers/user/cartController.js';
-import { storage } from './storage.js';
+import { storage } from './models/storage.js';
+import { getSessionId } from './middlewares/session.js';
 
 // Create Express app
 const app = express();
@@ -61,39 +56,23 @@ app.use((req, res, next) => {
   next();
 });
 
-// Session ID middleware
-const getSessionId = (req, res, next) => {
-  let sessionId = req.headers['x-session-id'];
-  
-  if (!sessionId) {
-    sessionId = uuidv4();
-    res.setHeader('X-Session-Id', sessionId);
-  }
-  
-  req.sessionId = sessionId;
-  next();
-};
-
+// Session middleware for all requests
 app.use(getSessionId);
 
 // API route prefix
 const apiPrefix = '/api';
 
 // Admin routes
-app.use(`${apiPrefix}/admin/auth`, adminAuthRoutes);
+app.use(`${apiPrefix}/admin`, adminAuthRoutes);
 app.use(`${apiPrefix}/admin/products`, adminProductRoutes);
 app.use(`${apiPrefix}/admin/users`, adminUserRoutes);
 
 // User routes
 app.use(`${apiPrefix}/auth`, userAuthRoutes);
+app.use(`${apiPrefix}/products`, userProductRoutes);
 app.use(`${apiPrefix}/cart`, userCartRoutes);
 
-// Public product and farmer routes
-app.get(`${apiPrefix}/products`, getAllProducts);
-app.get(`${apiPrefix}/products/featured`, getFeaturedProducts);
-app.get(`${apiPrefix}/products/category/:category`, getProductsByCategory);
-app.get(`${apiPrefix}/products/:id`, getProductById);
-
+// Additional public endpoints
 app.get(`${apiPrefix}/farmers`, getAllFarmers);
 app.get(`${apiPrefix}/farmers/featured`, getFeaturedFarmers);
 app.get(`${apiPrefix}/farmers/:id`, getFarmerById);

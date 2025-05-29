@@ -18,7 +18,9 @@ backend/
 │   │       └── productController.js
 │   ├── middlewares/        # Custom middleware functions
 │   │   ├── auth.js
-│   │   └── rateLimiter.js
+│   │   └── session.js
+│   ├── models/             # Data models and storage layer
+│   │   └── storage.js
 │   ├── routes/
 │   │   ├── admin/          # Admin API routes
 │   │   │   ├── authRoutes.js
@@ -32,9 +34,9 @@ backend/
 │   │   └── jwt.js
 │   ├── config/             # Configuration files
 │   │   └── db.js
-│   ├── storage.js          # Data storage layer
-│   ├── productData.js      # Product seed data
-│   ├── farmerData.js       # Farmer seed data
+│   ├── data/               # Seed data
+│   │   ├── productData.js
+│   │   └── farmerData.js
 │   ├── initDb.js           # Database initialization
 │   ├── app.js              # Express app configuration
 │   └── server.js           # Server entry point
@@ -87,11 +89,10 @@ backend/
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
 - `GET /api/auth/profile` - Get user profile
-- `PUT /api/auth/profile` - Update user profile
 
 ### Admin Authentication
-- `POST /api/admin/auth/login` - Admin login
-- `GET /api/admin/auth/profile` - Get admin profile
+- `POST /api/admin/login` - Admin login
+- `GET /api/admin/dashboard` - Get admin dashboard data
 
 ### Products (Public)
 - `GET /api/products` - Get all products
@@ -136,17 +137,6 @@ backend/
 - `npm run build` - Build for production
 - `npm run check` - Type check
 - `npm run db:push` - Push database schema changes
-
-## Architecture
-
-The backend follows a clean, modular architecture:
-
-- **Controllers**: Handle HTTP requests and responses
-- **Services**: Business logic (implemented in storage layer)
-- **Middleware**: Authentication, authorization, and request processing
-- **Routes**: API endpoint definitions
-- **Models**: Data models and database schemas (shared)
-- **Utils**: Helper functions and utilities
 
 ## License
 

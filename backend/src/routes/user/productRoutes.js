@@ -17,9 +17,4 @@ router.get('/featured', getFeaturedProducts);
 router.get('/category/:category', getProductsByCategory);
 router.get('/:id', getProductById);
 
-// Farmer routes (public)
-router.get('/farmers', getAllFarmers);
-router.get('/farmers/featured', getFeaturedFarmers);
-router.get('/farmers/:id', getFarmerById);
-
 export default router;
