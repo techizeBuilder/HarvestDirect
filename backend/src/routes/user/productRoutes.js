@@ -8,13 +8,14 @@ import {
   getFeaturedFarmers,
   getFarmerById
 } from '../../controllers/user/productController.js';
+import { authenticate } from '../../middlewares/auth.js';
 
 const router = Router();
 
-// Product routes (public)
-router.get('/', getAllProducts);
-router.get('/featured', getFeaturedProducts);
-router.get('/category/:category', getProductsByCategory);
-router.get('/:id', getProductById);
+// Protected product routes - require authentication
+router.get('/', authenticate, getAllProducts);
+router.get('/featured', authenticate, getFeaturedProducts);
+router.get('/category/:category', authenticate, getProductsByCategory);
+router.get('/:id', authenticate, getProductById);
 
 export default router;

@@ -1,292 +1,289 @@
-import { pgTable, text, integer, decimal, boolean, timestamp, uuid, json } from 'drizzle-orm/pg-core';
-import { createInsertSchema } from 'drizzle-zod';
-import { z } from 'zod';
+import { pgTable, serial, text, timestamp, integer, decimal, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
 
-// Enums
 export const ProductCategory = {
-  COFFEE_TEA: 'coffee_tea',
-  SPICES_HERBS: 'spices_herbs',
-  GRAINS_CEREALS: 'grains_cereals',
-  FRUITS: 'fruits',
-  VEGETABLES: 'vegetables',
-  DAIRY: 'dairy',
-  NUTS_SEEDS: 'nuts_seeds',
-  HONEY_SWEETENERS: 'honey_sweeteners',
-  OILS_VINEGARS: 'oils_vinegars',
-  PRESERVES_JAMS: 'preserves_jams'
+  COFFEE: "coffee",
+  TEA: "tea", 
+  SPICES: "spices",
+  FRUITS: "fruits",
+  VEGETABLES: "vegetables",
+  GRAINS: "grains",
+  HONEY: "honey",
+  HERBS: "herbs"
 } as const;
 
-// Users table
-export const users = pgTable('users', {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  name: text('name').notNull(),
-  email: text('email').unique().notNull(),
-  password: text('password').notNull(),
-  role: text('role').default('user').notNull(),
-  emailVerified: boolean('email_verified').default(false),
-  emailVerificationToken: text('email_verification_token'),
-  passwordResetToken: text('password_reset_token'),
-  passwordResetExpires: timestamp('password_reset_expires'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
+export type ProductCategoryType = typeof ProductCategory[keyof typeof ProductCategory];
 
-// Farmers table
-export const farmers = pgTable('farmers', {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  name: text('name').notNull(),
-  description: text('description'),
-  location: text('location').notNull(),
-  image: text('image'),
-  rating: decimal('rating', { precision: 3, scale: 2 }).default('4.50'),
-  totalReviews: integer('total_reviews').default(0),
-  featured: boolean('featured').default(false),
-  specialties: json('specialties').$type<string[]>().default([]),
-  yearsExperience: integer('years_experience').default(0),
-  certifications: json('certifications').$type<string[]>().default([]),
-  contactEmail: text('contact_email'),
-  contactPhone: text('contact_phone'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
+export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
+export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', 'canceled', 'expired', 'past_due']);
 
 // Products table
-export const products = pgTable('products', {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  name: text('name').notNull(),
-  description: text('description'),
-  price: decimal('price', { precision: 10, scale: 2 }).notNull(),
-  category: text('category').notNull(),
-  image: text('image'),
-  featured: boolean('featured').default(false),
-  inStock: boolean('in_stock').default(true),
-  stockQuantity: integer('stock_quantity').default(0),
-  unit: text('unit').default('kg'),
-  farmerId: integer('farmer_id').references(() => farmers.id),
-  nutritionalInfo: json('nutritional_info').$type<Record<string, any>>(),
-  tags: json('tags').$type<string[]>().default([]),
-  harvestDate: timestamp('harvest_date'),
-  expiryDate: timestamp('expiry_date'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-// Cart table
-export const carts = pgTable('carts', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  sessionId: text('session_id').unique().notNull(),
-  userId: integer('user_id').references(() => users.id),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-// Cart items table
-export const cartItems = pgTable('cart_items', {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  cartId: uuid('cart_id').references(() => carts.id, { onDelete: 'cascade' }).notNull(),
-  productId: integer('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
-  quantity: integer('quantity').notNull().default(1),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-// Product reviews table
-export const productReviews = pgTable('product_reviews', {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  productId: integer('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
-  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  rating: integer('rating').notNull(),
-  comment: text('comment'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-// Testimonials table
-export const testimonials = pgTable('testimonials', {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  name: text('name').notNull(),
-  role: text('role'),
-  content: text('content').notNull(),
-  image: text('image'),
-  rating: integer('rating').default(5),
-  featured: boolean('featured').default(false),
-  createdAt: timestamp('created_at').defaultNow(),
-});
-
-// Newsletter subscriptions table
-export const newsletterSubscriptions = pgTable('newsletter_subscriptions', {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  email: text('email').unique().notNull(),
-  subscribedAt: timestamp('subscribed_at').defaultNow(),
-  active: boolean('active').default(true),
-});
-
-// Contact messages table
-export const contactMessages = pgTable('contact_messages', {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  name: text('name').notNull(),
-  email: text('email').notNull(),
-  subject: text('subject'),
-  message: text('message').notNull(),
-  status: text('status').default('pending'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-// Payments table
-export const payments = pgTable('payments', {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  userId: integer('user_id').references(() => users.id).notNull(),
-  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
-  currency: text('currency').default('USD'),
-  status: text('status').notNull(), // pending, completed, failed, refunded
-  paymentMethod: text('payment_method'),
-  transactionId: text('transaction_id'),
-  metadata: json('metadata').$type<Record<string, any>>(),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-// Subscriptions table
-export const subscriptions = pgTable('subscriptions', {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  userId: integer('user_id').references(() => users.id).notNull(),
-  planName: text('plan_name').notNull(),
-  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
-  currency: text('currency').default('USD'),
-  status: text('status').notNull(), // active, inactive, cancelled, expired
-  billingCycle: text('billing_cycle').notNull(), // monthly, yearly
-  startDate: timestamp('start_date').defaultNow(),
-  endDate: timestamp('end_date'),
-  metadata: json('metadata').$type<Record<string, any>>(),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-// Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  emailVerificationToken: true,
-  passwordResetToken: true,
-  passwordResetExpires: true,
-});
-
-export const insertFarmerSchema = createInsertSchema(farmers).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  originalPrice: decimal("original_price", { precision: 10, scale: 2 }),
+  category: text("category").notNull(),
+  imageUrl: text("image_url").notNull(),
+  farmerId: integer("farmer_id"),
+  inStock: boolean("in_stock").default(true),
+  featured: boolean("featured").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
+});
+
+// Farmers table
+export const farmers = pgTable("farmers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  location: text("location").notNull(),
+  description: text("description").notNull(),
+  imageUrl: text("image_url").notNull(),
+  specialty: text("specialty").notNull(),
+  experience: text("experience").notNull(),
+  featured: boolean("featured").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertFarmerSchema = createInsertSchema(farmers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Carts table
+export const carts = pgTable("carts", {
+  id: text("id").primaryKey(),
+  sessionId: text("session_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 export const insertCartSchema = createInsertSchema(carts).omit({
-  id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
+});
+
+// Cart items table
+export const cartItems = pgTable("cart_items", {
+  id: serial("id").primaryKey(),
+  cartId: text("cart_id").notNull().references(() => carts.id, { onDelete: "cascade" }),
+  productId: integer("product_id").notNull().references(() => products.id),
+  quantity: integer("quantity").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
-export const insertProductReviewSchema = createInsertSchema(productReviews).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+// Testimonials table
+export const testimonials = pgTable("testimonials", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  imageUrl: text("image_url").notNull(),
+  rating: integer("rating").notNull().default(5),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 export const insertTestimonialSchema = createInsertSchema(testimonials).omit({
   id: true,
-  createdAt: true,
+  createdAt: true
+});
+
+// Newsletter subscriptions table
+export const newsletterSubscriptions = pgTable("newsletter_subscriptions", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 export const insertNewsletterSubscriptionSchema = createInsertSchema(newsletterSubscriptions).omit({
   id: true,
-  subscribedAt: true,
+  createdAt: true
+});
+
+// Orders table
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),
+  sessionId: text("session_id"),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Order items table
+export const orderItems = pgTable("order_items", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => orders.id),
+  productId: integer("product_id").notNull().references(() => products.id),
+  quantity: integer("quantity").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
+  id: true,
+  createdAt: true
+});
+
+// Product reviews table
+export const productReviews = pgTable("product_reviews", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull().references(() => products.id),
+  userId: integer("user_id"),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  rating: integer("rating").notNull(),
+  comment: text("comment").notNull(),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const insertProductReviewSchema = createInsertSchema(productReviews).omit({
+  id: true,
+  createdAt: true
+});
+
+// Contact messages table
+export const contactMessages = pgTable("contact_messages", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  status: text("status").notNull().default("new"),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({
   id: true,
+  createdAt: true
+});
+
+// Users table
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  name: text("name").notNull(),
+  role: userRoleEnum("role").notNull().default("user"),
+  isEmailVerified: boolean("is_email_verified").default(false),
+  emailVerificationToken: text("email_verification_token"),
+  passwordResetToken: text("password_reset_token"),
+  passwordResetExpiry: timestamp("password_reset_expiry"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
+});
+
+// Payments table
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  orderId: integer("order_id").references(() => orders.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("USD"),
+  status: text("status").notNull(),
+  paymentMethod: text("payment_method").notNull(),
+  transactionId: text("transaction_id"),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 export const insertPaymentSchema = createInsertSchema(payments).omit({
   id: true,
-  createdAt: true,
-  updatedAt: true,
+  createdAt: true
+});
+
+// Subscriptions table
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  planName: text("plan_name").notNull(),
+  status: subscriptionStatusEnum("status").notNull().default("active"),
+  currentPeriodStart: timestamp("current_period_start").notNull(),
+  currentPeriodEnd: timestamp("current_period_end").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
-// Types
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-
-export type Farmer = typeof farmers.$inferSelect;
-export type InsertFarmer = z.infer<typeof insertFarmerSchema>;
-
-export type Product = typeof products.$inferSelect;
+// Type exports
 export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type Product = typeof products.$inferSelect;
 
-export type Cart = typeof carts.$inferSelect;
-export type InsertCart = z.infer<typeof insertCartSchema>;
+export type InsertFarmer = z.infer<typeof insertFarmerSchema>;
+export type Farmer = typeof farmers.$inferSelect;
 
-export type CartItem = typeof cartItems.$inferSelect;
-export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
-
-export type ProductReview = typeof productReviews.$inferSelect;
 export type InsertProductReview = z.infer<typeof insertProductReviewSchema>;
+export type ProductReview = typeof productReviews.$inferSelect;
 
-export type Testimonial = typeof testimonials.$inferSelect;
+export type InsertCart = z.infer<typeof insertCartSchema>;
+export type Cart = typeof carts.$inferSelect;
+
+export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
+export type CartItem = typeof cartItems.$inferSelect;
+
 export type InsertTestimonial = z.infer<typeof insertTestimonialSchema>;
+export type Testimonial = typeof testimonials.$inferSelect;
 
-export type NewsletterSubscription = typeof newsletterSubscriptions.$inferSelect;
 export type InsertNewsletterSubscription = z.infer<typeof insertNewsletterSubscriptionSchema>;
+export type NewsletterSubscription = typeof newsletterSubscriptions.$inferSelect;
 
-export type ContactMessage = typeof contactMessages.$inferSelect;
-export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type Order = typeof orders.$inferSelect;
 
-export type Payment = typeof payments.$inferSelect;
+export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+export type OrderItem = typeof orderItems.$inferSelect;
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Payment = typeof payments.$inferSelect;
 
-export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
 
-// Additional schemas for forms
-export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
+export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
+export type ContactMessage = typeof contactMessages.$inferSelect;
 
-export const registerSchema = insertUserSchema.extend({
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-export const contactFormSchema = insertContactMessageSchema;
-
-export const newsletterSchema = insertNewsletterSubscriptionSchema;
-
-export const reviewSchema = insertProductReviewSchema.extend({
-  rating: z.number().min(1).max(5),
-  comment: z.string().min(10),
-});
-
-export const profileSchema = z.object({
-  name: z.string().min(2),
-});
+// Extended cart interface with calculated totals
+export interface CartWithItems extends Cart {
+  items: (CartItem & { product: Product })[];
+  totalItems: number;
+  subtotal: number;
+  shipping: number;
+  total: number;
+}

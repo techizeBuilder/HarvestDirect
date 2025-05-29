@@ -1,5 +1,5 @@
 import express from "express";
-import { setupVite, serveStatic, log } from "./vite.ts";
+import { setupVite, serveStatic, log } from "../../server/vite.ts";
 import { initializeDatabase } from "./initDb.js";
 import dotenv from 'dotenv';
 
@@ -53,8 +53,7 @@ app.use((req, res, next) => {
     await initializeDatabase();
     log('Database initialized successfully with seed data');
   } catch (error) {
-    log('Warning: Database initialization failed - ' + error.message);
-    log('Backend will continue running without initial data');
+    log('Error initializing database: ' + error);
   }
   
   // Create server directly

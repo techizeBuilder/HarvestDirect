@@ -11,14 +11,8 @@ export async function initializeDatabase() {
     console.log('Initializing database with seed data...');
     console.log('Using database URL:', process.env.DATABASE_URL ? 'Set' : 'Not set');
 
-    // Check if products already exist with graceful error handling
-    let existingProducts = [];
-    try {
-      existingProducts = await db.select().from(products);
-    } catch (dbError) {
-      console.log('Database tables may not exist yet or connection issue:', dbError.message);
-      return; // Exit gracefully if database is not accessible
-    }
+    // Check if products already exist
+    const existingProducts = await db.select().from(products);
     if (existingProducts.length === 0) {
       console.log('Seeding products...');
       await db.insert(products).values(productData);
