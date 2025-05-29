@@ -9,6 +9,7 @@ import { productData } from '../data/productData.js';
 import { farmerData } from '../data/farmerData.js';
 import { db } from '../config/db.js';
 import { eq, and, isNotNull, sql } from 'drizzle-orm';
+import { MemoryStorage } from './memoryStorage.js';
 
 // Storage interface with CRUD methods
 export class DatabaseStorage {
@@ -401,4 +402,13 @@ export class DatabaseStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// Use memory storage as fallback when database fails
+let storage;
+try {
+  storage = new DatabaseStorage();
+} catch (error) {
+  console.warn('Database connection failed, falling back to memory storage:', error.message);
+  storage = new MemoryStorage();
+}
+
+export { storage };
