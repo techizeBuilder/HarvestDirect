@@ -66,20 +66,10 @@ app.use('/auth', userAuthRoutes);
 app.use('/products', userProductRoutes);
 app.use('/cart', userCartRoutes);
 
-// Public endpoints
+// Additional public endpoints
 app.get('/farmers', getAllFarmers);
 app.get('/farmers/featured', getFeaturedFarmers);
 app.get('/farmers/:id', getFarmerById);
-
-// Public products route (no auth required)
-app.get('/products/public', async (req, res) => {
-  try {
-    const products = await storage.getAllProducts();
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch products" });
-  }
-});
 
 // Additional API endpoints from original routes
 app.get('/testimonials', async (req, res) => {
