@@ -1,5 +1,5 @@
 import { db } from './config/db.js';
-import { products, farmers, testimonials } from '../../shared/schema.js';
+import { products, farmers, testimonials } from '../../shared/schema.ts';
 import { productData } from './data/productData.js';
 import { farmerData } from './data/farmerData.js';
 

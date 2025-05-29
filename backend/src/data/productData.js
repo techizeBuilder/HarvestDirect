@@ -1,4 +1,4 @@
-import { ProductCategory } from "../../../shared/schema.js";
+import { ProductCategory } from "../../../shared/schema.ts";
 
 export const productData = [
   {

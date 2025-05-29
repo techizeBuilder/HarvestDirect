@@ -1,5 +1,5 @@
 import { storage } from "../../models/storage.js";
-import { products } from "../../../../shared/schema.js";
+import { products } from "../../../../shared/schema.ts";
 import { db } from "../../config/db.js";
 import { eq } from "drizzle-orm";
 

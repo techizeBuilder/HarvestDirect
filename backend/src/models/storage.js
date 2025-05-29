@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import { 
   products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews,
   users, payments, subscriptions, contactMessages, orders, orderItems
-} from "../../../shared/schema.js";
+} from "../../../shared/schema.ts";
 import { productData } from '../data/productData.js';
 import { farmerData } from '../data/farmerData.js';
 import { db } from '../config/db.js';
