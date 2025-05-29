@@ -10,7 +10,8 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Mail
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -50,6 +51,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { icon: <ShoppingCart className="h-5 w-5" />, label: 'Orders', path: '/admin/orders' },
     { icon: <Users className="h-5 w-5" />, label: 'Users', path: '/admin/users' },
     { icon: <Users className="h-5 w-5" />, label: 'Farmers', path: '/admin/farmers' },
+    { icon: <Mail className="h-5 w-5" />, label: 'Newsletter', path: '/admin/newsletter' },
     { icon: <Box className="h-5 w-5" />, label: 'Inventory', path: '/admin/inventory' },
     { icon: <Tag className="h-5 w-5" />, label: 'Discounts', path: '/admin/discounts' },
     { icon: <Settings className="h-5 w-5" />, label: 'Settings', path: '/admin/settings' },
