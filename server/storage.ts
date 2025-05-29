@@ -13,6 +13,8 @@ import {
   Payment, InsertPayment,
   Subscription, InsertSubscription,
   ContactMessage, InsertContactMessage,
+  Order, InsertOrder,
+  OrderItem, InsertOrderItem,
   products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews,
   users, payments, subscriptions, subscriptionStatusEnum, contactMessages, orders, orderItems
 } from '@shared/schema';
@@ -78,6 +80,14 @@ export interface IStorage {
   getSubscriptionsByUserId(userId: number): Promise<Subscription[]>;
   getSubscriptionById(id: number): Promise<Subscription | undefined>;
   updateSubscriptionStatus(id: number, status: string): Promise<Subscription>;
+
+  // Orders
+  createOrder(order: InsertOrder): Promise<Order>;
+  createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
+  getOrdersByUserId(userId: number): Promise<Order[]>;
+  getOrderById(id: number): Promise<Order | undefined>;
+  getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]>;
+  updateOrderStatus(id: number, status: string): Promise<Order>;
 }
 
 export class MemStorage implements IStorage {
@@ -1118,6 +1128,59 @@ export class DatabaseStorage implements IStorage {
     }
 
     return updatedSubscription;
+  }
+
+  // Order management methods
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const [newOrder] = await db.insert(orders).values(order).returning();
+    return newOrder;
+  }
+
+  async createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem> {
+    const [newOrderItem] = await db.insert(orderItems).values(orderItem).returning();
+    return newOrderItem;
+  }
+
+  async getOrdersByUserId(userId: number): Promise<Order[]> {
+    return await db.select().from(orders)
+      .where(eq(orders.userId, userId))
+      .orderBy(desc(orders.createdAt));
+  }
+
+  async getOrderById(id: number): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order;
+  }
+
+  async getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]> {
+    return await db.select({
+      id: orderItems.id,
+      orderId: orderItems.orderId,
+      productId: orderItems.productId,
+      quantity: orderItems.quantity,
+      price: orderItems.price,
+      productName: products.name,
+      productImage: products.image
+    })
+    .from(orderItems)
+    .innerJoin(products, eq(orderItems.productId, products.id))
+    .where(eq(orderItems.orderId, orderId));
+  }
+
+  async updateOrderStatus(id: number, status: string): Promise<Order> {
+    const [order] = await db.update(orders)
+      .set({ 
+        status,
+        updatedAt: new Date()
+      })
+      .where(eq(orders.id, id))
+      .returning();
+    
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    
+    return order;
   }
 }
 

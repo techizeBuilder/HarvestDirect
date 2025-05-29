@@ -115,6 +115,7 @@ export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   userId: integer("user_id"),
   sessionId: text("session_id").notNull(),
+  paymentId: text("payment_id"),
   total: doublePrecision("total").notNull(),
   status: text("status").notNull().default("pending"),
   shippingAddress: text("shipping_address").notNull(),
