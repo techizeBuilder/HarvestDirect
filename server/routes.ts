@@ -258,6 +258,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clear entire cart
+  app.delete(`${apiPrefix}/cart`, async (req, res) => {
+    try {
+      const sessionId = (req as any).sessionId;
+      
+      await storage.clearCart(sessionId);
+      res.json({ message: "Cart cleared successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to clear cart" });
+    }
+  });
+
   // Get testimonials
   app.get(`${apiPrefix}/testimonials`, async (req, res) => {
     try {

@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
 
 // This is needed for typescript to recognize the Razorpay global variable
 declare global {
@@ -19,7 +20,7 @@ export default function Payment() {
   const location = useLocation();
   const [, navigate] = useLocation();
   const { isAuthenticated, token, user } = useAuth();
-  const { sessionId } = useCart();
+  const { sessionId, clearCart } = useCart();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [orderDetails, setOrderDetails] = useState<{
@@ -157,6 +158,13 @@ export default function Payment() {
             }
 
             const verifyData = await verifyResponse.json();
+            
+            // Clear the cart from frontend context
+            await clearCart();
+            
+            // Invalidate cart and order history queries
+            queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/orders/history'] });
             
             toast({
               title: 'Payment Successful',
