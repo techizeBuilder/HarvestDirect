@@ -1199,8 +1199,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]> {
-    return await db.select()
+    return await db.select({
+      id: orderItems.id,
+      orderId: orderItems.orderId,
+      productId: orderItems.productId,
+      quantity: orderItems.quantity,
+      price: orderItems.price,
+      productName: products.name
+    })
     .from(orderItems)
+    .innerJoin(products, eq(orderItems.productId, products.id))
     .where(eq(orderItems.orderId, orderId));
   }
 

@@ -9,10 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Star } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import ProductRatingModal from '@/components/ProductRatingModal';
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
@@ -30,6 +33,17 @@ export default function Account() {
 
   const [deliveredOrders, setDeliveredOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [ratingModal, setRatingModal] = useState<{
+    isOpen: boolean;
+    orderId: number;
+    productId: number;
+    productName: string;
+  }>({
+    isOpen: false,
+    orderId: 0,
+    productId: 0,
+    productName: ''
+  });
   const { toast } = useToast();
 
   const form = useForm<ProfileFormData>({
@@ -418,49 +432,73 @@ export default function Account() {
               <CardHeader>
                 <CardTitle>Delivered Orders</CardTitle>
                 <CardDescription>
-                  View your successfully delivered orders
+                  View your successfully delivered orders and rate products
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <div className="text-center py-4">Loading delivered orders...</div>
                 ) : deliveredOrders.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="py-2 px-4 text-left">Order ID</th>
-                          <th className="py-2 px-4 text-left">Date</th>
-                          <th className="py-2 px-4 text-left">Total</th>
-                          <th className="py-2 px-4 text-left">Delivery Date</th>
-                          <th className="py-2 px-4 text-left">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {deliveredOrders.map((order: any) => (
-                          <tr key={order.id} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-4">#{order.id}</td>
-                            <td className="py-3 px-4">
-                              {new Date(order.createdAt).toLocaleDateString()}
-                            </td>
-                            <td className="py-3 px-4 font-medium">
-                              ${order.total.toFixed(2)}
-                            </td>
-                            <td className="py-3 px-4">
-                              {order.deliveredAt ? 
-                                new Date(order.deliveredAt).toLocaleDateString() : 
-                                'N/A'}
-                            </td>
-                            <td className="py-3 px-4">
-                              <div className="flex space-x-2">
-                                <Button variant="ghost" size="sm">View Details</Button>
-                                <Button variant="outline" size="sm">Buy Again</Button>
+                  <div className="space-y-6">
+                    {deliveredOrders.map((order: any) => (
+                      <Card key={order.id} className="border-l-4 border-l-green-500">
+                        <CardHeader className="pb-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-lg">Order #{order.id}</CardTitle>
+                              <CardDescription>
+                                Ordered: {new Date(order.createdAt).toLocaleDateString()} • 
+                                Delivered: {order.deliveredAt ? new Date(order.deliveredAt).toLocaleDateString() : 'N/A'}
+                              </CardDescription>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold">${order.total.toFixed(2)}</div>
+                              <Badge variant="outline" className="text-green-700 border-green-300">
+                                Delivered
+                              </Badge>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            {order.items && order.items.map((item: any) => (
+                              <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div className="flex-1">
+                                  <h4 className="font-medium">{item.productName || 'Product'}</h4>
+                                  <p className="text-sm text-gray-600">
+                                    Quantity: {item.quantity} • Price: ${item.price.toFixed(2)}
+                                  </p>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  {item.hasRated ? (
+                                    <div className="flex items-center space-x-1 text-sm text-gray-500">
+                                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                      <span>Rated</span>
+                                    </div>
+                                  ) : item.canRate ? (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={() => setRatingModal({
+                                        isOpen: true,
+                                        orderId: order.id,
+                                        productId: item.productId,
+                                        productName: item.productName || 'Product'
+                                      })}
+                                    >
+                                      <Star className="w-4 h-4 mr-1" />
+                                      Rate Product
+                                    </Button>
+                                  ) : (
+                                    <span className="text-sm text-gray-400">Cannot rate</span>
+                                  )}
+                                </div>
                               </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
@@ -524,6 +562,15 @@ export default function Account() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Product Rating Modal */}
+      <ProductRatingModal
+        isOpen={ratingModal.isOpen}
+        onClose={() => setRatingModal({ isOpen: false, orderId: 0, productId: 0, productName: '' })}
+        orderId={ratingModal.orderId}
+        productId={ratingModal.productId}
+        productName={ratingModal.productName}
+      />
     </Layout>
   );
 }
