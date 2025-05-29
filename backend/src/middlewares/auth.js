@@ -1,5 +1,5 @@
 import { verifyToken, extractTokenFromHeader } from '../utils/jwt.js';
-import { storage } from '../storage.js';
+import { storage } from '../models/storage.js';
 
 /**
  * Authentication middleware
