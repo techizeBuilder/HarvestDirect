@@ -22,6 +22,7 @@ import { productData } from './productData';
 import { farmerData } from './farmerData';
 import { db } from './db';
 import { eq, and, isNotNull, sql } from 'drizzle-orm';
+import { desc } from 'drizzle-orm';
 
 // modify the interface with any CRUD methods
 // you might need
@@ -674,6 +675,31 @@ export class MemStorage implements IStorage {
     this.subscriptions.set(id, updatedSubscription);
     return updatedSubscription;
   }
+
+  // Order methods (stub implementation for MemStorage)
+  async createOrder(order: InsertOrder): Promise<Order> {
+    throw new Error("Order creation not implemented in MemStorage");
+  }
+
+  async createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem> {
+    throw new Error("Order item creation not implemented in MemStorage");
+  }
+
+  async getOrdersByUserId(userId: number): Promise<Order[]> {
+    throw new Error("Order retrieval not implemented in MemStorage");
+  }
+
+  async getOrderById(id: number): Promise<Order | undefined> {
+    throw new Error("Order retrieval not implemented in MemStorage");
+  }
+
+  async getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]> {
+    throw new Error("Order items retrieval not implemented in MemStorage");
+  }
+
+  async updateOrderStatus(id: number, status: string): Promise<Order> {
+    throw new Error("Order status update not implemented in MemStorage");
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1153,17 +1179,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]> {
-    return await db.select({
-      id: orderItems.id,
-      orderId: orderItems.orderId,
-      productId: orderItems.productId,
-      quantity: orderItems.quantity,
-      price: orderItems.price,
-      productName: products.name,
-      productImage: products.image
-    })
+    return await db.select()
     .from(orderItems)
-    .innerJoin(products, eq(orderItems.productId, products.id))
     .where(eq(orderItems.orderId, orderId));
   }
 
