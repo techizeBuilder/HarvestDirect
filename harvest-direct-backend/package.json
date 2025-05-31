@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "NODE_ENV=development tsx src/index.ts",
-    "build": "esbuild src/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build": "esbuild src/index.ts --platform=node --external:express --external:cors --external:bcrypt --external:jsonwebtoken --external:nodemailer --external:razorpay --external:ws --external:zod --external:drizzle-orm --external:@neondatabase/serverless --external:connect-pg-simple --external:express-session --external:zod-validation-error --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",

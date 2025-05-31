@@ -14,7 +14,7 @@ import {
   insertSubscriptionSchema,
   insertProductReviewSchema,
   insertContactMessageSchema
-} from "@shared/schema";
+} from "./shared/schema.js";
 import adminRouter from './admin';
 
 // JWT Secret

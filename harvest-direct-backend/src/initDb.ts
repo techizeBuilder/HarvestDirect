@@ -1,5 +1,5 @@
 import { db } from './db';
-import { products, farmers, testimonials } from '@shared/schema';
+import { products, farmers, testimonials } from './shared/schema.js';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
 import { sql } from 'drizzle-orm';

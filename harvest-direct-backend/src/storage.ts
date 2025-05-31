@@ -15,7 +15,7 @@ import {
   ContactMessage, InsertContactMessage,
   products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews,
   users, payments, subscriptions, subscriptionStatusEnum, contactMessages, orders, orderItems
-} from '@shared/schema';
+} from './shared/schema.js';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
 import { db } from './db';
