@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { db } from '../db';
-import { users, orders, payments } from '@shared/schema';
+import { users, orders, payments } from '../shared/schema.js';
 import { eq, like, desc, asc, count, and, gte, lte, sql, isNull, isNotNull } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 

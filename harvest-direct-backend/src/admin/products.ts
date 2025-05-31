@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { db } from '../db';
-import { products, insertProductSchema, Product, ProductCategory } from '@shared/schema';
+import { products, insertProductSchema, Product, ProductCategory } from '../shared/schema.js';
 import { eq, like, desc, asc, sql } from 'drizzle-orm';
 import { z } from 'zod';
 

@@ -7,7 +7,7 @@ import {
   users,
   Order,
   OrderItem
-} from '@shared/schema';
+} from '../shared/schema.js';
 import { eq, like, desc, asc, and, gte, lte, sql } from 'drizzle-orm';
 
 // GET all orders with pagination, sorting and filtering

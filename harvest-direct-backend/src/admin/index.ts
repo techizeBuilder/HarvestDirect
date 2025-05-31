@@ -3,7 +3,7 @@ import * as productController from './products';
 import * as orderController from './orders';
 import * as userController from './users';
 import * as farmerController from './farmers';
-import { users } from '@shared/schema';
+import { users } from '../shared/schema.js';
 import { db } from '../db';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
