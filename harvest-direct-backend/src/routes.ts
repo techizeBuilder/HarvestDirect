@@ -69,6 +69,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.use(getSessionId);
 
+  // Health check endpoint for deployment monitoring
+  app.get(`${apiPrefix}/health`, (req, res) => {
+    res.json({ 
+      status: 'OK', 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
   // Register admin routes
   app.use(`${apiPrefix}/admin`, adminRouter);
 
