@@ -62,7 +62,7 @@ export default function AllFarmers() {
         <div className="container mx-auto px-4 text-center">
           <AnimatedText
             tag="h1"
-            className="font-heading text-white text-4xl md:text-6xl font-bold mb-6 text-shadow"
+            className="font-heading text-white text-4xl md:text-6xl font-bold mb-6 text-shadow-extra-strong"
           >
             Meet Our Farmers
           </AnimatedText>
@@ -70,7 +70,7 @@ export default function AllFarmers() {
           <AnimatedText
             tag="p"
             delay={0.4}
-            className="text-cream text-lg md:text-xl max-w-3xl mx-auto text-shadow"
+            className="text-cream text-lg md:text-xl max-w-3xl mx-auto text-shadow-extra-strong"
           >
             The dedicated individuals who cultivate the earth with traditional
             wisdom and sustainable practices to bring you the finest natural
