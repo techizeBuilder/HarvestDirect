@@ -61,11 +61,25 @@ export const insertProductSchema = createInsertSchema(products).omit({
 export const farmers = pgTable("farmers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
   specialty: text("specialty").notNull(),
   story: text("story").notNull(),
   location: text("location").notNull(),
+  farmName: text("farm_name"),
+  certificationStatus: text("certification_status").default("none"), // none, organic, certified, pending
+  certificationDetails: text("certification_details"),
+  farmSize: text("farm_size"),
+  experienceYears: integer("experience_years"),
+  website: text("website"),
+  socialMedia: text("social_media"), // JSON string for social links
+  bankAccount: text("bank_account"),
+  panNumber: text("pan_number"),
+  aadharNumber: text("aadhar_number"),
   imageUrl: text("image_url").notNull(),
   featured: boolean("featured").default(false),
+  verified: boolean("verified").default(false),
+  active: boolean("active").default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

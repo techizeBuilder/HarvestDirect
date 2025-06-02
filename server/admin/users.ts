@@ -100,12 +100,12 @@ export const getAllUsers = async (req: Request, res: Response) => {
     // Get payment totals for each user
     const paymentTotals = await Promise.all(
       userIds.map(async (userId) => {
-        const payments = await db
+        const userPayments = await db
           .select({ amount: payments.amount })
           .from(payments)
           .where(eq(payments.userId, userId));
         
-        const total = payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
+        const total = userPayments.reduce((sum, payment) => sum + Number(payment.amount), 0);
         return { userId, total };
       })
     );

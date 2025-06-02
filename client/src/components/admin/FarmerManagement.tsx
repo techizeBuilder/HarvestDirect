@@ -47,14 +47,28 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 
-// Create a more specific validation schema for the farmer form
+// Create a comprehensive validation schema for the farmer form
 const farmerFormSchema = insertFarmerSchema.extend({
   name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
   specialty: z.string().min(2, "Specialty must be at least 2 characters"),
   location: z.string().min(2, "Location must be at least 2 characters"),
   story: z.string().min(10, "Story must be at least 10 characters"),
+  farmName: z.string().optional(),
+  certificationStatus: z.enum(["none", "organic", "certified", "pending"]).default("none"),
+  certificationDetails: z.string().optional(),
+  farmSize: z.string().optional(),
+  experienceYears: z.number().min(0).optional(),
+  website: z.string().url().optional().or(z.literal("")),
+  socialMedia: z.string().optional(),
+  bankAccount: z.string().optional(),
+  panNumber: z.string().optional(),
+  aadharNumber: z.string().optional(),
   imageUrl: z.string().url("Please enter a valid image URL"),
-  featured: z.boolean().default(false)
+  featured: z.boolean().default(false),
+  verified: z.boolean().default(false),
+  active: z.boolean().default(true)
 });
 
 // Type definition for our form
