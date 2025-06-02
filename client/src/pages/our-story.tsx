@@ -4,10 +4,22 @@ import { ParallaxSection } from "@/components/ui/parallax-section";
 import { useAnimations } from "@/hooks/use-animations";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { type TeamMember } from "@shared/schema";
 
 export default function OurStory() {
   // Set up animations
   const { setupScrollAnimation } = useAnimations();
+
+  // Fetch team members from database
+  const { data: teamMembers = [], isLoading: isLoadingTeam } = useQuery<TeamMember[]>({
+    queryKey: ["/api/team-members"],
+  });
+
+  // Filter only active team members and sort by display order
+  const activeTeamMembers = teamMembers
+    .filter(member => member.isActive)
+    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
 
   useEffect(() => {
     setupScrollAnimation();
@@ -246,67 +258,48 @@ export default function OurStory() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 scroll-animation">
-            <div className="bg-white rounded-lg overflow-hidden shadow-md">
-              <img 
-                src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" 
-                alt="Arjun Sharma" 
-                className="w-full h-64 object-cover object-center"
-              />
-              <div className="p-6">
-                <h3 className="font-heading text-forest text-xl font-semibold mb-1">Arjun Sharma</h3>
-                <p className="text-secondary text-sm font-medium mb-4">Founder & CEO</p>
-                <p className="text-olive text-sm">
-                  With deep roots in farming communities and a background in agricultural economics, Arjun bridges traditional knowledge with modern markets.
-                </p>
-              </div>
+          {isLoadingTeam ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 scroll-animation">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-white rounded-lg overflow-hidden shadow-md animate-pulse">
+                  <div className="w-full h-64 bg-gray-200"></div>
+                  <div className="p-6">
+                    <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-4 w-2/3"></div>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                      <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            
-            <div className="bg-white rounded-lg overflow-hidden shadow-md">
-              <img 
-                src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" 
-                alt="Priya Nair" 
-                className="w-full h-64 object-cover object-center"
-              />
-              <div className="p-6">
-                <h3 className="font-heading text-forest text-xl font-semibold mb-1">Priya Nair</h3>
-                <p className="text-secondary text-sm font-medium mb-4">Head of Farmer Relations</p>
-                <p className="text-olive text-sm">
-                  A third-generation farmer herself, Priya works directly with our partner farmers to document practices and ensure quality standards.
-                </p>
-              </div>
+          ) : activeTeamMembers.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 scroll-animation">
+              {activeTeamMembers.map((member) => (
+                <div key={member.id} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
+                  <img 
+                    src={member.profileImageUrl || "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"} 
+                    alt={member.name} 
+                    className="w-full h-64 object-cover object-center"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940";
+                    }}
+                  />
+                  <div className="p-6">
+                    <h3 className="font-heading text-forest text-xl font-semibold mb-1">{member.name}</h3>
+                    <p className="text-secondary text-sm font-medium mb-4">{member.jobTitle}</p>
+                    <p className="text-olive text-sm">{member.description}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            
-            <div className="bg-white rounded-lg overflow-hidden shadow-md">
-              <img 
-                src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" 
-                alt="Raj Kumar" 
-                className="w-full h-64 object-cover object-center"
-              />
-              <div className="p-6">
-                <h3 className="font-heading text-forest text-xl font-semibold mb-1">Raj Kumar</h3>
-                <p className="text-secondary text-sm font-medium mb-4">Operations Director</p>
-                <p className="text-olive text-sm">
-                  With expertise in sustainable supply chains, Raj oversees our logistics network that brings products from remote farms to your doorstep.
-                </p>
-              </div>
+          ) : (
+            <div className="text-center scroll-animation">
+              <p className="text-olive text-lg">Our team information will be available soon.</p>
             </div>
-            
-            <div className="bg-white rounded-lg overflow-hidden shadow-md">
-              <img 
-                src="https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" 
-                alt="Anjali Mehta" 
-                className="w-full h-64 object-cover object-center"
-              />
-              <div className="p-6">
-                <h3 className="font-heading text-forest text-xl font-semibold mb-1">Anjali Mehta</h3>
-                <p className="text-secondary text-sm font-medium mb-4">Sustainability Manager</p>
-                <p className="text-olive text-sm">
-                  With a background in environmental science, Anjali works on reducing our ecological footprint and developing regenerative farming initiatives.
-                </p>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </section>
       
