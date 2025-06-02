@@ -633,7 +633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/payments/history`, authenticate, async (req, res) => {
     try {
       const user = (req as any).user;
-      const payments = await storage.getPaymentsByUserId(user.id);
+      const payments = await storage.getPaymentsByUserId(user._id);
       
       res.json({ payments });
     } catch (error) {
@@ -702,7 +702,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/subscriptions`, authenticate, async (req, res) => {
     try {
       const user = (req as any).user;
-      const subscriptions = await storage.getSubscriptionsByUserId(user.id);
+      const subscriptions = await storage.getSubscriptionsByUserId(user._id);
       
       res.json({ subscriptions });
     } catch (error) {
@@ -714,7 +714,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/orders/history`, authenticate, async (req, res) => {
     try {
       const user = (req as any).user;
-      const orders = await storage.getOrdersByUserId(user.id);
+      const orders = await storage.getOrdersByUserId(user._id);
       
       // Fetch order items for each order
       const ordersWithItems = await Promise.all(

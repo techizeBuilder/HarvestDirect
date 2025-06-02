@@ -6,6 +6,7 @@ import {
 } from '@shared/mongodb-schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
+import { seedUserData } from './seedUserData';
 import bcrypt from 'bcrypt';
 
 /**
