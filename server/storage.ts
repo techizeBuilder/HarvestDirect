@@ -30,7 +30,7 @@ import { desc } from 'drizzle-orm';
 export interface IStorage {
   // Products
   getAllProducts(): Promise<Product[]>;
-  getProductById(id: number): Promise<Product | undefined>;
+  getProductById(id: string): Promise<Product | undefined>;
   getProductsByCategory(category: string): Promise<Product[]>;
   getFeaturedProducts(): Promise<Product[]>;
   
@@ -39,14 +39,14 @@ export interface IStorage {
 
   // Farmers
   getAllFarmers(): Promise<Farmer[]>;
-  getFarmerById(id: number): Promise<Farmer | undefined>;
+  getFarmerById(id: string): Promise<Farmer | undefined>;
   getFeaturedFarmers(): Promise<Farmer[]>;
 
   // Cart
   getCart(sessionId: string): Promise<CartWithItems>;
-  addToCart(sessionId: string, productId: number, quantity: number): Promise<CartWithItems>;
-  updateCartItem(sessionId: string, productId: number, quantity: number): Promise<CartWithItems>;
-  removeFromCart(sessionId: string, productId: number): Promise<CartWithItems>;
+  addToCart(sessionId: string, productId: string, quantity: number): Promise<CartWithItems>;
+  updateCartItem(sessionId: string, productId: string, quantity: number): Promise<CartWithItems>;
+  removeFromCart(sessionId: string, productId: string): Promise<CartWithItems>;
   clearCart(sessionId: string): Promise<void>;
 
   // Testimonials
@@ -55,56 +55,56 @@ export interface IStorage {
   // Newsletter
   addNewsletterSubscription(subscription: InsertNewsletterSubscription): Promise<NewsletterSubscription>;
   getAllNewsletterSubscriptions(): Promise<NewsletterSubscription[]>;
-  getNewsletterSubscriptionById(id: number): Promise<NewsletterSubscription | undefined>;
-  deleteNewsletterSubscription(id: number): Promise<boolean>;
+  getNewsletterSubscriptionById(id: string): Promise<NewsletterSubscription | undefined>;
+  deleteNewsletterSubscription(id: string): Promise<boolean>;
   
   // Product Reviews
-  getProductReviews(productId: number): Promise<ProductReview[]>;
+  getProductReviews(productId: string): Promise<ProductReview[]>;
   addProductReview(review: InsertProductReview): Promise<ProductReview>;
-  canUserReviewProduct(userId: number, productId: number): Promise<boolean>;
-  getUserProductReviews(userId: number): Promise<ProductReview[]>;
+  canUserReviewProduct(userId: string, productId: string): Promise<boolean>;
+  getUserProductReviews(userId: string): Promise<ProductReview[]>;
   
   // Contact Messages
   addContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
   getAllContactMessages(): Promise<ContactMessage[]>;
-  getContactMessageById(id: number): Promise<ContactMessage | undefined>;
-  updateContactMessageStatus(id: number, status: string): Promise<ContactMessage>;
+  getContactMessageById(id: string): Promise<ContactMessage | undefined>;
+  updateContactMessageStatus(id: string, status: string): Promise<ContactMessage>;
 
   // User Authentication
   createUser(user: InsertUser): Promise<User>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  getUserById(id: number): Promise<User | undefined>;
-  updateUser(id: number, userData: Partial<InsertUser>): Promise<User>;
+  getUserById(id: string): Promise<User | undefined>;
+  updateUser(id: string, userData: Partial<InsertUser>): Promise<User>;
   verifyUserEmail(token: string): Promise<boolean>;
   resetPasswordRequest(email: string): Promise<boolean>;
   resetPassword(token: string, newPassword: string): Promise<boolean>;
 
   // Payments
   createPayment(payment: InsertPayment): Promise<Payment>;
-  getPaymentsByUserId(userId: number): Promise<Payment[]>;
-  getPaymentById(id: number): Promise<Payment | undefined>;
+  getPaymentsByUserId(userId: string): Promise<Payment[]>;
+  getPaymentById(id: string): Promise<Payment | undefined>;
 
   // Subscriptions
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
-  getSubscriptionsByUserId(userId: number): Promise<Subscription[]>;
-  getSubscriptionById(id: number): Promise<Subscription | undefined>;
-  updateSubscriptionStatus(id: number, status: string): Promise<Subscription>;
+  getSubscriptionsByUserId(userId: string): Promise<Subscription[]>;
+  getSubscriptionById(id: string): Promise<Subscription | undefined>;
+  updateSubscriptionStatus(id: string, status: string): Promise<Subscription>;
 
   // Orders
   createOrder(order: InsertOrder): Promise<Order>;
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
-  getOrdersByUserId(userId: number): Promise<Order[]>;
-  getOrderById(id: number): Promise<Order | undefined>;
-  getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]>;
-  updateOrderStatus(id: number, status: string): Promise<Order>;
+  getOrdersByUserId(userId: string): Promise<Order[]>;
+  getOrderById(id: string): Promise<Order | undefined>;
+  getOrderItemsByOrderId(orderId: string): Promise<OrderItem[]>;
+  updateOrderStatus(id: string, status: string): Promise<Order>;
 
   // Team Members
   getAllTeamMembers(): Promise<TeamMember[]>;
   getActiveTeamMembers(): Promise<TeamMember[]>;
-  getTeamMemberById(id: number): Promise<TeamMember | undefined>;
+  getTeamMemberById(id: string): Promise<TeamMember | undefined>;
   createTeamMember(teamMember: InsertTeamMember): Promise<TeamMember>;
-  updateTeamMember(id: number, teamMember: Partial<InsertTeamMember>): Promise<TeamMember>;
-  deleteTeamMember(id: number): Promise<void>;
+  updateTeamMember(id: string, teamMember: Partial<InsertTeamMember>): Promise<TeamMember>;
+  deleteTeamMember(id: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -1324,4 +1324,6 @@ export class DatabaseStorage implements IStorage {
 
 // Use the database storage implementation
 // Use the database storage implementation for production
-export const storage = new DatabaseStorage();
+import { MongoDBStorage } from './mongodb-storage';
+
+export const storage = new MongoDBStorage();
