@@ -379,16 +379,267 @@ export default function FarmerManagement() {
                 </DialogHeader>
                 
                 <Form {...addForm}>
-                  <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto">
+                    {/* Basic Information */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={addForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Name *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Farmer's full name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={addForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email *</FormLabel>
+                              <FormControl>
+                                <Input type="email" placeholder="farmer@example.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={addForm.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Phone *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="9876543210" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={addForm.control}
+                          name="specialty"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Specialty *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="e.g. Coffee, Spices, Vegetables" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
                       <FormField
                         control={addForm.control}
-                        name="name"
+                        name="location"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Name</FormLabel>
+                            <FormLabel>Location *</FormLabel>
                             <FormControl>
-                              <Input placeholder="Farmer's name" {...field} />
+                              <Input placeholder="Farm location (City, State)" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Farm Details */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold border-b pb-2">Farm Details</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={addForm.control}
+                          name="farmName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Farm Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Name of the farm" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={addForm.control}
+                          name="farmSize"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Farm Size</FormLabel>
+                              <FormControl>
+                                <Input placeholder="e.g. 5 acres, 2 hectares" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={addForm.control}
+                          name="experienceYears"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Experience (Years)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  placeholder="0" 
+                                  {...field}
+                                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={addForm.control}
+                          name="certificationStatus"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Certification Status</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select certification status" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="none">No Certification</SelectItem>
+                                  <SelectItem value="organic">Organic Certified</SelectItem>
+                                  <SelectItem value="certified">Other Certification</SelectItem>
+                                  <SelectItem value="pending">Certification Pending</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={addForm.control}
+                        name="certificationDetails"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Certification Details</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Details about certifications, license numbers, etc." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Contact & Social */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold border-b pb-2">Contact & Social</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={addForm.control}
+                          name="website"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Website</FormLabel>
+                              <FormControl>
+                                <Input placeholder="https://farmwebsite.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={addForm.control}
+                          name="socialMedia"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Social Media</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Instagram, Facebook, etc." {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Financial Details */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold border-b pb-2">Financial Details</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={addForm.control}
+                          name="bankAccount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Bank Account</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Bank account information" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={addForm.control}
+                          name="panNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>PAN Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="ABCDE1234F" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={addForm.control}
+                          name="aadharNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Aadhar Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="1234 5678 9012" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Profile & Story */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold border-b pb-2">Profile & Story</h3>
+                      <FormField
+                        control={addForm.control}
+                        name="imageUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Profile Image URL *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://example.com/image.jpg" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -397,83 +648,85 @@ export default function FarmerManagement() {
                       
                       <FormField
                         control={addForm.control}
-                        name="specialty"
+                        name="story"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Specialty</FormLabel>
+                            <FormLabel>Story *</FormLabel>
                             <FormControl>
-                              <Input placeholder="e.g. Coffee, Spices" {...field} />
+                              <Textarea 
+                                placeholder="Tell the farmer's story, their farming journey, and what makes them special..." 
+                                className="min-h-[100px]" 
+                                {...field} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
-                    
-                    <FormField
-                      control={addForm.control}
-                      name="location"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Location</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Farm location" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={addForm.control}
-                      name="imageUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Image URL</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://example.com/image.jpg" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={addForm.control}
-                      name="story"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Story</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Tell the farmer's story..." 
-                              className="min-h-[100px]" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={addForm.control}
-                      name="featured"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal cursor-pointer">
-                            Feature this farmer on the homepage
-                          </FormLabel>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+
+                    {/* Settings */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold border-b pb-2">Settings</h3>
+                      <div className="space-y-3">
+                        <FormField
+                          control={addForm.control}
+                          name="featured"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal cursor-pointer">
+                                Feature this farmer on the homepage
+                              </FormLabel>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={addForm.control}
+                          name="verified"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal cursor-pointer">
+                                Mark as verified farmer
+                              </FormLabel>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={addForm.control}
+                          name="active"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal cursor-pointer">
+                                Active farmer profile
+                              </FormLabel>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
                     
                     <DialogFooter>
                       <Button 
