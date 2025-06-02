@@ -162,8 +162,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get farmer by ID
   app.get(`${apiPrefix}/farmers/:id`, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
+      const id = req.params.id;
+      if (!id) {
         return res.status(400).json({ message: "Invalid farmer ID" });
       }
       
@@ -229,11 +229,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { productId, quantity } = req.body;
       const sessionId = (req as any).sessionId;
       
-      if (typeof productId !== 'number' || typeof quantity !== 'number' || quantity <= 0) {
+      if (!productId || typeof quantity !== 'number' || quantity <= 0) {
         return res.status(400).json({ message: "Invalid product ID or quantity" });
       }
       
-      const cart = await storage.addToCart(sessionId, productId, quantity);
+      const cart = await storage.addToCart(sessionId, productId.toString(), quantity);
       res.json(cart);
     } catch (error) {
       res.status(500).json({ message: "Failed to add item to cart" });
@@ -243,11 +243,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update cart item
   app.put(`${apiPrefix}/cart/items/:productId`, async (req, res) => {
     try {
-      const productId = parseInt(req.params.productId);
+      const productId = req.params.productId;
       const { quantity } = req.body;
       const sessionId = (req as any).sessionId;
       
-      if (isNaN(productId) || typeof quantity !== 'number') {
+      if (!productId || typeof quantity !== 'number') {
         return res.status(400).json({ message: "Invalid product ID or quantity" });
       }
       
@@ -261,10 +261,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Remove item from cart
   app.delete(`${apiPrefix}/cart/items/:productId`, async (req, res) => {
     try {
-      const productId = parseInt(req.params.productId);
+      const productId = req.params.productId;
       const sessionId = (req as any).sessionId;
       
-      if (isNaN(productId)) {
+      if (!productId) {
         return res.status(400).json({ message: "Invalid product ID" });
       }
       
@@ -719,7 +719,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Fetch order items for each order
       const ordersWithItems = await Promise.all(
         orders.map(async (order) => {
-          const items = await storage.getOrderItemsByOrderId(order.id);
+          const items = await storage.getOrderItemsByOrderId(order._id);
           return {
             ...order,
             items
