@@ -1,8 +1,10 @@
-import { db } from './db';
-import { products, farmers, testimonials } from '@shared/schema';
+import { 
+  ProductModel, 
+  FarmerModel, 
+  TestimonialModel 
+} from '@shared/mongodb-schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
-import { sql } from 'drizzle-orm';
 
 /**
  * Initialize the database with seed data
@@ -12,33 +14,32 @@ export async function initializeDatabase() {
   
   try {
     // Check if products already exist
-    const existingProducts = await db.select({ count: sql`count(*)` }).from(products);
+    const existingProductsCount = await ProductModel.countDocuments();
     
-    if (Number(existingProducts[0].count) === 0) {
+    if (existingProductsCount === 0) {
       console.log('Adding products...');
-      await db.insert(products).values(productData);
+      await ProductModel.insertMany(productData);
     } else {
-      console.log(`Found ${existingProducts[0].count} existing products, skipping product seeding.`);
+      console.log(`Found ${existingProductsCount} existing products, skipping product seeding.`);
     }
     
     // Check if farmers already exist
-    const existingFarmers = await db.select({ count: sql`count(*)` }).from(farmers);
+    const existingFarmersCount = await FarmerModel.countDocuments();
     
-    if (Number(existingFarmers[0].count) === 0) {
+    if (existingFarmersCount === 0) {
       console.log('Adding farmers...');
-      await db.insert(farmers).values(farmerData);
+      await FarmerModel.insertMany(farmerData);
     } else {
-      console.log(`Found ${existingFarmers[0].count} existing farmers, skipping farmer seeding.`);
+      console.log(`Found ${existingFarmersCount} existing farmers, skipping farmer seeding.`);
     }
     
     // Add testimonials if they don't exist
-    const existingTestimonials = await db.select({ count: sql`count(*)` }).from(testimonials);
+    const existingTestimonialsCount = await TestimonialModel.countDocuments();
     
-    if (Number(existingTestimonials[0].count) === 0) {
+    if (existingTestimonialsCount === 0) {
       console.log('Adding testimonials...');
       const testimonialsData = [
         {
-          id: 1,
           name: "Sarah K.",
           title: "Coffee Enthusiast",
           content: "I've been ordering the cardamom and coffee beans for over a year now. The difference in flavor compared to store-bought is remarkable. You can taste the care that goes into growing these products.",
@@ -46,7 +47,6 @@ export async function initializeDatabase() {
           imageInitials: "SK"
         },
         {
-          id: 2,
           name: "Rahul M.",
           title: "Home Chef",
           content: "The rice varieties are exceptional. I've discovered flavors I never knew existed in rice! Knowing my purchase supports traditional farming methods makes it even better.",
@@ -54,7 +54,6 @@ export async function initializeDatabase() {
           imageInitials: "RM"
         },
         {
-          id: 3,
           name: "Anita T.",
           title: "Tea Connoisseur",
           content: "I love the transparency about where each product comes from. The tea leaves have such a vibrant flavor and aroma that you just can't find in commercial brands. Worth every penny!",
@@ -62,7 +61,6 @@ export async function initializeDatabase() {
           imageInitials: "AT"
         },
         {
-          id: 4,
           name: "Deepa P.",
           title: "Health Enthusiast",
           content: "The moringa leaves have become a staple in my kitchen. Knowing they're grown without chemicals gives me peace of mind, and the flavor is incomparable to anything I've found elsewhere.",
@@ -71,9 +69,9 @@ export async function initializeDatabase() {
         }
       ];
       
-      await db.insert(testimonials).values(testimonialsData);
+      await TestimonialModel.insertMany(testimonialsData);
     } else {
-      console.log(`Found ${existingTestimonials[0].count} existing testimonials, skipping testimonial seeding.`);
+      console.log(`Found ${existingTestimonialsCount} existing testimonials, skipping testimonial seeding.`);
     }
     
     console.log('Database initialization completed successfully!');

@@ -1,58 +1,93 @@
-import { Farmer } from '@shared/schema';
-
-export const farmerData: Farmer[] = [
+export const farmerData = [
   {
-    id: 1,
     name: "Rajesh Kumar",
-    specialty: "Coffee & Spice Farmer",
-    story: "For three generations, my family has grown coffee and spices in harmony with nature. We believe the best flavors come when we respect the earth's rhythms.",
+    email: "rajesh.kumar@example.com",
+    phone: "+91-9876543210",
     location: "Coorg, Karnataka",
+    specialization: "Coffee & Spice Farmer",
+    experience: 25,
+    bio: "For three generations, my family has grown coffee and spices in harmony with nature. We believe the best flavors come when we respect the earth's rhythms.",
     imageUrl: "https://pixabay.com/get/g4b89ff49760958c4d2f84e04fe9e73ecb93257571eb75020184483c3482da4a225891842c320392206d47885193937c600f393589664ae26e434a5e878953b13_1280.jpg",
-    featured: true
+    verified: true,
+    rating: 4.8,
+    totalProducts: 3
   },
   {
-    id: 2,
     name: "Lakshmi Devi",
-    specialty: "Tea Cultivator",
-    story: "Our tea gardens thrive at 6000 feet elevation. The morning mist and perfect climate create the distinct character in every leaf we harvest by hand.",
+    email: "lakshmi.devi@example.com",
+    phone: "+91-9876543211",
     location: "Nilgiris, Tamil Nadu",
+    specialization: "Tea Cultivator",
+    experience: 30,
+    bio: "Our tea gardens thrive at 6000 feet elevation. The morning mist and perfect climate create the distinct character in every leaf we harvest by hand.",
     imageUrl: "https://pixabay.com/get/gae3d38b07190d697793fd7d01e876b28496baff2cf281fa756e51eecc418e9dda7cdd247f005e8fc859028007113f663e0723d4857a5b483c852219399a8923a_1280.jpg",
-    featured: true
+    verified: true,
+    rating: 4.9,
+    totalProducts: 2
   },
   {
-    id: 3,
     name: "Venkatesh Reddy",
-    specialty: "Heritage Rice Farmer",
-    story: "I preserve traditional rice varieties that modern agriculture has forgotten. Each grain contains our ancestors' wisdom and nourishment that commercial farming can't replicate.",
+    email: "venkatesh.reddy@example.com",
+    phone: "+91-9876543212",
     location: "Wayanad, Kerala",
+    specialization: "Heritage Rice Farmer",
+    experience: 35,
+    bio: "I preserve traditional rice varieties that modern agriculture has forgotten. Each grain contains our ancestors' wisdom and nourishment that commercial farming can't replicate.",
     imageUrl: "https://pixabay.com/get/g0ba1640eedee6bdf5ad6b6117bf0b7b84521a685adee8d47660daa2a4504c2a08706d88cebe0d1a34dc974c80dcf0f1ff6c55e25b5671e134fe9678b2ad2f8af_1280.jpg",
-    featured: true
+    verified: true,
+    rating: 4.7,
+    totalProducts: 2
   },
   {
-    id: 4,
-    name: "Anand Sharma",
-    specialty: "Organic Spice Farmer",
-    story: "My grandfather taught me that healthy soil creates healthy spices. We use ancient companion planting techniques that naturally repel pests while enhancing flavor.",
-    location: "Munnar, Kerala",
-    imageUrl: "https://images.unsplash.com/photo-1613395053164-e8e39ad5ba14?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
-    featured: false
+    name: "Priya Sharma",
+    email: "priya.sharma@example.com",
+    phone: "+91-9876543213",
+    location: "Himachal Pradesh",
+    specialization: "Honey & Herb Producer",
+    experience: 18,
+    bio: "Our bees roam freely in the Himalayan foothills, creating honey that captures the essence of wildflowers and medicinal herbs.",
+    imageUrl: "https://pixabay.com/get/g2e15c8a8b6aa1e85c5c0b2dce5f8f4ef3f4e8b5a8c6d9e7a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2_1280.jpg",
+    verified: true,
+    rating: 4.6,
+    totalProducts: 2
   },
   {
-    id: 5,
-    name: "Priya Nair",
-    specialty: "Sustainable Grain Farmer",
-    story: "After seeing what industrial farming did to neighboring lands, I committed to preserving traditional methods. Our grains take longer to grow but carry exceptional flavor and nutrition.",
-    location: "Palakkad, Kerala",
-    imageUrl: "https://images.unsplash.com/photo-1531946903299-4fa4c650b2e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
-    featured: false
+    name: "Arjun Patel",
+    email: "arjun.patel@example.com",
+    phone: "+91-9876543214",
+    location: "Gujarat",
+    specialization: "Oil Seed Farmer",
+    experience: 22,
+    bio: "Traditional oil extraction methods preserve the nutritional value and authentic taste that machine processing destroys.",
+    imageUrl: "https://pixabay.com/get/g3c8b9f7e1d2a4c6b8e0f2a4c6b8e0f2a4c6b8e0f2a4c6b8e0f2a4c6b8e0f2a4c6b8e0f2a4c6b8e0f2a4c6b8e0f2a4c6b8e0f2a4c6b8e0f2a4c6b8e0f2a4c6b8e0f_1280.jpg",
+    verified: true,
+    rating: 4.5,
+    totalProducts: 2
   },
   {
-    id: 6,
-    name: "Ravi Patel",
-    specialty: "Moringa Cultivator",
-    story: "We've grown moringa for generations, long before it became known as a superfood. Our farming practices focus on maximizing nutrition rather than yield or appearance.",
-    location: "Mysore, Karnataka",
-    imageUrl: "https://images.unsplash.com/photo-1556760544-74068565f05c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
-    featured: false
+    name: "Meera Singh",
+    email: "meera.singh@example.com",
+    phone: "+91-9876543215",
+    location: "Uttarakhand",
+    specialization: "Himalayan Salt Producer",
+    experience: 28,
+    bio: "Mining ancient salt deposits with respect for the mountain's gifts, ensuring purity that spans millennia.",
+    imageUrl: "https://pixabay.com/get/g4f6c8a2e3b5d7f9a1c3e5b7d9f1a3c5e7b9d1f3a5c7e9b1d3f5a7c9e1b3d5f7a9c1e3f5b7d9a1c3e5b7d9f1a3c5e7b9d1f3a5c7e9b1d3f5a7c9e1b3d5f7a9c1e3f_1280.jpg",
+    verified: true,
+    rating: 4.4,
+    totalProducts: 1
+  },
+  {
+    name: "Kiran Nair",
+    email: "kiran.nair@example.com",
+    phone: "+91-9876543216",
+    location: "Kerala",
+    specialization: "Spice Garden Owner",
+    experience: 20,
+    bio: "Our spice gardens follow ancient Ayurvedic principles, growing medicinal spices in harmony with forest ecosystems.",
+    imageUrl: "https://pixabay.com/get/g1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d_1280.jpg",
+    verified: true,
+    rating: 4.8,
+    totalProducts: 3
   }
 ];
