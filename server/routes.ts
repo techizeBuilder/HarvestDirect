@@ -72,10 +72,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register admin routes
   app.use(`${apiPrefix}/admin`, adminRouter);
 
-  // Get all products
+  // Get all products (from enhanced products)
   app.get(`${apiPrefix}/products`, async (req, res) => {
     try {
-      const products = await storage.getAllProducts();
+      const enhancedProducts = await storage.getAllEnhancedProducts();
+      // Convert enhanced products to standard product format
+      const products = enhancedProducts.map(ep => ({
+        id: ep.id,
+        name: ep.name,
+        description: ep.description,
+        shortDescription: ep.description.length > 100 ? ep.description.substring(0, 100) + "..." : ep.description,
+        price: ep.price,
+        discountPrice: ep.discountPrice,
+        category: ep.category,
+        sku: ep.sku || `EP-${ep.id}`,
+        imageUrl: ep.primaryImage,
+        imageUrls: [ep.primaryImage, ...(ep.additionalImages || [])].filter(Boolean),
+        stock: ep.stock,
+        featured: ep.isPremium || ep.isFeatured,
+        farmerId: ep.farmerId
+      }));
       res.json(products);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch products" });

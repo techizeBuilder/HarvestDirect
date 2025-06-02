@@ -48,7 +48,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const menuItems: MenuItem[] = [
     { icon: <BarChart3 className="h-5 w-5" />, label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: <Package className="h-5 w-5" />, label: 'Products', path: '/admin/products' },
     { icon: <Package className="h-5 w-5" />, label: 'Enhanced Products', path: '/admin/enhanced-products' },
     { icon: <ShoppingCart className="h-5 w-5" />, label: 'Orders', path: '/admin/orders' },
     { icon: <Users className="h-5 w-5" />, label: 'Users', path: '/admin/users' },
