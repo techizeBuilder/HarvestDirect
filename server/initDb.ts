@@ -1,10 +1,12 @@
 import { 
   ProductModel, 
   FarmerModel, 
-  TestimonialModel 
+  TestimonialModel,
+  UserModel
 } from '@shared/mongodb-schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
+import bcrypt from 'bcrypt';
 
 /**
  * Initialize the database with seed data
@@ -74,6 +76,22 @@ export async function initializeDatabase() {
       console.log(`Found ${existingTestimonialsCount} existing testimonials, skipping testimonial seeding.`);
     }
     
+    // Create test user if it doesn't exist
+    const existingTestUser = await UserModel.findOne({ email: 'testuser@example.com' });
+    if (!existingTestUser) {
+      const hashedPassword = await bcrypt.hash('password123', 10);
+      
+      await UserModel.create({
+        email: 'testuser@example.com',
+        firstName: 'Test',
+        lastName: 'User',
+        password: hashedPassword,
+        role: 'user',
+        isVerified: true
+      });
+      console.log('Test user created: testuser@example.com / password123');
+    }
+
     console.log('Database initialization completed successfully!');
     
   } catch (error) {
