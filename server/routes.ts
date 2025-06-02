@@ -37,7 +37,7 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
     
     const user = await storage.getUserById(decoded.userId);
     if (!user) {
@@ -388,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Password verified, generating token');
         
         // Generate JWT token
-        const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+        const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
         
         // Return token and user data without password
         const { password: _, ...userWithoutPassword } = user;
