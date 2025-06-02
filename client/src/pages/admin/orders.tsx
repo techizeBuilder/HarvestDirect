@@ -24,7 +24,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
-  Loader2
+  Loader2,
+  Printer
 } from 'lucide-react';
 import {
   Select,
@@ -41,6 +42,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { PrintableDeliverySticker } from '@/components/admin/PrintableDeliverySticker';
 
 // Order type definition for API response
 interface OrderData {
