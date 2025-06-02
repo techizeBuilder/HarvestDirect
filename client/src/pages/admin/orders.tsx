@@ -71,7 +71,7 @@ interface OrdersResponse {
 
 // Order status options with their corresponding badge colors
 const ORDER_STATUSES = [
-  { value: '', label: 'All Orders' },
+  { value: 'all', label: 'All Orders' },
   { value: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
   { value: 'processing', label: 'Processing', color: 'bg-blue-100 text-blue-800' },
   { value: 'shipped', label: 'Shipped', color: 'bg-indigo-100 text-indigo-800' },
@@ -82,7 +82,7 @@ const ORDER_STATUSES = [
 export default function AdminOrders() {
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -112,7 +112,7 @@ export default function AdminOrders() {
       if (search) {
         params.append('search', search);
       }
-      if (status) {
+      if (status && status !== 'all') {
         params.append('status', status);
       }
       
@@ -353,7 +353,7 @@ export default function AdminOrders() {
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                      {ORDER_STATUSES.filter(status => status.value !== '').map((status) => (
+                                      {ORDER_STATUSES.filter(status => status.value !== 'all').map((status) => (
                                         <DropdownMenuItem 
                                           key={status.value}
                                           onClick={() => handleUpdateStatus(order.id, status.value)}
