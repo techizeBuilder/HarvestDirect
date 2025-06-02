@@ -15,8 +15,9 @@ import {
   ContactMessage, InsertContactMessage,
   Order, InsertOrder,
   OrderItem, InsertOrderItem,
+  TeamMember, InsertTeamMember,
   products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews,
-  users, payments, subscriptions, subscriptionStatusEnum, contactMessages, orders, orderItems
+  users, payments, subscriptions, subscriptionStatusEnum, contactMessages, orders, orderItems, teamMembers
 } from '@shared/schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
@@ -96,6 +97,14 @@ export interface IStorage {
   getOrderById(id: number): Promise<Order | undefined>;
   getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]>;
   updateOrderStatus(id: number, status: string): Promise<Order>;
+
+  // Team Members
+  getAllTeamMembers(): Promise<TeamMember[]>;
+  getActiveTeamMembers(): Promise<TeamMember[]>;
+  getTeamMemberById(id: number): Promise<TeamMember | undefined>;
+  createTeamMember(teamMember: InsertTeamMember): Promise<TeamMember>;
+  updateTeamMember(id: number, teamMember: Partial<InsertTeamMember>): Promise<TeamMember>;
+  deleteTeamMember(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -1269,6 +1278,47 @@ export class DatabaseStorage implements IStorage {
     }
     
     return order;
+  }
+
+  // Team Member methods
+  async getAllTeamMembers(): Promise<TeamMember[]> {
+    return await db.select().from(teamMembers).orderBy(teamMembers.displayOrder, teamMembers.createdAt);
+  }
+
+  async getActiveTeamMembers(): Promise<TeamMember[]> {
+    return await db.select().from(teamMembers)
+      .where(eq(teamMembers.isActive, true))
+      .orderBy(teamMembers.displayOrder, teamMembers.createdAt);
+  }
+
+  async getTeamMemberById(id: number): Promise<TeamMember | undefined> {
+    const [member] = await db.select().from(teamMembers).where(eq(teamMembers.id, id));
+    return member;
+  }
+
+  async createTeamMember(teamMember: InsertTeamMember): Promise<TeamMember> {
+    const [newMember] = await db.insert(teamMembers).values(teamMember).returning();
+    return newMember;
+  }
+
+  async updateTeamMember(id: number, teamMemberData: Partial<InsertTeamMember>): Promise<TeamMember> {
+    const [updatedMember] = await db.update(teamMembers)
+      .set({ 
+        ...teamMemberData,
+        updatedAt: new Date()
+      })
+      .where(eq(teamMembers.id, id))
+      .returning();
+    
+    if (!updatedMember) {
+      throw new Error("Team member not found");
+    }
+    
+    return updatedMember;
+  }
+
+  async deleteTeamMember(id: number): Promise<void> {
+    await db.delete(teamMembers).where(eq(teamMembers.id, id));
   }
 }
 

@@ -13,7 +13,8 @@ import {
   insertPaymentSchema,
   insertSubscriptionSchema,
   insertProductReviewSchema,
-  insertContactMessageSchema
+  insertContactMessageSchema,
+  insertTeamMemberSchema
 } from "@shared/schema";
 import adminRouter from './admin';
 
