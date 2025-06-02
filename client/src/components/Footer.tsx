@@ -1,6 +1,62 @@
 import { Link } from "wouter";
+import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Footer() {
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await apiRequest("/api/newsletter/subscribe", {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          agreedToTerms: true,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      toast({
+        title: "Subscription successful!",
+        description: "Thank you for joining our newsletter.",
+      });
+      
+      setEmail("");
+    } catch (error) {
+      toast({
+        title: "Subscription failed",
+        description: error instanceof Error ? error.message : "Please try again later",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <footer className="bg-[#283618] text-white pt-16 pb-8 mt-16 w-full">
       <div className="container mx-auto px-4 lg:px-8">
@@ -147,16 +203,23 @@ export default function Footer() {
           <div className="max-w-xl mx-auto text-center">
             <h4 className="text-white font-bold text-xl mb-4">Join Our Newsletter</h4>
             <p className="text-white/80 mb-6">Get updates on new arrivals, seasonal harvest news, and exclusive offers.</p>
-            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md mx-auto">
+            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 w-full max-w-md mx-auto">
               <input 
                 type="email" 
                 placeholder="Your email address" 
-                className="bg-white/10 border border-white/20 text-white rounded-md py-3 px-4 flex-grow focus:outline-none focus:ring-2 focus:ring-[#DDA15E]"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-white/10 border border-white/20 text-white placeholder-white/60 rounded-md py-3 px-4 flex-grow focus:outline-none focus:ring-2 focus:ring-[#DDA15E]"
+                required
               />
-              <button className="bg-[#DDA15E] hover:bg-[#DDA15E]/90 text-white font-semibold py-3 px-6 rounded-md transition-all duration-300">
-                Subscribe
+              <button 
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-[#DDA15E] hover:bg-[#DDA15E]/90 disabled:bg-[#DDA15E]/50 text-white font-semibold py-3 px-6 rounded-md transition-all duration-300"
+              >
+                {isSubmitting ? "Subscribing..." : "Subscribe"}
               </button>
-            </div>
+            </form>
           </div>
         </div>
         
