@@ -78,7 +78,13 @@ export default function Home() {
 
   const onSubmit = async (data: NewsletterFormData) => {
     try {
-      await apiRequest("POST", "/api/newsletter/subscribe", data);
+      await apiRequest("/api/newsletter/subscribe", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       toast({
         title: "Subscription successful!",
         description: "Thank you for joining our community.",
