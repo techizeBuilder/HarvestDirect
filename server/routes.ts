@@ -931,47 +931,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to submit contact message" });
     }
   });
-  
-  // Admin routes for managing contact messages (protected)
-  app.get(`${apiPrefix}/admin/contact-messages`, authenticate, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      
-      // Only allow admins to access this endpoint
-      if (user.role !== 'admin') {
-        return res.status(403).json({ message: "Access denied" });
-      }
-      
-      const messages = await storage.getAllContactMessages();
-      res.json(messages);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch contact messages" });
-    }
-  });
-  
-  // Update contact message status (mark as read, in progress, resolved, etc.)
-  app.patch(`${apiPrefix}/admin/contact-messages/:id`, authenticate, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      
-      // Only allow admins to access this endpoint
-      if (user.role !== 'admin') {
-        return res.status(403).json({ message: "Access denied" });
-      }
-      
-      const messageId = parseInt(req.params.id);
-      const { status } = req.body;
-      
-      if (!status || typeof status !== 'string') {
-        return res.status(400).json({ message: "Status is required" });
-      }
-      
-      const updatedMessage = await storage.updateContactMessageStatus(messageId, status);
-      res.json(updatedMessage);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update contact message status" });
-    }
-  });
+
 
   // Initialize Razorpay and Email service when environment variables are available
   if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {

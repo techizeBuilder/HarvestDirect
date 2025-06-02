@@ -183,4 +183,28 @@ adminRouter.delete('/newsletter-subscriptions/:id', authenticateAdmin, async (re
   }
 });
 
+// Contact Messages routes
+adminRouter.get('/contact-messages', authenticateAdmin, async (req: Request, res: Response) => {
+  try {
+    const messages = await storage.getAllContactMessages();
+    res.json(messages);
+  } catch (error) {
+    console.error('Error fetching contact messages:', error);
+    res.status(500).json({ message: 'Failed to fetch contact messages' });
+  }
+});
+
+adminRouter.patch('/contact-messages/:id', authenticateAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    const updatedMessage = await storage.updateContactMessageStatus(parseInt(id), status);
+    res.json(updatedMessage);
+  } catch (error) {
+    console.error('Error updating contact message status:', error);
+    res.status(500).json({ message: 'Failed to update contact message status' });
+  }
+});
+
 export default adminRouter;
