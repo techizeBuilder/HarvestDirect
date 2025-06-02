@@ -93,6 +93,9 @@ export async function initializeDatabase() {
       console.log('Test user created: testuser@example.com / password123');
     }
 
+    // Seed sample user data for testing
+    await seedUserData();
+
     console.log('Database initialization completed successfully!');
     
   } catch (error) {

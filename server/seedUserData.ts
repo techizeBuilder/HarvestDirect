@@ -18,18 +18,9 @@ async function seedUserData() {
         userId: testUser._id.toString(),
         sessionId: 'sample-session-1',
         total: 129.99,
-        currency: 'INR',
         status: 'delivered',
-        shippingAddress: {
-          fullName: 'Test User',
-          address: '123 Main Street',
-          city: 'Mumbai',
-          state: 'Maharashtra',
-          zipCode: '400001',
-          country: 'India',
-          phone: '+91 9876543210'
-        },
-        razorpayOrderId: 'order_sample_1',
+        paymentMethod: 'razorpay',
+        shippingAddress: 'Test User, 123 Main Street, Mumbai, Maharashtra 400001, India, +91 9876543210',
         createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days ago
         updatedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
       },
@@ -37,18 +28,9 @@ async function seedUserData() {
         userId: testUser._id.toString(),
         sessionId: 'sample-session-2',
         total: 75.50,
-        currency: 'INR',
         status: 'shipped',
-        shippingAddress: {
-          fullName: 'Test User',
-          address: '123 Main Street',
-          city: 'Mumbai',
-          state: 'Maharashtra',
-          zipCode: '400001',
-          country: 'India',
-          phone: '+91 9876543210'
-        },
-        razorpayOrderId: 'order_sample_2',
+        paymentMethod: 'razorpay',
+        shippingAddress: 'Test User, 123 Main Street, Mumbai, Maharashtra 400001, India, +91 9876543210',
         createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
         updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
       },
@@ -56,18 +38,9 @@ async function seedUserData() {
         userId: testUser._id.toString(),
         sessionId: 'sample-session-3',
         total: 45.95,
-        currency: 'INR',
         status: 'processing',
-        shippingAddress: {
-          fullName: 'Test User',
-          address: '123 Main Street',
-          city: 'Mumbai',
-          state: 'Maharashtra',
-          zipCode: '400001',
-          country: 'India',
-          phone: '+91 9876543210'
-        },
-        razorpayOrderId: 'order_sample_3',
+        paymentMethod: 'razorpay',
+        shippingAddress: 'Test User, 123 Main Street, Mumbai, Maharashtra 400001, India, +91 9876543210',
         createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
         updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
       }
@@ -129,34 +102,31 @@ async function seedUserData() {
       const payments = [
         {
           userId: testUser._id.toString(),
-          orderId: createdOrders[0]._id.toString(),
-          razorpayPaymentId: 'pay_sample_1',
-          razorpayOrderId: 'order_sample_1',
           amount: 129.99,
           currency: 'INR',
           status: 'completed',
+          paymentMethod: 'razorpay',
+          transactionId: 'pay_sample_1',
           createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
           updatedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
         },
         {
           userId: testUser._id.toString(),
-          orderId: createdOrders[1]._id.toString(),
-          razorpayPaymentId: 'pay_sample_2',
-          razorpayOrderId: 'order_sample_2',
           amount: 75.50,
           currency: 'INR',
           status: 'completed',
+          paymentMethod: 'razorpay',
+          transactionId: 'pay_sample_2',
           createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
           updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
         },
         {
           userId: testUser._id.toString(),
-          orderId: createdOrders[2]._id.toString(),
-          razorpayPaymentId: 'pay_sample_3',
-          razorpayOrderId: 'order_sample_3',
           amount: 45.95,
           currency: 'INR',
           status: 'pending',
+          paymentMethod: 'razorpay',
+          transactionId: 'pay_sample_3',
           createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
           updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
         }
