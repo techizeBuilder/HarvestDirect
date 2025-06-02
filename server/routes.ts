@@ -949,6 +949,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Team Members API Routes
+  // Get all team members (public endpoint)
+  app.get(`${apiPrefix}/team-members`, async (req, res) => {
+    try {
+      const teamMembers = await storage.getActiveTeamMembers();
+      res.json(teamMembers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch team members" });
+    }
+  });
+
+  // Admin routes for team member management
+  app.get(`${apiPrefix}/admin/team-members`, async (req, res) => {
+    try {
+      const teamMembers = await storage.getAllTeamMembers();
+      res.json(teamMembers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch team members" });
+    }
+  });
+
+  app.get(`${apiPrefix}/admin/team-members/:id`, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const teamMember = await storage.getTeamMemberById(id);
+      
+      if (!teamMember) {
+        return res.status(404).json({ message: "Team member not found" });
+      }
+      
+      res.json(teamMember);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch team member" });
+    }
+  });
+
+  app.post(`${apiPrefix}/admin/team-members`, async (req, res) => {
+    try {
+      const teamMemberData = req.body;
+      
+      // Validate the team member data
+      const validatedData = insertTeamMemberSchema.parse(teamMemberData);
+      
+      const newTeamMember = await storage.createTeamMember(validatedData);
+      res.status(201).json(newTeamMember);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create team member" });
+    }
+  });
+
+  app.put(`${apiPrefix}/admin/team-members/:id`, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const teamMemberData = req.body;
+      
+      // Validate the team member data
+      const validatedData = insertTeamMemberSchema.partial().parse(teamMemberData);
+      
+      const updatedTeamMember = await storage.updateTeamMember(id, validatedData);
+      res.json(updatedTeamMember);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update team member" });
+    }
+  });
+
+  app.delete(`${apiPrefix}/admin/team-members/:id`, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteTeamMember(id);
+      res.json({ message: "Team member deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete team member" });
+    }
+  });
+
 
   // Initialize Razorpay and Email service when environment variables are available
   if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {

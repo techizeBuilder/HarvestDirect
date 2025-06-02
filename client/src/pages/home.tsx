@@ -19,7 +19,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAnimations } from "@/hooks/use-animations";
 import { ChevronDown, Leaf, Truck, Sprout, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
-import type { Product, Farmer, Testimonial as TestimonialType } from "@shared/schema";
+import type { Product, Farmer, Testimonial as TestimonialType, TeamMember } from "@shared/schema";
 
 const newsletterSchema = z.object({
   name: z.string().optional(),
@@ -46,6 +46,10 @@ export default function Home() {
 
   const { data: testimonials = [] } = useQuery<TestimonialType[]>({
     queryKey: ["/api/testimonials"],
+  });
+
+  const { data: teamMembers = [] } = useQuery<TeamMember[]>({
+    queryKey: ["/api/team-members"],
   });
 
   // Animation controller for scroll animations
@@ -639,6 +643,50 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Meet Our Team Section */}
+      {teamMembers.length > 0 && (
+        <section className="py-16 md:py-24 bg-background">
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center mb-16 scroll-animation">
+              <h2 className="font-heading text-forest text-3xl md:text-4xl font-bold mb-6">
+                Meet Our Team
+              </h2>
+              <p className="text-olive text-lg">
+                The passionate individuals working behind the scenes to connect farmers with consumers
+                while preserving traditional growing methods.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {teamMembers.map((member) => (
+                <div key={member.id} className="scroll-animation">
+                  <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                    <div className="aspect-square overflow-hidden">
+                      <img
+                        src={member.profileImageUrl}
+                        alt={member.name}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-6">
+                      <h3 className="font-heading text-forest text-xl font-bold mb-2">
+                        {member.name}
+                      </h3>
+                      <p className="text-primary font-medium mb-3">
+                        {member.jobTitle}
+                      </p>
+                      <p className="text-olive text-sm leading-relaxed">
+                        {member.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Testimonials */}
       <section className="py-20 md:py-28 bg-[#283618] text-white">
