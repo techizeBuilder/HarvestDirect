@@ -135,16 +135,16 @@ export default function Home() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <h1 className="font-heading text-white text-4xl md:text-5xl lg:text-7xl font-bold mb-4 leading-tight text-shadow-strong">
+              <h1 className="font-heading text-white text-4xl md:text-5xl lg:text-7xl font-bold mb-4 leading-tight text-shadow-extra-strong">
                 From <span className="text-secondary font-extrabold">Soil</span>{" "}
                 to <span className="text-secondary font-extrabold">Soul</span>
               </h1>
 
-              <h2 className="font-heading text-white text-2xl md:text-3xl lg:text-4xl font-semibold mb-6 text-shadow-strong">
+              <h2 className="font-heading text-white text-2xl md:text-3xl lg:text-4xl font-semibold mb-6 text-shadow-extra-strong">
                 Pure Nature, Direct to Your Table
               </h2>
 
-              <p className="text-white text-lg max-w-xl mb-8 text-shadow-strong">
+              <p className="text-white text-lg max-w-xl mb-8 text-shadow-extra-strong">
                 Experience the authentic flavors of traditionally grown,
                 chemical-free products sourced directly from the farmers who
                 nurture them with generations of wisdom.

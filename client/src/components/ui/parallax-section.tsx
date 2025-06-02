@@ -48,7 +48,7 @@ export function ParallaxSection({
           y
         }}
       />
-      <div className="absolute inset-0 bg-black bg-opacity-50" />
+      <div className="absolute inset-0 bg-black bg-opacity-70" />
       <div className="relative z-10">
         {children}
       </div>

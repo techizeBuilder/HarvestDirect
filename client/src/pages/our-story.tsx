@@ -37,7 +37,7 @@ export default function OurStory() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="font-heading text-white text-3xl md:text-5xl lg:text-6xl font-bold mb-6 text-shadow"
+            className="font-heading text-white text-3xl md:text-5xl lg:text-6xl font-bold mb-6 text-shadow-extra-strong"
           >
             Our Story
           </motion.h1>
@@ -45,7 +45,7 @@ export default function OurStory() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-cream text-lg max-w-3xl mx-auto text-shadow"
+            className="text-cream text-lg max-w-3xl mx-auto text-shadow-extra-strong"
           >
             How a journey to rediscover authentic farming traditions led to the creation of Harvest Direct
           </motion.p>
