@@ -90,6 +90,7 @@ export default function AdminOrders() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<number | null>(null);
+  const [printStickerOrder, setPrintStickerOrder] = useState<OrderData | null>(null);
   const ordersPerPage = 10;
   const { toast } = useToast();
 
@@ -344,8 +345,17 @@ export default function AdminOrders() {
                                     variant="ghost" 
                                     size="icon"
                                     onClick={() => setSelectedOrder(order.id)}
+                                    title="View Order Details"
                                   >
                                     <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    onClick={() => setPrintStickerOrder(order)}
+                                    title="Print Delivery Sticker"
+                                  >
+                                    <Printer className="h-4 w-4" />
                                   </Button>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
@@ -406,7 +416,19 @@ export default function AdminOrders() {
             </CardContent>
           </Card>
 
-          {/* Order details modal could be added here */}
+          {/* Print Delivery Sticker Modal */}
+          {printStickerOrder && (
+            <PrintableDeliverySticker
+              orderId={printStickerOrder.id}
+              customerName={printStickerOrder.userName || 'Guest Customer'}
+              customerEmail={printStickerOrder.userEmail || 'No email provided'}
+              shippingAddress={printStickerOrder.shippingAddress}
+              orderTotal={printStickerOrder.total}
+              orderDate={printStickerOrder.createdAt}
+              paymentMethod={printStickerOrder.paymentMethod}
+              onClose={() => setPrintStickerOrder(null)}
+            />
+          )}
         </div>
       </AdminLayout>
     </AdminAuthWrapper>
