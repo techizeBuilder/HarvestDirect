@@ -11,7 +11,7 @@ import ProductCard from "@/components/ProductCard";
 import FarmerCard from "@/components/FarmerCard";
 import ProcessStep from "@/components/ProcessStep";
 import Testimonial from "@/components/Testimonial";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "@/hooks/use-toast";
@@ -66,6 +66,7 @@ export default function Home() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<NewsletterFormData>({
     resolver: zodResolver(newsletterSchema),
@@ -732,10 +733,17 @@ export default function Home() {
                   </div>
 
                   <div className="flex items-start space-x-2">
-                    <Checkbox
-                      id="agreedToTerms"
-                      {...register("agreedToTerms")}
-                      className="mt-1"
+                    <Controller
+                      name="agreedToTerms"
+                      control={control}
+                      render={({ field }) => (
+                        <Checkbox
+                          id="agreedToTerms"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="mt-1"
+                        />
+                      )}
                     />
                     <label
                       htmlFor="agreedToTerms"
