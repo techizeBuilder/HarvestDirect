@@ -19,6 +19,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAnimations } from "@/hooks/use-animations";
 import { ChevronDown, Leaf, Truck, Sprout, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
+import type { Product, Farmer, Testimonial as TestimonialType } from "@shared/schema";
 
 const newsletterSchema = z.object({
   name: z.string().optional(),
@@ -32,15 +33,18 @@ type NewsletterFormData = z.infer<typeof newsletterSchema>;
 
 export default function Home() {
   // Get products and farmers data
-  const { data: products = [] } = useQuery<Product[]>({
-    queryKey: ["/api/products/featured"],
+  const { data: allProducts = [] } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
   });
+  
+  // Filter featured products on the frontend
+  const products = allProducts.filter(product => product.featured);
 
   const { data: farmers = [] } = useQuery<Farmer[]>({
     queryKey: ["/api/farmers/featured"],
   });
 
-  const { data: testimonials = [] } = useQuery<Testimonial[]>({
+  const { data: testimonials = [] } = useQuery<TestimonialType[]>({
     queryKey: ["/api/testimonials"],
   });
 

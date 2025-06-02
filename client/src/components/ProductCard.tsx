@@ -1,8 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Product } from "@shared/schema";
 import { AddToCartButton } from "@/components/ui/add-to-cart-button";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { Star, Leaf, Shield, Crown } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
