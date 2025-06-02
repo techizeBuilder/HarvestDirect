@@ -1,14 +1,14 @@
 import mongoose from 'mongoose';
 
-if (!process.env.MONGODB_URL) {
-  throw new Error(
-    "MONGODB_URL must be set. Please provide your MongoDB connection string.",
-  );
-}
-
 const connectToMongoDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URL!);
+    const mongoUrl = process.env.MONGODB_URL || "mongodb+srv://jeeturadicalloop:Mjvesqnj8gY3t0zP@cluster0.by2xy6x.mongodb.net/FarmerEcommerce";
+    
+    if (!mongoUrl) {
+      throw new Error("MONGODB_URL must be set. Please provide your MongoDB connection string.");
+    }
+    
+    await mongoose.connect(mongoUrl);
     console.log('Connected to MongoDB successfully');
   } catch (error) {
     console.error('Failed to connect to MongoDB:', error);

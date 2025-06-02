@@ -1,29 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
-import * as crypto from 'crypto';
-import { 
-  Product, InsertProduct, 
-  Farmer, InsertFarmer, 
-  Cart, InsertCart, 
-  CartItem, InsertCartItem,
-  CartWithItems, 
-  Testimonial, InsertTestimonial,
-  NewsletterSubscription, InsertNewsletterSubscription,
-  ProductReview, InsertProductReview,
-  User, InsertUser,
-  Payment, InsertPayment,
-  Subscription, InsertSubscription,
-  ContactMessage, InsertContactMessage,
-  Order, InsertOrder,
-  OrderItem, InsertOrderItem,
-  TeamMember, InsertTeamMember,
-  products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews,
-  users, payments, subscriptions, subscriptionStatusEnum, contactMessages, orders, orderItems, teamMembers
-} from '@shared/schema';
-import { productData } from './productData';
-import { farmerData } from './farmerData';
-import { db } from './db';
-import { eq, and, isNotNull, sql } from 'drizzle-orm';
-import { desc } from 'drizzle-orm';
+import { MongoDBStorage } from './mongodb-storage';
 
 // modify the interface with any CRUD methods
 // you might need
