@@ -13,8 +13,9 @@ import { insertTeamMemberSchema, type TeamMember, type InsertTeamMember } from "
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, Edit, Trash2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import AdminLayout from "@/components/admin/AdminLayout";
 
-export default function TeamMembersAdmin() {
+function TeamMembersAdmin() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const { toast } = useToast();
@@ -473,5 +474,13 @@ export default function TeamMembersAdmin() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TeamMembersAdminWithLayout() {
+  return (
+    <AdminLayout>
+      <TeamMembersAdmin />
+    </AdminLayout>
   );
 }
