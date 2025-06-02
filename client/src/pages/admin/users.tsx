@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import {
   Card,
@@ -43,123 +43,149 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-// Sample user data for demonstration
-const SAMPLE_USERS = [
-  {
-    id: 1,
-    name: 'Sarah Johnson',
-    email: 'sarah.j@example.com',
-    createdAt: '2025-03-15',
-    status: 'active',
-    lastLogin: '2025-05-24',
-    orders: 12,
-    totalSpent: 875.45
-  },
-  {
-    id: 2,
-    name: 'Michael Davis',
-    email: 'michael.d@example.com',
-    createdAt: '2025-01-22',
-    status: 'active',
-    lastLogin: '2025-05-23',
-    orders: 8,
-    totalSpent: 562.30
-  },
-  {
-    id: 3,
-    name: 'Emma Wilson',
-    email: 'emma.w@example.com',
-    createdAt: '2025-04-10',
-    status: 'active',
-    lastLogin: '2025-05-20',
-    orders: 5,
-    totalSpent: 325.75
-  },
-  {
-    id: 4,
-    name: 'James Smith',
-    email: 'james.s@example.com',
-    createdAt: '2024-11-05',
-    status: 'blocked',
-    lastLogin: '2025-04-30',
-    orders: 3,
-    totalSpent: 189.50
-  },
-  {
-    id: 5,
-    name: 'Olivia Brown',
-    email: 'olivia.b@example.com',
-    createdAt: '2025-02-18',
-    status: 'active',
-    lastLogin: '2025-05-22',
-    orders: 15,
-    totalSpent: 1247.65
-  },
-  {
-    id: 6,
-    name: 'Noah Jones',
-    email: 'noah.j@example.com',
-    createdAt: '2024-12-07',
-    status: 'active',
-    lastLogin: '2025-05-18',
-    orders: 6,
-    totalSpent: 423.90
-  }
-];
+// User interface based on API response
+interface UserData {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  emailVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+  orders: number;
+  totalSpent: number;
+}
+
+interface UsersResponse {
+  users: UserData[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
 
 export default function AdminUsers() {
-  const [users, setUsers] = useState(SAMPLE_USERS);
+  const [users, setUsers] = useState<UserData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
   const usersPerPage = 10;
   const { toast } = useToast();
 
-  // Filter users based on search term and status
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  // Fetch users from the API
+  const fetchUsers = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: usersPerPage.toString(),
+        sort: 'createdAt',
+        order: 'desc'
+      });
+      
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+      if (statusFilter && statusFilter !== 'all') {
+        if (statusFilter === 'active') {
+          params.append('status', 'verified');
+        } else if (statusFilter === 'blocked') {
+          params.append('status', 'unverified');
+        }
+      }
+      
+      const response = await fetch(`/api/admin/users?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
-  // Pagination calculations
-  const indexOfLastUser = currentPage * usersPerPage;
-  const indexOfFirstUser = indexOfLastUser - usersPerPage;
-  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
 
-  const handleToggleUserStatus = (userId: number) => {
-    // In a real application, you would call your API to update the user status
-    setUsers(users.map(user => 
-      user.id === userId 
-        ? { ...user, status: user.status === 'active' ? 'blocked' : 'active' } 
-        : user
-    ));
-    
-    const user = users.find(u => u.id === userId);
-    const newStatus = user?.status === 'active' ? 'blocked' : 'active';
-    
-    toast({
-      title: `User ${newStatus === 'active' ? 'unblocked' : 'blocked'}`,
-      description: `${user?.name} has been ${newStatus === 'active' ? 'unblocked' : 'blocked'} successfully.`,
-    });
-    
-    setIsBlockDialogOpen(false);
+      const data: UsersResponse = await response.json();
+      setUsers(data.users);
+      setTotalPages(data.pagination.totalPages);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setError(error instanceof Error ? error.message : 'Failed to fetch users');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const openViewDialog = (user: any) => {
+  useEffect(() => {
+    fetchUsers();
+  }, [currentPage, searchTerm, statusFilter]);
+
+  const handleToggleUserStatus = async (userId: number) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+
+      const newEmailVerified = !user.emailVerified;
+      
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          emailVerified: newEmailVerified
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update user status');
+      }
+
+      // Refresh the users list
+      await fetchUsers();
+      
+      toast({
+        title: `User ${newEmailVerified ? 'activated' : 'deactivated'}`,
+        description: `${user.name} has been ${newEmailVerified ? 'activated' : 'deactivated'} successfully.`,
+      });
+      
+      setIsBlockDialogOpen(false);
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update user status. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const openViewDialog = (user: UserData) => {
     setSelectedUser(user);
     setIsViewDialogOpen(true);
   };
 
-  const openBlockDialog = (user: any) => {
+  const openBlockDialog = (user: UserData) => {
     setSelectedUser(user);
     setIsBlockDialogOpen(true);
   };
@@ -211,75 +237,85 @@ export default function AdminUsers() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead>Last Login</TableHead>
-                    <TableHead>Orders</TableHead>
-                    <TableHead>Total Spent</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{user.name}</div>
-                            <div className="text-sm text-muted-foreground">{user.email}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span 
-                          className={`inline-block px-2 py-1 text-xs rounded-full ${
-                            user.status === 'active' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {user.status === 'active' ? 'Active' : 'Blocked'}
-                        </span>
-                      </TableCell>
-                      <TableCell>{user.createdAt}</TableCell>
-                      <TableCell>{user.lastLogin}</TableCell>
-                      <TableCell>{user.orders}</TableCell>
-                      <TableCell>${user.totalSpent.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => openViewDialog(user)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => openBlockDialog(user)}
-                          >
-                            {user.status === 'active' ? (
-                              <UserX className="h-4 w-4" />
-                            ) : (
-                              <UserCheck className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </TableCell>
+            {isLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="text-muted-foreground">Loading users...</div>
+              </div>
+            ) : error ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="text-red-500">{error}</div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Joined</TableHead>
+                      <TableHead>Last Updated</TableHead>
+                      <TableHead>Orders</TableHead>
+                      <TableHead>Total Spent</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">{user.name}</div>
+                              <div className="text-sm text-muted-foreground">{user.email}</div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span 
+                            className={`inline-block px-2 py-1 text-xs rounded-full ${
+                              user.emailVerified 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {user.emailVerified ? 'Active' : 'Blocked'}
+                          </span>
+                        </TableCell>
+                        <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(user.updatedAt).toLocaleDateString()}</TableCell>
+                        <TableCell>{user.orders}</TableCell>
+                        <TableCell>${user.totalSpent.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => openViewDialog(user)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => openBlockDialog(user)}
+                            >
+                              {user.emailVerified ? (
+                                <UserX className="h-4 w-4" />
+                              ) : (
+                                <UserCheck className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
 
             {/* Pagination */}
             {totalPages > 1 && (
