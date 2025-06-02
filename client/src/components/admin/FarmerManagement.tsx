@@ -46,6 +46,13 @@ import {
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Create a comprehensive validation schema for the farmer form
 const farmerFormSchema = insertFarmerSchema.extend({
@@ -221,11 +228,25 @@ export default function FarmerManagement() {
     resolver: zodResolver(farmerFormSchema),
     defaultValues: {
       name: "",
+      email: "",
+      phone: "",
       specialty: "",
       location: "",
       story: "",
+      farmName: "",
+      certificationStatus: "none",
+      certificationDetails: "",
+      farmSize: "",
+      experienceYears: undefined,
+      website: "",
+      socialMedia: "",
+      bankAccount: "",
+      panNumber: "",
+      aadharNumber: "",
       imageUrl: "",
-      featured: false
+      featured: false,
+      verified: false,
+      active: true
     }
   });
 
@@ -234,11 +255,25 @@ export default function FarmerManagement() {
     resolver: zodResolver(farmerFormSchema),
     defaultValues: {
       name: "",
+      email: "",
+      phone: "",
       specialty: "",
       location: "",
       story: "",
+      farmName: "",
+      certificationStatus: "none",
+      certificationDetails: "",
+      farmSize: "",
+      experienceYears: undefined,
+      website: "",
+      socialMedia: "",
+      bankAccount: "",
+      panNumber: "",
+      aadharNumber: "",
       imageUrl: "",
-      featured: false
+      featured: false,
+      verified: false,
+      active: true
     }
   });
 
@@ -259,11 +294,25 @@ export default function FarmerManagement() {
     setCurrentFarmer(farmer);
     editForm.reset({
       name: farmer.name,
+      email: (farmer as any).email || "",
+      phone: (farmer as any).phone || "",
       specialty: farmer.specialty,
       location: farmer.location,
       story: farmer.story,
+      farmName: (farmer as any).farmName || "",
+      certificationStatus: (farmer as any).certificationStatus || "none",
+      certificationDetails: (farmer as any).certificationDetails || "",
+      farmSize: (farmer as any).farmSize || "",
+      experienceYears: (farmer as any).experienceYears || undefined,
+      website: (farmer as any).website || "",
+      socialMedia: (farmer as any).socialMedia || "",
+      bankAccount: (farmer as any).bankAccount || "",
+      panNumber: (farmer as any).panNumber || "",
+      aadharNumber: (farmer as any).aadharNumber || "",
       imageUrl: farmer.imageUrl,
-      featured: farmer.featured || false
+      featured: farmer.featured || false,
+      verified: (farmer as any).verified || false,
+      active: (farmer as any).active !== false
     });
     setIsEditDialogOpen(true);
   };
