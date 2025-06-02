@@ -21,7 +21,7 @@ import { ChevronDown, Leaf, Truck, Sprout, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 
 const newsletterSchema = z.object({
-  name: z.string().min(2, "Name is required"),
+  name: z.string().optional(),
   email: z.string().email("Please enter a valid email address"),
   agreedToTerms: z.boolean().refine((val) => val === true, {
     message: "You must agree to the terms",

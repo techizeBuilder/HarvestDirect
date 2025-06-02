@@ -133,7 +133,7 @@ export const insertTestimonialSchema = createInsertSchema(testimonials).omit({
 // Newsletter Subscription Schema
 export const newsletterSubscriptions = pgTable("newsletter_subscriptions", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(),
+  name: text("name"),
   email: text("email").notNull().unique(),
   agreedToTerms: boolean("agreed_to_terms").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
