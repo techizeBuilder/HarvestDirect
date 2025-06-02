@@ -33,6 +33,7 @@ import AdminInventory from "@/pages/admin/inventory";
 import AdminDiscounts from "@/pages/admin/discounts";
 import AdminSettings from "@/pages/admin/settings";
 import AdminNewsletter from "@/pages/admin/newsletter";
+import AdminMessages from "@/pages/admin/messages";
 
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
@@ -56,6 +57,7 @@ function App() {
               <Route path="/admin/users" component={AdminUsers} />
               <Route path="/admin/farmers" component={AdminFarmers} />
               <Route path="/admin/newsletter" component={AdminNewsletter} />
+              <Route path="/admin/messages" component={AdminMessages} />
               <Route path="/admin/inventory" component={AdminInventory} />
               <Route path="/admin/discounts" component={AdminDiscounts} />
               <Route path="/admin/settings" component={AdminSettings} />
