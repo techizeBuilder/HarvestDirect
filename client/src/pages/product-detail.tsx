@@ -92,11 +92,11 @@ export default function ProductDetail() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              {/* Use our new ProductGallery component with default fallbacks in case fields don't exist yet */}
+              {/* Use our new ProductGallery component with enhanced product data */}
               <ProductGallery 
                 mainImage={product?.imageUrl || "https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"}
-                additionalImages={[]}
-                videoUrl={null}
+                additionalImages={product?.imageUrls || []}
+                videoUrl={product?.videoUrl}
                 productName={product?.name || "Product"}
               />
             </motion.div>
@@ -118,24 +118,53 @@ export default function ProductDetail() {
               </p>
               
               <div className="flex flex-wrap items-center gap-4 mb-6">
-                <div className="flex items-center text-sm text-olive">
-                  <Leaf className="text-primary mr-2 h-4 w-4" />
-                  <span>Naturally Grown</span>
-                </div>
-                <div className="flex items-center text-sm text-olive">
-                  <Shield className="text-primary mr-2 h-4 w-4" />
-                  <span>Chemical-Free</span>
-                </div>
-                <div className="flex items-center text-sm text-olive">
-                  <Award className="text-primary mr-2 h-4 w-4" />
-                  <span>Premium Quality</span>
-                </div>
+                {product?.naturallyGrown && (
+                  <div className="flex items-center text-sm text-olive">
+                    <Leaf className="text-primary mr-2 h-4 w-4" />
+                    <span>Naturally Grown</span>
+                  </div>
+                )}
+                {product?.chemicalFree && (
+                  <div className="flex items-center text-sm text-olive">
+                    <Shield className="text-primary mr-2 h-4 w-4" />
+                    <span>Chemical-Free</span>
+                  </div>
+                )}
+                {product?.premiumQuality && (
+                  <div className="flex items-center text-sm text-olive">
+                    <Award className="text-primary mr-2 h-4 w-4" />
+                    <span>Premium Quality</span>
+                  </div>
+                )}
               </div>
               
+              {/* Stock Status */}
+              {product?.stockQuantity && product.stockQuantity <= 10 && (
+                <div className="bg-orange-100 border border-orange-300 text-orange-800 px-3 py-2 rounded-md mb-4">
+                  <p className="text-sm font-medium">
+                    Only {product.stockQuantity} left in stock!
+                  </p>
+                </div>
+              )}
+              
               <div className="flex items-center space-x-4 mb-8">
-                <span className="text-forest text-3xl font-bold">
-                  ₹{product?.price ? product.price.toFixed(2) : "0.00"}
-                </span>
+                {product?.discountPrice && product.discountPrice < product.price ? (
+                  <div className="flex items-center space-x-3">
+                    <span className="text-forest text-3xl font-bold">
+                      ₹{product.discountPrice.toFixed(2)}
+                    </span>
+                    <span className="text-gray-500 line-through text-xl">
+                      ₹{product.price.toFixed(2)}
+                    </span>
+                    <span className="bg-red-500 text-white px-2 py-1 rounded text-sm font-semibold">
+                      {Math.round(((product.price - product.discountPrice) / product.price) * 100)}% OFF
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-forest text-3xl font-bold">
+                    ₹{product?.price ? product.price.toFixed(2) : "0.00"}
+                  </span>
+                )}
                 <div className="text-sm text-olive bg-background/80 px-3 py-1 rounded">
                   In Stock: {product?.stockQuantity || 0}
                 </div>
