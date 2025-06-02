@@ -77,19 +77,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const enhancedProducts = await storage.getAllEnhancedProducts();
       // Convert enhanced products to standard product format
-      const products = enhancedProducts.map(ep => ({
+      const products = enhancedProducts.map((ep: any) => ({
         id: ep.id,
         name: ep.name,
         description: ep.description,
-        shortDescription: ep.description.length > 100 ? ep.description.substring(0, 100) + "..." : ep.description,
+        shortDescription: ep.shortDescription || (ep.description.length > 100 ? ep.description.substring(0, 100) + "..." : ep.description),
         price: ep.price,
         discountPrice: ep.discountPrice,
         category: ep.category,
         sku: ep.sku || `EP-${ep.id}`,
-        imageUrl: ep.primaryImage,
-        imageUrls: [ep.primaryImage, ...(ep.additionalImages || [])].filter(Boolean),
-        stock: ep.stock,
-        featured: ep.isPremium || ep.isFeatured,
+        imageUrl: ep.imageUrl,
+        imageUrls: ep.imageUrls || [ep.imageUrl],
+        stock: ep.stockQuantity,
+        featured: ep.featured || ep.premiumQuality,
         farmerId: ep.farmerId
       }));
       res.json(products);

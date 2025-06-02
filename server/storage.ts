@@ -32,6 +32,9 @@ export interface IStorage {
   getProductById(id: number): Promise<Product | undefined>;
   getProductsByCategory(category: string): Promise<Product[]>;
   getFeaturedProducts(): Promise<Product[]>;
+  
+  // Enhanced Products
+  getAllEnhancedProducts(): Promise<any[]>;
 
   // Farmers
   getAllFarmers(): Promise<Farmer[]>;
@@ -215,6 +218,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.products.values()).filter(
       product => product.featured
     );
+  }
+
+  async getAllEnhancedProducts(): Promise<any[]> {
+    return Array.from(this.products.values());
   }
 
   // Farmer methods
@@ -743,6 +750,11 @@ export class DatabaseStorage implements IStorage {
   async getFeaturedProducts(): Promise<Product[]> {
     const featuredProducts = await db.select().from(products).where(eq(products.featured, true));
     return featuredProducts;
+  }
+
+  async getAllEnhancedProducts(): Promise<any[]> {
+    const enhancedProducts = await db.select().from(products);
+    return enhancedProducts;
   }
 
   async getAllFarmers(): Promise<Farmer[]> {

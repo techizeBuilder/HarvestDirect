@@ -32,15 +32,15 @@ type NewsletterFormData = z.infer<typeof newsletterSchema>;
 
 export default function Home() {
   // Get products and farmers data
-  const { data: products = [] } = useQuery({
+  const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products/featured"],
   });
 
-  const { data: farmers = [] } = useQuery({
+  const { data: farmers = [] } = useQuery<Farmer[]>({
     queryKey: ["/api/farmers/featured"],
   });
 
-  const { data: testimonials = [] } = useQuery({
+  const { data: testimonials = [] } = useQuery<Testimonial[]>({
     queryKey: ["/api/testimonials"],
   });
 
