@@ -21,9 +21,10 @@ const useSearchParams = () => {
 export default function AllProducts() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
+  const searchParam = searchParams.get("search");
   
   // State for filters
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParam || "");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryParam);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 20]);
   const [showFilters, setShowFilters] = useState(false);
@@ -39,6 +40,18 @@ export default function AllProducts() {
   useEffect(() => {
     setupScrollAnimation();
   }, []);
+
+  // Update search input when URL search param changes
+  useEffect(() => {
+    if (searchParam) {
+      setSearchQuery(searchParam);
+      // Also update the input field value
+      const searchInput = document.getElementById("product-search") as HTMLInputElement;
+      if (searchInput) {
+        searchInput.value = searchParam;
+      }
+    }
+  }, [searchParam]);
   
   // Filter products
   const filteredProducts = allProducts.filter((product: Product) => {

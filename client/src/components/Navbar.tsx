@@ -16,9 +16,10 @@ export default function Navbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { cartItems, openCart } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
 
@@ -47,6 +48,19 @@ export default function Navbar() {
   const toggleSearch = () => {
     setShowSearch(!showSearch);
     if (showMobileMenu) setShowMobileMenu(false);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      setShowSearch(false);
+      setSearchQuery("");
+    }
+  };
+
+  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
   const navLinks = [
@@ -208,14 +222,17 @@ export default function Navbar() {
         {/* Search Bar */}
         {showSearch && (
           <div className="bg-background absolute w-full py-4 px-6 shadow-md">
-            <div className="relative max-w-md mx-auto">
+            <form onSubmit={handleSearch} className="relative max-w-md mx-auto">
               <Input
                 type="text"
                 placeholder="Search for products..."
+                value={searchQuery}
+                onChange={handleSearchInput}
                 className="pl-10 pr-4 py-2 rounded-full border border-border/30 focus:border-primary"
+                autoFocus
               />
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            </div>
+            </form>
           </div>
         )}
       </nav>
