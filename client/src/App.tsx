@@ -25,6 +25,7 @@ import PrivacyPolicy from "@/pages/privacy-policy";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProducts from "@/pages/admin/products";
+import AdminEnhancedProducts from "@/pages/admin/enhanced-products";
 import AdminOrders from "@/pages/admin/orders";
 import AdminUsers from "@/pages/admin/users";
 import AdminFarmers from "@/pages/admin/farmers";
@@ -50,6 +51,7 @@ function App() {
               <Route path="/admin/login" component={AdminLogin} />
               <Route path="/admin/dashboard" component={AdminDashboard} />
               <Route path="/admin/products" component={AdminProducts} />
+              <Route path="/admin/enhanced-products" component={AdminEnhancedProducts} />
               <Route path="/admin/orders" component={AdminOrders} />
               <Route path="/admin/users" component={AdminUsers} />
               <Route path="/admin/farmers" component={AdminFarmers} />
