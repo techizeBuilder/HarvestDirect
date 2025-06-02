@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { Mail, User, Calendar, MessageSquare, Eye } from "lucide-react";
+import AdminLayout from "@/components/admin/AdminLayout";
 
 interface ContactMessage {
   id: number;
@@ -21,7 +22,7 @@ interface ContactMessage {
   createdAt: string;
 }
 
-export default function AdminMessages() {
+function AdminMessages() {
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
   const queryClient = useQueryClient();
 
@@ -270,5 +271,13 @@ export default function AdminMessages() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminMessagesWithLayout() {
+  return (
+    <AdminLayout>
+      <AdminMessages />
+    </AdminLayout>
   );
 }
