@@ -22,19 +22,39 @@ export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', '
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  shortDescription: text("short_description").notNull(),
   description: text("description").notNull(),
   price: doublePrecision("price").notNull(),
+  discountPrice: doublePrecision("discount_price"),
   category: text("category").notNull(),
+  sku: text("sku"),
   imageUrl: text("image_url").notNull(),
   imageUrls: text("image_urls").array(),
   videoUrl: text("video_url"),
   farmerId: integer("farmer_id").notNull(),
   stockQuantity: integer("stock_quantity").notNull().default(100),
   featured: boolean("featured").default(false),
+  // Product Attributes
+  naturallyGrown: boolean("naturally_grown").default(false),
+  chemicalFree: boolean("chemical_free").default(false),
+  premiumQuality: boolean("premium_quality").default(false),
+  // SEO Fields
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
+  slug: text("slug"),
+  // Social Sharing Options
+  enableShareButtons: boolean("enable_share_buttons").default(true),
+  enableWhatsappShare: boolean("enable_whatsapp_share").default(true),
+  enableFacebookShare: boolean("enable_facebook_share").default(true),
+  enableInstagramShare: boolean("enable_instagram_share").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({
-  id: true
+  id: true,
+  createdAt: true,
+  updatedAt: true
 });
 
 // Farmer Schema
