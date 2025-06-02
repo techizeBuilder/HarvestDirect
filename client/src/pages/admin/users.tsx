@@ -375,22 +375,26 @@ export default function AdminUsers() {
                   <p className="font-medium">
                     <span 
                       className={`inline-block px-2 py-1 text-xs rounded-full ${
-                        selectedUser.status === 'active' 
+                        selectedUser.emailVerified 
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-red-100 text-red-800'
                       }`}
                     >
-                      {selectedUser.status === 'active' ? 'Active' : 'Blocked'}
+                      {selectedUser.emailVerified ? 'Active' : 'Blocked'}
                     </span>
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Joined</p>
-                  <p className="font-medium">{selectedUser.createdAt}</p>
+                  <p className="text-sm text-muted-foreground">Role</p>
+                  <p className="font-medium capitalize">{selectedUser.role}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Last Login</p>
-                  <p className="font-medium">{selectedUser.lastLogin}</p>
+                  <p className="text-sm text-muted-foreground">Joined</p>
+                  <p className="font-medium">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Last Updated</p>
+                  <p className="font-medium">{new Date(selectedUser.updatedAt).toLocaleDateString()}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Orders</p>
@@ -410,10 +414,10 @@ export default function AdminUsers() {
             <Button
               onClick={() => {
                 setIsViewDialogOpen(false);
-                openBlockDialog(selectedUser);
+                if (selectedUser) openBlockDialog(selectedUser);
               }}
             >
-              {selectedUser?.status === 'active' ? 'Block User' : 'Unblock User'}
+              {selectedUser?.emailVerified ? 'Block User' : 'Unblock User'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -424,10 +428,10 @@ export default function AdminUsers() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {selectedUser?.status === 'active' ? 'Block User' : 'Unblock User'}
+              {selectedUser?.emailVerified ? 'Block User' : 'Unblock User'}
             </DialogTitle>
             <DialogDescription>
-              {selectedUser?.status === 'active'
+              {selectedUser?.emailVerified
                 ? 'Are you sure you want to block this user? They will not be able to login or place orders.'
                 : 'Are you sure you want to unblock this user? They will regain full access to their account.'}
             </DialogDescription>
@@ -437,10 +441,10 @@ export default function AdminUsers() {
               Cancel
             </Button>
             <Button
-              variant={selectedUser?.status === 'active' ? 'destructive' : 'default'}
+              variant={selectedUser?.emailVerified ? 'destructive' : 'default'}
               onClick={() => selectedUser && handleToggleUserStatus(selectedUser.id)}
             >
-              {selectedUser?.status === 'active' ? 'Block User' : 'Unblock User'}
+              {selectedUser?.emailVerified ? 'Block User' : 'Unblock User'}
             </Button>
           </DialogFooter>
         </DialogContent>
