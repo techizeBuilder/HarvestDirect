@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   Mail,
-  MessageSquare
+  MessageSquare,
+  Palette
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -58,6 +59,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { icon: <MessageSquare className="h-5 w-5" />, label: 'Messages', path: '/admin/messages' },
     { icon: <Box className="h-5 w-5" />, label: 'Inventory', path: '/admin/inventory' },
     { icon: <Tag className="h-5 w-5" />, label: 'Discounts', path: '/admin/discounts' },
+    { icon: <Palette className="h-5 w-5" />, label: 'Branding', path: '/admin/branding' },
     { icon: <Settings className="h-5 w-5" />, label: 'Settings', path: '/admin/settings' },
   ];
 

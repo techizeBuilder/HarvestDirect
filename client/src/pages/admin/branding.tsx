@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,9 +40,13 @@ export default function AdminBranding() {
   const { data: settings = [], isLoading } = useQuery({
     queryKey: ['/api/admin/site-settings'],
     queryFn: () => apiRequest('/api/admin/site-settings'),
-    onSuccess: (data: SiteSetting[]) => {
+  });
+
+  // Process settings data when it changes
+  React.useEffect(() => {
+    if (settings.length > 0) {
       const socialData: Record<string, string> = {};
-      data.forEach(setting => {
+      settings.forEach((setting: SiteSetting) => {
         if (setting.key.startsWith('social_')) {
           socialData[setting.key] = setting.value || '';
         }
@@ -51,8 +55,8 @@ export default function AdminBranding() {
         }
       });
       setSocialLinks(socialData);
-    },
-  });
+    }
+  }, [settings]);
 
   // Update site setting mutation
   const updateSettingMutation = useMutation({
