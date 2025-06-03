@@ -1,5 +1,5 @@
 import { db } from './db';
-import { products, farmers, testimonials, discounts, siteSettings } from '@shared/schema';
+import { products, farmers, testimonials, discounts, siteSettings, users, orders, orderItems, payments } from '@shared/schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
 import { discountData } from './discountData';
@@ -96,6 +96,77 @@ export async function initializeDatabase() {
       await db.insert(siteSettings).values(storeSettingsData);
     } else {
       console.log(`Found ${existingSiteSettings[0].count} existing site settings, skipping settings seeding.`);
+    }
+
+    // Add sample orders for demonstration
+    const existingOrders = await db.select({ count: sql`count(*)` }).from(orders);
+    
+    if (Number(existingOrders[0].count) === 0) {
+      console.log('Adding sample orders...');
+      
+      // Create demo user first
+      const [demoUser] = await db.insert(users).values({
+        name: "Demo User",
+        email: "demo@harvestdirect.com",
+        password: "demo_password",
+        role: "user"
+      }).returning();
+      
+      // Create sample orders
+      const [order1] = await db.insert(orders).values({
+        userId: demoUser.id,
+        sessionId: "demo-session-123",
+        paymentId: "pay_demo123",
+        total: 45.95,
+        status: "delivered",
+        shippingAddress: "123 Farm Lane, Green Valley, CA 95014",
+        billingAddress: "123 Farm Lane, Green Valley, CA 95014",
+        paymentMethod: "razorpay",
+        discountId: 1,
+        deliveredAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      }).returning();
+      
+      const [order2] = await db.insert(orders).values({
+        userId: demoUser.id,
+        sessionId: "demo-session-456",
+        paymentId: "pay_demo456",
+        total: 78.50,
+        status: "confirmed",
+        shippingAddress: "456 Organic Street, Eco City, CA 94102",
+        billingAddress: "456 Organic Street, Eco City, CA 94102",
+        paymentMethod: "razorpay"
+      }).returning();
+      
+      // Add order items
+      await db.insert(orderItems).values([
+        { orderId: order1.id, productId: 1, quantity: 2, price: 15.00 },
+        { orderId: order1.id, productId: 2, quantity: 1, price: 15.95 },
+        { orderId: order2.id, productId: 3, quantity: 3, price: 22.50 },
+        { orderId: order2.id, productId: 4, quantity: 1, price: 11.50 }
+      ]);
+      
+      // Add payment records
+      await db.insert(payments).values([
+        {
+          userId: demoUser.id,
+          orderId: order1.id,
+          razorpayPaymentId: "pay_demo123",
+          amount: 45.95,
+          status: "captured",
+          method: "card"
+        },
+        {
+          userId: demoUser.id,
+          orderId: order2.id,
+          razorpayPaymentId: "pay_demo456",
+          amount: 78.50,
+          status: "captured",
+          method: "upi"
+        }
+      ]);
+      
+    } else {
+      console.log(`Found ${existingOrders[0].count} existing orders, skipping order seeding.`);
     }
 
     console.log('Database initialization completed successfully!');
