@@ -1243,6 +1243,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Site Settings Routes for Branding & Social Links
+  app.get('/api/admin/site-settings', async (req, res) => {
+    try {
+      const settings = await storage.getAllSiteSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error('Site settings fetch error:', error);
+      res.status(500).json({ message: "Failed to fetch site settings" });
+    }
+  });
+
+  app.get('/api/admin/site-settings/:key', async (req, res) => {
+    try {
+      const { key } = req.params;
+      const setting = await storage.getSiteSetting(key);
+      if (!setting) {
+        return res.status(404).json({ message: "Setting not found" });
+      }
+      res.json(setting);
+    } catch (error) {
+      console.error('Site setting fetch error:', error);
+      res.status(500).json({ message: "Failed to fetch site setting" });
+    }
+  });
+
+  app.post('/api/admin/site-settings', async (req, res) => {
+    try {
+      const setting = await storage.upsertSiteSetting(req.body);
+      res.json(setting);
+    } catch (error) {
+      console.error('Site setting update error:', error);
+      res.status(500).json({ message: "Failed to update site setting" });
+    }
+  });
+
+  app.delete('/api/admin/site-settings/:key', async (req, res) => {
+    try {
+      const { key } = req.params;
+      await storage.deleteSiteSetting(key);
+      res.json({ message: "Setting deleted successfully" });
+    } catch (error) {
+      console.error('Site setting deletion error:', error);
+      res.status(500).json({ message: "Failed to delete site setting" });
+    }
+  });
+
+  // Public route for getting site settings
+  app.get('/api/site-settings', async (req, res) => {
+    try {
+      const settings = await storage.getAllSiteSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error('Public site settings fetch error:', error);
+      res.status(500).json({ message: "Failed to fetch site settings" });
+    }
+  });
+
   // Discount validation and application for checkout
   app.post('/api/discounts/validate', async (req, res) => {
     try {
