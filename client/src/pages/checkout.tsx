@@ -436,6 +436,60 @@ export default function Checkout() {
                   />
                 </div>
                 
+                {/* Discount Code Section */}
+                <div className="bg-white p-6 rounded-lg shadow-sm">
+                  <h2 className="text-xl font-heading font-semibold text-forest mb-6">Discount Code</h2>
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter discount code"
+                        value={discountCode}
+                        onChange={(e) => setDiscountCode(e.target.value)}
+                        disabled={discountLoading || !!appliedDiscount}
+                        className="flex-1"
+                      />
+                      {!appliedDiscount ? (
+                        <Button
+                          type="button"
+                          onClick={applyDiscount}
+                          disabled={discountLoading || !discountCode.trim()}
+                          variant="outline"
+                        >
+                          {discountLoading ? "Applying..." : "Apply"}
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          onClick={removeDiscount}
+                          variant="destructive"
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {discountError && (
+                      <p className="text-red-600 text-sm">{discountError}</p>
+                    )}
+                    
+                    {appliedDiscount && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-green-800">{appliedDiscount.code} Applied!</p>
+                            <p className="text-sm text-green-600">{appliedDiscount.description}</p>
+                          </div>
+                          <div className="text-green-800 font-semibold">
+                            {appliedDiscount.type === 'percentage' && `-${appliedDiscount.value}%`}
+                            {appliedDiscount.type === 'fixed' && `-₹${appliedDiscount.value}`}
+                            {appliedDiscount.type === 'shipping' && 'Free Shipping'}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
                 <Button 
                   type="submit" 
                   className="w-full bg-primary hover:bg-primary-dark text-white py-3 text-lg"
@@ -476,16 +530,32 @@ export default function Checkout() {
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-foreground">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>₹{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-foreground">
                   <span>Shipping</span>
-                  <span>${shipping.toFixed(2)}</span>
+                  <span>{appliedDiscount?.type === 'shipping' ? (
+                    <span className="line-through text-muted-foreground">₹{shipping.toFixed(2)}</span>
+                  ) : (
+                    `₹${shipping.toFixed(2)}`
+                  )}</span>
                 </div>
+                
+                {appliedDiscount && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount ({appliedDiscount.code})</span>
+                    <span>
+                      {appliedDiscount.type === 'percentage' && `-₹${((subtotal + shipping) * appliedDiscount.value / 100).toFixed(2)}`}
+                      {appliedDiscount.type === 'fixed' && `-₹${appliedDiscount.value.toFixed(2)}`}
+                      {appliedDiscount.type === 'shipping' && `-₹${shipping.toFixed(2)}`}
+                    </span>
+                  </div>
+                )}
+                
                 <Separator className="my-2" />
                 <div className="flex justify-between text-lg font-semibold text-foreground">
                   <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>₹{calculateTotal().toFixed(2)}</span>
                 </div>
               </div>
               
