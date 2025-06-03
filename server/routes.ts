@@ -1024,6 +1024,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Inventory Management API Endpoints
+  
+  // Update product stock quantity (Enhanced Products & Inventory sync)
+  app.put(`${apiPrefix}/admin/products/:id/stock`, async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const { stockQuantity } = req.body;
+      
+      if (typeof stockQuantity !== 'number' || stockQuantity < 0) {
+        return res.status(400).json({ message: "Invalid stock quantity" });
+      }
+      
+      const updatedProduct = await storage.updateProductStock(productId, stockQuantity);
+      res.json({ 
+        message: "Stock updated successfully",
+        product: updatedProduct 
+      });
+    } catch (error) {
+      console.error('Stock update error:', error);
+      res.status(500).json({ message: "Failed to update stock" });
+    }
+  });
+
+  // Validate stock availability before order placement
+  app.post(`${apiPrefix}/admin/validate-stock`, async (req, res) => {
+    try {
+      const { productId, quantity } = req.body;
+      
+      if (!productId || !quantity || quantity <= 0) {
+        return res.status(400).json({ message: "Invalid product ID or quantity" });
+      }
+      
+      const isAvailable = await storage.validateStockAvailability(productId, quantity);
+      const product = await storage.getProductById(productId);
+      
+      res.json({ 
+        available: isAvailable,
+        currentStock: product?.stockQuantity || 0,
+        requestedQuantity: quantity
+      });
+    } catch (error) {
+      console.error('Stock validation error:', error);
+      res.status(500).json({ message: "Failed to validate stock" });
+    }
+  });
+
+  // Get low stock products alert
+  app.get(`${apiPrefix}/admin/low-stock`, async (req, res) => {
+    try {
+      const threshold = parseInt(req.query.threshold as string) || 10;
+      const allProducts = await storage.getAllProducts();
+      const lowStockProducts = allProducts.filter(product => product.stockQuantity <= threshold);
+      
+      res.json({ 
+        lowStockProducts,
+        threshold,
+        count: lowStockProducts.length
+      });
+    } catch (error) {
+      console.error('Low stock check error:', error);
+      res.status(500).json({ message: "Failed to check low stock products" });
+    }
+  });
+
 
   // Initialize Razorpay and Email service when environment variables are available
   if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {

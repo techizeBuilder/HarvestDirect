@@ -1282,15 +1282,53 @@ export class DatabaseStorage implements IStorage {
     return updatedSubscription;
   }
 
-  // Order management methods
+  // Order management methods with inventory sync
   async createOrder(order: InsertOrder): Promise<Order> {
     const [newOrder] = await db.insert(orders).values(order).returning();
     return newOrder;
   }
 
   async createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem> {
+    // Validate stock availability before creating order item
+    const isStockAvailable = await this.validateStockAvailability(
+      orderItem.productId, 
+      orderItem.quantity
+    );
+    
+    if (!isStockAvailable) {
+      throw new Error(`Insufficient stock for product ID ${orderItem.productId}. Requested: ${orderItem.quantity}`);
+    }
+
+    // Create the order item
     const [newOrderItem] = await db.insert(orderItems).values(orderItem).returning();
+    
+    // Automatically deduct stock from inventory
+    await this.deductProductStock(orderItem.productId, orderItem.quantity);
+    
     return newOrderItem;
+  }
+
+  // Helper method to deduct stock from product inventory
+  private async deductProductStock(productId: number, quantity: number): Promise<void> {
+    const [currentProduct] = await db.select().from(products).where(eq(products.id, productId));
+    
+    if (!currentProduct) {
+      throw new Error(`Product with id ${productId} not found`);
+    }
+    
+    const newStockQuantity = currentProduct.stockQuantity - quantity;
+    
+    // Prevent negative stock
+    if (newStockQuantity < 0) {
+      throw new Error(`Cannot deduct ${quantity} items from product ${productId}. Available stock: ${currentProduct.stockQuantity}`);
+    }
+    
+    await db.update(products)
+      .set({ 
+        stockQuantity: newStockQuantity,
+        updatedAt: new Date()
+      })
+      .where(eq(products.id, productId));
   }
 
   async getOrdersByUserId(userId: number): Promise<Order[]> {

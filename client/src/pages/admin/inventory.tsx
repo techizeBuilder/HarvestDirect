@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+import AdminAuthWrapper from '@/components/admin/AdminAuthWrapper';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Package, AlertTriangle, CheckCircle, Edit, Save, X } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -13,566 +15,467 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  AlertCircle,
-  Plus,
-  Minus,
-  Save,
-  ExternalLink
-} from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { useToast } from '@/hooks/use-toast';
-import { Progress } from '@/components/ui/progress';
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
-// Sample inventory data for demonstration
-const SAMPLE_INVENTORY = [
-  {
-    id: 1,
-    name: 'Mountain Coffee Beans',
-    sku: 'MCB-001',
-    category: 'Coffee & Tea',
-    stockQuantity: 100,
-    minStockLevel: 20,
-    status: 'In Stock',
-    location: 'Warehouse A',
-    lastUpdated: '2025-05-20',
-    imageUrl: 'https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600',
-  },
-  {
-    id: 2,
-    name: 'Handcrafted Cheese',
-    sku: 'HC-002',
-    category: 'Dairy',
-    stockQuantity: 45,
-    minStockLevel: 15,
-    status: 'In Stock',
-    location: 'Warehouse B',
-    lastUpdated: '2025-05-22',
-    imageUrl: 'https://images.unsplash.com/photo-1566454419290-57a0589c9c51?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600',
-  },
-  {
-    id: 3,
-    name: 'Organic Spice Mix',
-    sku: 'OSM-003',
-    category: 'Spices',
-    stockQuantity: 8,
-    minStockLevel: 15,
-    status: 'Low Stock',
-    location: 'Warehouse A',
-    lastUpdated: '2025-05-21',
-    imageUrl: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600',
-  },
-  {
-    id: 4,
-    name: 'Fresh Valley Honey',
-    sku: 'FVH-004',
-    category: 'Sweeteners',
-    stockQuantity: 3,
-    minStockLevel: 10,
-    status: 'Low Stock',
-    location: 'Warehouse C',
-    lastUpdated: '2025-05-23',
-    imageUrl: 'https://images.unsplash.com/photo-1587049352851-8d4e89133924?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600',
-  },
-  {
-    id: 5,
-    name: 'Organic Tea Sampler',
-    sku: 'OTS-005',
-    category: 'Coffee & Tea',
-    stockQuantity: 25,
-    minStockLevel: 10,
-    status: 'In Stock',
-    location: 'Warehouse A',
-    lastUpdated: '2025-05-19',
-    imageUrl: 'https://images.unsplash.com/photo-1565194481104-39d1ee1b8bcc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600',
-  },
-  {
-    id: 6,
-    name: 'Artisanal Olive Oil',
-    sku: 'AOO-006',
-    category: 'Oils',
-    stockQuantity: 0,
-    minStockLevel: 5,
-    status: 'Out of Stock',
-    location: 'Warehouse B',
-    lastUpdated: '2025-05-18',
-    imageUrl: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600',
-  }
-];
+interface Product {
+  id: number;
+  name: string;
+  sku: string;
+  category: string;
+  stockQuantity: number;
+  price: number;
+  featured: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
-export default function AdminInventory() {
-  const [inventory, setInventory] = useState(SAMPLE_INVENTORY);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
-  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
-  const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
-  const [updateQuantity, setUpdateQuantity] = useState<number>(0);
-  const [minStockLevel, setMinStockLevel] = useState<number>(0);
-  const itemsPerPage = 10;
+interface LowStockProduct {
+  id: number;
+  name: string;
+  stockQuantity: number;
+  threshold: number;
+}
+
+export default function InventoryManagement() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [lowStockProducts, setLowStockProducts] = useState<LowStockProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editingProduct, setEditingProduct] = useState<number | null>(null);
+  const [stockInput, setStockInput] = useState<string>('');
+  const [stockThreshold, setStockThreshold] = useState(10);
   const { toast } = useToast();
 
-  // Filter inventory based on search term and status
-  const filteredInventory = inventory.filter(item => {
-    const matchesSearch = 
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    let matchesStatus = true;
-    if (statusFilter === 'in-stock') {
-      matchesStatus = item.status === 'In Stock';
-    } else if (statusFilter === 'low-stock') {
-      matchesStatus = item.status === 'Low Stock';
-    } else if (statusFilter === 'out-of-stock') {
-      matchesStatus = item.status === 'Out of Stock';
-    }
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  // Pagination calculations
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredInventory.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
-
-  const openUpdateDialog = (product: any) => {
-    setSelectedProduct(product);
-    setUpdateQuantity(product.stockQuantity);
-    setIsUpdateDialogOpen(true);
-  };
-
-  const openAlertDialog = (product: any) => {
-    setSelectedProduct(product);
-    setMinStockLevel(product.minStockLevel);
-    setIsAlertDialogOpen(true);
-  };
-
-  const handleUpdateQuantity = () => {
-    if (selectedProduct) {
-      // In a real application, you would call your API to update the stock quantity
-      const updatedInventory = inventory.map(item => {
-        if (item.id === selectedProduct.id) {
-          let status = 'In Stock';
-          if (updateQuantity <= 0) {
-            status = 'Out of Stock';
-          } else if (updateQuantity < item.minStockLevel) {
-            status = 'Low Stock';
-          }
-          
-          return {
-            ...item,
-            stockQuantity: updateQuantity,
-            status,
-            lastUpdated: new Date().toISOString().split('T')[0]
-          };
-        }
-        return item;
-      });
-      
-      setInventory(updatedInventory);
-      setIsUpdateDialogOpen(false);
-      
+  // Fetch all products
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('/api/admin/products');
+      const data = await response.json();
+      if (data.products) {
+        setProducts(data.products);
+      }
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
       toast({
-        title: "Inventory updated",
-        description: `Stock quantity for ${selectedProduct.name} has been updated.`,
+        title: "Error",
+        description: "Failed to fetch products",
+        variant: "destructive",
       });
     }
   };
 
-  const handleUpdateMinStock = () => {
-    if (selectedProduct) {
-      // In a real application, you would call your API to update the min stock level
-      const updatedInventory = inventory.map(item => {
-        if (item.id === selectedProduct.id) {
-          let status = item.status;
-          if (item.stockQuantity <= 0) {
-            status = 'Out of Stock';
-          } else if (item.stockQuantity < minStockLevel) {
-            status = 'Low Stock';
-          } else {
-            status = 'In Stock';
-          }
-          
-          return {
-            ...item,
-            minStockLevel,
-            status,
-            lastUpdated: new Date().toISOString().split('T')[0]
-          };
-        }
-        return item;
+  // Fetch low stock products
+  const fetchLowStockProducts = async () => {
+    try {
+      const response = await fetch(`/api/admin/low-stock?threshold=${stockThreshold}`);
+      const data = await response.json();
+      if (data.lowStockProducts) {
+        setLowStockProducts(data.lowStockProducts);
+      }
+    } catch (error) {
+      console.error('Failed to fetch low stock products:', error);
+    }
+  };
+
+  // Update product stock
+  const updateProductStock = async (productId: number, newStock: number) => {
+    try {
+      const response = await fetch(`/api/admin/products/${productId}/stock`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ stockQuantity: newStock }),
       });
-      
-      setInventory(updatedInventory);
-      setIsAlertDialogOpen(false);
-      
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Stock updated successfully",
+        });
+        
+        // Update local state
+        setProducts(prev => prev.map(product => 
+          product.id === productId 
+            ? { ...product, stockQuantity: newStock, updatedAt: new Date().toISOString() }
+            : product
+        ));
+        
+        setEditingProduct(null);
+        setStockInput('');
+        
+        // Refresh low stock alerts
+        fetchLowStockProducts();
+      } else {
+        throw new Error(data.message || 'Failed to update stock');
+      }
+    } catch (error) {
+      console.error('Stock update error:', error);
       toast({
-        title: "Alert level updated",
-        description: `Low stock alert for ${selectedProduct.name} has been set to ${minStockLevel} units.`,
+        title: "Error",
+        description: "Failed to update stock",
+        variant: "destructive",
       });
     }
   };
 
-  const getStockStatusBadge = (status: string) => {
-    if (status === 'In Stock') {
-      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">In Stock</Badge>;
-    } else if (status === 'Low Stock') {
-      return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Low Stock</Badge>;
+  // Validate stock availability
+  const validateStock = async (productId: number, quantity: number) => {
+    try {
+      const response = await fetch('/api/admin/validate-stock', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ productId, quantity }),
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Stock validation error:', error);
+      return { available: false, currentStock: 0, requestedQuantity: quantity };
+    }
+  };
+
+  // Handle stock edit
+  const handleStockEdit = (product: Product) => {
+    setEditingProduct(product.id);
+    setStockInput(product.stockQuantity.toString());
+  };
+
+  // Handle stock save
+  const handleStockSave = async (productId: number) => {
+    const newStock = parseInt(stockInput);
+    if (isNaN(newStock) || newStock < 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid stock quantity",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await updateProductStock(productId, newStock);
+  };
+
+  // Cancel stock edit
+  const cancelStockEdit = () => {
+    setEditingProduct(null);
+    setStockInput('');
+  };
+
+  // Get stock status badge
+  const getStockStatus = (quantity: number) => {
+    if (quantity === 0) {
+      return <Badge variant="destructive">Out of Stock</Badge>;
+    } else if (quantity <= stockThreshold) {
+      return <Badge variant="secondary">Low Stock</Badge>;
     } else {
-      return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Out of Stock</Badge>;
+      return <Badge variant="default">In Stock</Badge>;
     }
   };
 
-  const getStockLevel = (current: number, min: number) => {
-    if (current <= 0) return 0;
-    const percentage = Math.min(100, (current / min) * 50); // Scale to make low stock more visible
-    return percentage;
-  };
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      await Promise.all([fetchProducts(), fetchLowStockProducts()]);
+      setIsLoading(false);
+    };
+
+    loadData();
+  }, [stockThreshold]);
+
+  if (isLoading) {
+    return (
+      <AdminAuthWrapper>
+        <AdminLayout>
+          <div className="flex items-center justify-center min-h-96">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading inventory...</span>
+          </div>
+        </AdminLayout>
+      </AdminAuthWrapper>
+    );
+  }
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Inventory</h1>
-            <p className="text-muted-foreground">Manage your product inventory</p>
-          </div>
-          <Button>
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Export Inventory
-          </Button>
-        </div>
-
-        {/* Low Stock Alert Summary */}
-        <Card className="bg-yellow-50 border-yellow-200">
-          <CardHeader className="py-4">
-            <CardTitle className="flex items-center text-yellow-800">
-              <AlertCircle className="h-5 w-5 mr-2 text-yellow-600" />
-              Low Stock Alert
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p className="text-yellow-700">
-                {inventory.filter(item => item.status === 'Low Stock').length} products are below their minimum stock level.
+    <AdminAuthWrapper>
+      <AdminLayout>
+        <div className="space-y-8">
+          {/* Header */}
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Inventory Management</h1>
+              <p className="text-muted-foreground">
+                Manage product stock levels and monitor inventory status
               </p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {inventory
-                  .filter(item => item.status === 'Low Stock')
-                  .map(item => (
-                    <Badge key={item.id} variant="outline" className="bg-yellow-100 text-yellow-800">
-                      {item.name} ({item.stockQuantity}/{item.minStockLevel})
-                    </Badge>
-                  ))}
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="threshold">Low Stock Threshold:</Label>
+                <Input
+                  id="threshold"
+                  type="number"
+                  value={stockThreshold}
+                  onChange={(e) => setStockThreshold(Number(e.target.value))}
+                  className="w-20"
+                  min="1"
+                />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card>
-          <CardHeader className="py-4">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <CardTitle>Inventory List</CardTitle>
-              <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search inventory..."
-                    className="pl-8"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+          {/* Stock Alerts */}
+          {lowStockProducts.length > 0 && (
+            <Card className="border-orange-200 bg-orange-50">
+              <CardHeader>
+                <CardTitle className="flex items-center text-orange-800">
+                  <AlertTriangle className="h-5 w-5 mr-2" />
+                  Low Stock Alerts ({lowStockProducts.length})
+                </CardTitle>
+                <CardDescription className="text-orange-700">
+                  Products running low on inventory
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-2">
+                  {lowStockProducts.map((product) => (
+                    <div key={product.id} className="flex justify-between items-center p-2 bg-white rounded">
+                      <span className="font-medium">{product.name}</span>
+                      <Badge variant="destructive">{product.stockQuantity} remaining</Badge>
+                    </div>
+                  ))}
                 </div>
-                <Select 
-                  value={statusFilter} 
-                  onValueChange={setStatusFilter}
-                >
-                  <SelectTrigger className="w-full sm:w-40">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Items</SelectItem>
-                    <SelectItem value="in-stock">In Stock</SelectItem>
-                    <SelectItem value="low-stock">Low Stock</SelectItem>
-                    <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Inventory Overview Stats */}
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{products.length}</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">In Stock</CardTitle>
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {products.filter(p => p.stockQuantity > stockThreshold).length}
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">
+                  {lowStockProducts.length}
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+                <X className="h-4 w-4 text-red-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {products.filter(p => p.stockQuantity === 0).length}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Inventory Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Inventory</CardTitle>
+              <CardDescription>
+                View and manage stock levels for all products. Changes sync automatically with Enhanced Products.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Product</TableHead>
+                    <TableHead>Product Name</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead>Category</TableHead>
-                    <TableHead>Stock Level</TableHead>
-                    <TableHead>Min. Stock</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Stock Quantity</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Location</TableHead>
                     <TableHead>Last Updated</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentItems.map((item) => (
-                    <TableRow key={item.id}>
+                  {products.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell>{product.sku || 'N/A'}</TableCell>
+                      <TableCell>{product.category}</TableCell>
+                      <TableCell>₹{product.price}</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-3">
-                          <img 
-                            src={item.imageUrl} 
-                            alt={item.name} 
-                            className="w-10 h-10 rounded-md object-cover" 
-                          />
-                          <span className="font-medium">{item.name}</span>
-                        </div>
+                        {editingProduct === product.id ? (
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              type="number"
+                              value={stockInput}
+                              onChange={(e) => setStockInput(e.target.value)}
+                              className="w-20"
+                              min="0"
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => handleStockSave(product.id)}
+                            >
+                              <Save className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={cancelStockEdit}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <span>{product.stockQuantity}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleStockEdit(product)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
                       </TableCell>
-                      <TableCell>{item.sku}</TableCell>
-                      <TableCell>{item.category}</TableCell>
+                      <TableCell>{getStockStatus(product.stockQuantity)}</TableCell>
                       <TableCell>
-                        <div className="w-24">
-                          <Progress value={getStockLevel(item.stockQuantity, item.minStockLevel)} className="h-2" />
-                          <div className="text-xs mt-1 text-right">{item.stockQuantity} units</div>
-                        </div>
+                        {new Date(product.updatedAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>{item.minStockLevel}</TableCell>
                       <TableCell>
-                        {getStockStatusBadge(item.status)}
-                      </TableCell>
-                      <TableCell>{item.location}</TableCell>
-                      <TableCell>{item.lastUpdated}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => openUpdateDialog(item)}
-                          >
-                            Update Stock
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => openAlertDialog(item)}
-                          >
-                            Set Alert
-                          </Button>
-                        </div>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              Validate Stock
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Stock Validation - {product.name}</DialogTitle>
+                              <DialogDescription>
+                                Test stock availability for order processing
+                              </DialogDescription>
+                            </DialogHeader>
+                            <StockValidationDialog 
+                              product={product} 
+                              validateStock={validateStock} 
+                            />
+                          </DialogContent>
+                        </Dialog>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AdminLayout>
+    </AdminAuthWrapper>
+  );
+}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center mt-6">
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+// Stock Validation Dialog Component
+function StockValidationDialog({ 
+  product, 
+  validateStock 
+}: { 
+  product: Product; 
+  validateStock: (productId: number, quantity: number) => Promise<any>; 
+}) {
+  const [testQuantity, setTestQuantity] = useState(1);
+  const [validationResult, setValidationResult] = useState<any>(null);
+  const [isValidating, setIsValidating] = useState(false);
+
+  const handleValidation = async () => {
+    setIsValidating(true);
+    const result = await validateStock(product.id, testQuantity);
+    setValidationResult(result);
+    setIsValidating(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-2">
+        <Label htmlFor="test-quantity">Test Quantity</Label>
+        <Input
+          id="test-quantity"
+          type="number"
+          value={testQuantity}
+          onChange={(e) => setTestQuantity(Number(e.target.value))}
+          min="1"
+        />
       </div>
-
-      {/* Update Stock Dialog */}
-      <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Update Stock Quantity</DialogTitle>
-            <DialogDescription>
-              Adjust the current stock quantity for this product.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedProduct && (
-            <div className="space-y-4 py-2">
-              <div className="flex items-center gap-3">
-                <img 
-                  src={selectedProduct.imageUrl} 
-                  alt={selectedProduct.name} 
-                  className="w-12 h-12 rounded-md object-cover" 
-                />
-                <div>
-                  <p className="font-medium">{selectedProduct.name}</p>
-                  <p className="text-sm text-muted-foreground">SKU: {selectedProduct.sku}</p>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="stock-quantity">Current Stock Quantity</Label>
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => setUpdateQuantity(Math.max(0, updateQuantity - 1))}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <Input 
-                    id="stock-quantity"
-                    type="number" 
-                    value={updateQuantity} 
-                    onChange={(e) => setUpdateQuantity(Math.max(0, parseInt(e.target.value) || 0))} 
-                    className="text-center" 
-                  />
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => setUpdateQuantity(updateQuantity + 1)}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium">Stock Status:</p>
-                <div className="mt-1">
-                  {updateQuantity <= 0 ? (
-                    <Badge variant="outline" className="bg-red-100 text-red-800">Out of Stock</Badge>
-                  ) : updateQuantity < selectedProduct.minStockLevel ? (
-                    <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Low Stock</Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-green-100 text-green-800">In Stock</Badge>
-                  )}
-                </div>
-              </div>
+      
+      <Button onClick={handleValidation} disabled={isValidating}>
+        {isValidating ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Validating...
+          </>
+        ) : (
+          'Validate Stock'
+        )}
+      </Button>
+      
+      {validationResult && (
+        <div className="p-4 border rounded-lg">
+          <h4 className="font-semibold mb-2">Validation Result</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span>Current Stock:</span>
+              <span>{validationResult.currentStock}</span>
             </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsUpdateDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateQuantity}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Set Alert Level Dialog */}
-      <Dialog open={isAlertDialogOpen} onOpenChange={setIsAlertDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Set Low Stock Alert</DialogTitle>
-            <DialogDescription>
-              Set the minimum stock level at which you want to be alerted.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedProduct && (
-            <div className="space-y-4 py-2">
-              <div className="flex items-center gap-3">
-                <img 
-                  src={selectedProduct.imageUrl} 
-                  alt={selectedProduct.name} 
-                  className="w-12 h-12 rounded-md object-cover" 
-                />
-                <div>
-                  <p className="font-medium">{selectedProduct.name}</p>
-                  <p className="text-sm text-muted-foreground">Current Stock: {selectedProduct.stockQuantity} units</p>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="min-stock">Minimum Stock Level</Label>
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => setMinStockLevel(Math.max(1, minStockLevel - 1))}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <Input 
-                    id="min-stock"
-                    type="number" 
-                    value={minStockLevel} 
-                    onChange={(e) => setMinStockLevel(Math.max(1, parseInt(e.target.value) || 1))} 
-                    className="text-center" 
-                  />
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => setMinStockLevel(minStockLevel + 1)}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium">Alert Status:</p>
-                <div className="mt-1">
-                  {selectedProduct.stockQuantity < minStockLevel ? (
-                    <div className="flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1 text-yellow-600" />
-                      <span className="text-yellow-800">Will trigger low stock alert</span>
-                    </div>
-                  ) : (
-                    <span className="text-green-600">Stock level is above minimum</span>
-                  )}
-                </div>
-              </div>
+            <div className="flex justify-between">
+              <span>Requested Quantity:</span>
+              <span>{validationResult.requestedQuantity}</span>
             </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAlertDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateMinStock}>
-              Save Alert Level
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </AdminLayout>
+            <div className="flex justify-between">
+              <span>Available:</span>
+              <span className={validationResult.available ? 'text-green-600' : 'text-red-600'}>
+                {validationResult.available ? 'Yes' : 'No'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
