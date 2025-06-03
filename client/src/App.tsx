@@ -39,6 +39,7 @@ import AdminTeamMembers from "@/pages/admin/team-members";
 
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { SiteProvider } from "@/context/SiteContext";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -70,33 +71,35 @@ function App() {
               {/* Main Store Routes - Wrapped in Layout */}
               <Route>
                 {() => (
-                  <Layout>
-                    <Switch>
-                      <Route path="/" component={Home} />
-                      <Route path="/products" component={AllProducts} />
-                      <Route path="/products/:id" component={ProductDetail} />
-                      <Route path="/farmers" component={AllFarmers} />
-                      <Route path="/checkout" component={Checkout} />
-                      <Route path="/our-story" component={OurStory} />
-                      <Route path="/our-process" component={OurProcess} />
-                      <Route path="/contact" component={Contact} />
-                      <Route path="/login" component={Login} />
-                      <Route path="/register" component={Register} />
-                      <Route path="/account" component={Account} />
-                      <Route path="/order-history" component={OrderHistory} />
-                      <Route path="/payment" component={Payment} />
-                      <Route path="/payment-success" component={PaymentSuccess} />
-                      
-                      {/* Customer Care Pages */}
-                      <Route path="/faqs" component={FAQs} />
-                      <Route path="/shipping-returns" component={ShippingReturns} />
-                      <Route path="/track-order" component={TrackOrder} />
-                      <Route path="/privacy-policy" component={PrivacyPolicy} />
-                      
-                      {/* 404 Route */}
-                      <Route component={NotFound} />
-                    </Switch>
-                  </Layout>
+                  <SiteProvider>
+                    <Layout>
+                      <Switch>
+                        <Route path="/" component={Home} />
+                        <Route path="/products" component={AllProducts} />
+                        <Route path="/products/:id" component={ProductDetail} />
+                        <Route path="/farmers" component={AllFarmers} />
+                        <Route path="/checkout" component={Checkout} />
+                        <Route path="/our-story" component={OurStory} />
+                        <Route path="/our-process" component={OurProcess} />
+                        <Route path="/contact" component={Contact} />
+                        <Route path="/login" component={Login} />
+                        <Route path="/register" component={Register} />
+                        <Route path="/account" component={Account} />
+                        <Route path="/order-history" component={OrderHistory} />
+                        <Route path="/payment" component={Payment} />
+                        <Route path="/payment-success" component={PaymentSuccess} />
+                        
+                        {/* Customer Care Pages */}
+                        <Route path="/faqs" component={FAQs} />
+                        <Route path="/shipping-returns" component={ShippingReturns} />
+                        <Route path="/track-order" component={TrackOrder} />
+                        <Route path="/privacy-policy" component={PrivacyPolicy} />
+                        
+                        {/* 404 Route */}
+                        <Route component={NotFound} />
+                      </Switch>
+                    </Layout>
+                  </SiteProvider>
                 )}
               </Route>
             </Switch>

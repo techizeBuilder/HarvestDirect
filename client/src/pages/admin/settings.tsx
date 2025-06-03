@@ -1,639 +1,439 @@
-import { useState } from 'react';
-import { z } from 'zod';
+import React from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import AdminLayout from '@/components/admin/AdminLayout';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+import { z } from 'zod';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from '@/components/ui/form';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  User, 
-  Lock, 
-  Building, 
-  Mail, 
-  Phone, 
-  Globe, 
-  MapPin,
-  Facebook,
-  Twitter,
-  Instagram,
-  Youtube,
-  Smartphone,
-  Upload
-} from 'lucide-react';
+import { Save, Store, Globe } from 'lucide-react';
+import AdminLayout from '@/components/admin/AdminLayout';
 
-// Schema for password change form
-const passwordSchema = z
-  .object({
-    currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z.string().min(6, 'Password must be at least 6 characters'),
-    confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
+interface SiteSetting {
+  id: number;
+  key: string;
+  value: string | null;
+  type: string;
+  description: string | null;
+  updatedAt: string;
+}
 
-// Schema for store information form
-const storeInfoSchema = z.object({
-  siteName: z.string().min(1, 'Site name is required'),
-  siteTagline: z.string().optional(),
-  email: z.string().email('Please enter a valid email address'),
-  phone: z.string().min(1, 'Phone number is required'),
-  address: z.string().min(1, 'Address is required'),
-  city: z.string().min(1, 'City is required'),
-  state: z.string().min(1, 'State is required'),
-  zipCode: z.string().min(1, 'Zip code is required'),
-  country: z.string().min(1, 'Country is required'),
+const settingsSchema = z.object({
+  // Site Information
+  site_name: z.string().min(1, 'Site name is required'),
+  site_tagline: z.string().min(1, 'Site tagline is required'),
+  site_logo: z.string().optional(),
+  
+  // Store Information
+  store_email: z.string().email('Valid email is required'),
+  store_phone: z.string().min(1, 'Phone number is required'),
+  store_address: z.string().min(1, 'Address is required'),
+  store_city: z.string().min(1, 'City is required'),
+  store_state: z.string().min(1, 'State is required'),
+  store_zip: z.string().min(1, 'ZIP code is required'),
+  store_country: z.string().min(1, 'Country is required'),
+  
+  // Social Media Links
+  social_facebook: z.string().url('Valid URL required').optional().or(z.literal('')),
+  social_instagram: z.string().url('Valid URL required').optional().or(z.literal('')),
+  social_twitter: z.string().url('Valid URL required').optional().or(z.literal('')),
+  social_linkedin: z.string().url('Valid URL required').optional().or(z.literal('')),
+  social_youtube: z.string().url('Valid URL required').optional().or(z.literal('')),
+  social_website: z.string().url('Valid URL required').optional().or(z.literal(''))
 });
 
-// Schema for social media form
-const socialMediaSchema = z.object({
-  facebook: z.string().url('Please enter a valid URL').or(z.string().length(0)),
-  twitter: z.string().url('Please enter a valid URL').or(z.string().length(0)),
-  instagram: z.string().url('Please enter a valid URL').or(z.string().length(0)),
-  youtube: z.string().url('Please enter a valid URL').or(z.string().length(0)),
-});
+type SettingsFormData = z.infer<typeof settingsSchema>;
 
 export default function AdminSettings() {
   const { toast } = useToast();
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [storeLogoPreview, setStoreLogoPreview] = useState<string | null>(null);
 
-  // Initialize forms
-  const passwordForm = useForm<z.infer<typeof passwordSchema>>({
-    resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
+  const { data: settings = [], isLoading } = useQuery({
+    queryKey: ['/api/admin/site-settings'],
+    queryFn: () => apiRequest('/api/admin/site-settings'),
+  });
+
+  // Transform settings array to object for form
+  const settingsMap = React.useMemo(() => {
+    return settings.reduce((acc: Record<string, string>, setting: SiteSetting) => {
+      acc[setting.key] = setting.value || '';
+      return acc;
+    }, {});
+  }, [settings]);
+
+  const form = useForm<SettingsFormData>({
+    resolver: zodResolver(settingsSchema),
+    defaultValues: settingsMap,
+  });
+
+  React.useEffect(() => {
+    if (settingsMap && Object.keys(settingsMap).length > 0) {
+      form.reset(settingsMap);
+    }
+  }, [settingsMap, form]);
+
+  const updateSettingMutation = useMutation({
+    mutationFn: (setting: { key: string; value: string; type: string; description?: string }) =>
+      apiRequest('/api/admin/site-settings', {
+        method: 'POST',
+        body: JSON.stringify(setting),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/site-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/site-settings'] });
     },
   });
 
-  const storeInfoForm = useForm<z.infer<typeof storeInfoSchema>>({
-    resolver: zodResolver(storeInfoSchema),
-    defaultValues: {
-      siteName: 'Farm to Table',
-      siteTagline: 'Fresh products from farms to your table',
-      email: 'contact@farmtotable.com',
-      phone: '(555) 123-4567',
-      address: '123 Harvest Lane',
-      city: 'Farmington',
-      state: 'CA',
-      zipCode: '90210',
-      country: 'United States',
-    },
-  });
+  const onSubmit = async (data: SettingsFormData) => {
+    try {
+      const updates = Object.entries(data).map(([key, value]) => ({
+        key,
+        value: value || '',
+        type: 'text',
+        description: getSettingDescription(key)
+      }));
 
-  const socialMediaForm = useForm<z.infer<typeof socialMediaSchema>>({
-    resolver: zodResolver(socialMediaSchema),
-    defaultValues: {
-      facebook: 'https://facebook.com/farmtotable',
-      twitter: 'https://twitter.com/farmtotable',
-      instagram: 'https://instagram.com/farmtotable',
-      youtube: 'https://youtube.com/farmtotable',
-    },
-  });
+      await Promise.all(
+        updates.map(setting => updateSettingMutation.mutateAsync(setting))
+      );
 
-  // Submit handlers
-  const onPasswordSubmit = (data: z.infer<typeof passwordSchema>) => {
-    setIsUpdating(true);
-    
-    // In a real application, you would call your API to update the password
-    setTimeout(() => {
-      setIsUpdating(false);
       toast({
-        title: 'Password updated',
-        description: 'Your admin password has been updated successfully.',
+        title: 'Settings Updated',
+        description: 'Store settings have been saved successfully.',
       });
-      
-      passwordForm.reset({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      });
-    }, 1000);
-  };
-
-  const onStoreInfoSubmit = (data: z.infer<typeof storeInfoSchema>) => {
-    setIsUpdating(true);
-    
-    // In a real application, you would call your API to update the store information
-    setTimeout(() => {
-      setIsUpdating(false);
+    } catch (error) {
       toast({
-        title: 'Store information updated',
-        description: 'Your store information has been updated successfully.',
-      });
-    }, 1000);
-  };
-
-  const onSocialMediaSubmit = (data: z.infer<typeof socialMediaSchema>) => {
-    setIsUpdating(true);
-    
-    // In a real application, you would call your API to update the social media links
-    setTimeout(() => {
-      setIsUpdating(false);
-      toast({
-        title: 'Social media links updated',
-        description: 'Your social media links have been updated successfully.',
-      });
-    }, 1000);
-  };
-
-  // Handle logo upload
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    
-    if (file) {
-      // In a real application, you would upload the file to your server or CDN
-      // For this demo, we'll just display a preview
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setStoreLogoPreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-      
-      toast({
-        title: 'Logo updated',
-        description: 'Your store logo has been updated successfully.',
+        title: 'Error',
+        description: 'Failed to update settings. Please try again.',
+        variant: 'destructive',
       });
     }
   };
 
+  const getSettingDescription = (key: string): string => {
+    const descriptions: Record<string, string> = {
+      site_name: 'Website name',
+      site_tagline: 'Website tagline',
+      site_logo: 'Website logo URL',
+      store_email: 'Store contact email',
+      store_phone: 'Store contact phone',
+      store_address: 'Store address',
+      store_city: 'Store city',
+      store_state: 'Store state',
+      store_zip: 'Store zip code',
+      store_country: 'Store country',
+      social_facebook: 'Facebook page URL',
+      social_instagram: 'Instagram profile URL',
+      social_twitter: 'Twitter profile URL',
+      social_linkedin: 'LinkedIn company page URL',
+      social_youtube: 'YouTube channel URL',
+      social_website: 'Official website URL'
+    };
+    return descriptions[key] || '';
+  };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">Manage your store settings and configurations</p>
+      <div className="container mx-auto p-6 max-w-4xl">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Store Settings</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage your store information and social media links
+          </p>
         </div>
 
-        <Tabs defaultValue="account" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="store">Store Information</TabsTrigger>
-            <TabsTrigger value="social">Social Media</TabsTrigger>
-          </TabsList>
-          
-          {/* Account Settings */}
-          <TabsContent value="account" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Change Password</CardTitle>
-                <CardDescription>
-                  Update your admin account password
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...passwordForm}>
-                  <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-                    <FormField
-                      control={passwordForm.control}
-                      name="currentPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Current Password</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Lock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                              <Input type="password" className="pl-8" {...field} />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={passwordForm.control}
-                      name="newPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>New Password</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Lock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                              <Input type="password" className="pl-8" {...field} />
-                            </div>
-                          </FormControl>
-                          <FormDescription>
-                            Password must be at least 6 characters long.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={passwordForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Confirm New Password</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Lock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                              <Input type="password" className="pl-8" {...field} />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <Button type="submit" disabled={isUpdating}>
-                      {isUpdating ? 'Updating...' : 'Update Password'}
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Admin Account</CardTitle>
-                <CardDescription>
-                  Manage your admin account details
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-primary/10 p-4 rounded-full">
-                      <User className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Admin</p>
-                      <p className="text-sm text-muted-foreground">admin@farmtotable.com</p>
-                    </div>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <p className="text-sm font-medium mb-1">Account Security</p>
-                    <p className="text-sm text-muted-foreground">
-                      It is recommended to use a strong password and change it regularly.
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Site Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                Site Information
+              </CardTitle>
+              <CardDescription>
+                Basic information about your website
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="site_name">Site Name</Label>
+                  <Input
+                    id="site_name"
+                    {...form.register('site_name')}
+                    placeholder="HarvestDirect"
+                  />
+                  {form.formState.errors.site_name && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.site_name.message}
                     </p>
-                  </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
+                <div>
+                  <Label htmlFor="site_tagline">Site Tagline</Label>
+                  <Input
+                    id="site_tagline"
+                    {...form.register('site_tagline')}
+                    placeholder="Fresh from Farm to Your Table"
+                  />
+                  {form.formState.errors.site_tagline && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.site_tagline.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="site_logo">Site Logo URL (Optional)</Label>
+                <Input
+                  id="site_logo"
+                  {...form.register('site_logo')}
+                  placeholder="https://example.com/logo.png"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Store Information */}
-          <TabsContent value="store" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Store Information</CardTitle>
-                <CardDescription>
-                  Update your store details and contact information
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...storeInfoForm}>
-                  <form onSubmit={storeInfoForm.handleSubmit(onStoreInfoSubmit)} className="space-y-6">
-                    <div className="space-y-4">
-                      <div className="flex flex-col md:flex-row gap-6">
-                        <div className="md:w-1/3 space-y-4">
-                          <h3 className="text-lg font-medium">Store Logo</h3>
-                          <div className="border rounded-lg p-4 text-center">
-                            {storeLogoPreview ? (
-                              <div className="space-y-4">
-                                <img 
-                                  src={storeLogoPreview} 
-                                  alt="Store Logo" 
-                                  className="max-h-40 mx-auto" 
-                                />
-                                <Button 
-                                  variant="outline" 
-                                  onClick={() => setStoreLogoPreview(null)}
-                                >
-                                  Remove Logo
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="space-y-4">
-                                <div className="w-40 h-40 mx-auto bg-muted rounded-lg flex items-center justify-center">
-                                  <Building className="h-10 w-10 text-muted-foreground" />
-                                </div>
-                                
-                                <div>
-                                  <label htmlFor="logo-upload" className="cursor-pointer">
-                                    <div className="flex items-center justify-center gap-2 text-primary">
-                                      <Upload className="h-4 w-4" />
-                                      <span>Upload Logo</span>
-                                    </div>
-                                    <input
-                                      id="logo-upload"
-                                      type="file"
-                                      accept="image/*"
-                                      className="hidden"
-                                      onChange={handleLogoUpload}
-                                    />
-                                  </label>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Recommended size: 200x200px. Max file size: 2MB.
-                          </p>
-                        </div>
-                        
-                        <div className="md:w-2/3 space-y-4">
-                          <h3 className="text-lg font-medium">Store Details</h3>
-                          
-                          <FormField
-                            control={storeInfoForm.control}
-                            name="siteName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Site Name</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={storeInfoForm.control}
-                            name="siteTagline"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Site Tagline</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormDescription>
-                                  A short description of your store that appears in the header.
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-                      
-                      <Separator className="my-6" />
-                      
-                      <h3 className="text-lg font-medium">Contact Information</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={storeInfoForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email Address</FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <Mail className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                  <Input className="pl-8" {...field} />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={storeInfoForm.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Phone Number</FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <Phone className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                  <Input className="pl-8" {...field} />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <Separator className="my-6" />
-                      
-                      <h3 className="text-lg font-medium">Store Address</h3>
-                      <div className="space-y-4">
-                        <FormField
-                          control={storeInfoForm.control}
-                          name="address"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Street Address</FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <MapPin className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                  <Input className="pl-8" {...field} />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={storeInfoForm.control}
-                            name="city"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>City</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={storeInfoForm.control}
-                            name="state"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>State/Province</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={storeInfoForm.control}
-                            name="zipCode"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>ZIP/Postal Code</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={storeInfoForm.control}
-                            name="country"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Country</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Button type="submit" disabled={isUpdating}>
-                      {isUpdating ? 'Saving...' : 'Save Store Information'}
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          {/* Social Media */}
-          <TabsContent value="social">
-            <Card>
-              <CardHeader>
-                <CardTitle>Social Media Links</CardTitle>
-                <CardDescription>
-                  Connect your store with social media platforms
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...socialMediaForm}>
-                  <form onSubmit={socialMediaForm.handleSubmit(onSocialMediaSubmit)} className="space-y-6">
-                    <div className="space-y-4">
-                      <FormField
-                        control={socialMediaForm.control}
-                        name="facebook"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Facebook</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Facebook className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input 
-                                  placeholder="https://facebook.com/yourstorename" 
-                                  className="pl-8" 
-                                  {...field} 
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={socialMediaForm.control}
-                        name="twitter"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Twitter</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Twitter className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input 
-                                  placeholder="https://twitter.com/yourstorename" 
-                                  className="pl-8" 
-                                  {...field} 
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={socialMediaForm.control}
-                        name="instagram"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Instagram</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Instagram className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input 
-                                  placeholder="https://instagram.com/yourstorename" 
-                                  className="pl-8" 
-                                  {...field} 
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={socialMediaForm.control}
-                        name="youtube"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>YouTube</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Youtube className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input 
-                                  placeholder="https://youtube.com/yourstorename" 
-                                  className="pl-8" 
-                                  {...field} 
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <Button type="submit" disabled={isUpdating}>
-                      {isUpdating ? 'Saving...' : 'Save Social Media Links'}
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Store className="h-5 w-5" />
+                Store Information
+              </CardTitle>
+              <CardDescription>
+                Contact details and address information
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="store_email">Email</Label>
+                  <Input
+                    id="store_email"
+                    type="email"
+                    {...form.register('store_email')}
+                    placeholder="contact@harvestdirect.com"
+                  />
+                  {form.formState.errors.store_email && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.store_email.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="store_phone">Phone</Label>
+                  <Input
+                    id="store_phone"
+                    {...form.register('store_phone')}
+                    placeholder="+1 (555) 123-4567"
+                  />
+                  {form.formState.errors.store_phone && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.store_phone.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="store_address">Address</Label>
+                <Input
+                  id="store_address"
+                  {...form.register('store_address')}
+                  placeholder="123 Harvest Lane"
+                />
+                {form.formState.errors.store_address && (
+                  <p className="text-sm text-destructive mt-1">
+                    {form.formState.errors.store_address.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="store_city">City</Label>
+                  <Input
+                    id="store_city"
+                    {...form.register('store_city')}
+                    placeholder="Farmington"
+                  />
+                  {form.formState.errors.store_city && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.store_city.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="store_state">State</Label>
+                  <Input
+                    id="store_state"
+                    {...form.register('store_state')}
+                    placeholder="California"
+                  />
+                  {form.formState.errors.store_state && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.store_state.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="store_zip">ZIP Code</Label>
+                  <Input
+                    id="store_zip"
+                    {...form.register('store_zip')}
+                    placeholder="90210"
+                  />
+                  {form.formState.errors.store_zip && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.store_zip.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="store_country">Country</Label>
+                <Input
+                  id="store_country"
+                  {...form.register('store_country')}
+                  placeholder="United States"
+                />
+                {form.formState.errors.store_country && (
+                  <p className="text-sm text-destructive mt-1">
+                    {form.formState.errors.store_country.message}
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Social Media Links */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Social Media Links</CardTitle>
+              <CardDescription>
+                Connect your social media profiles (all optional)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="social_facebook">Facebook</Label>
+                  <Input
+                    id="social_facebook"
+                    {...form.register('social_facebook')}
+                    placeholder="https://facebook.com/harvestdirect"
+                  />
+                  {form.formState.errors.social_facebook && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.social_facebook.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="social_instagram">Instagram</Label>
+                  <Input
+                    id="social_instagram"
+                    {...form.register('social_instagram')}
+                    placeholder="https://instagram.com/harvestdirect"
+                  />
+                  {form.formState.errors.social_instagram && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.social_instagram.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="social_twitter">Twitter</Label>
+                  <Input
+                    id="social_twitter"
+                    {...form.register('social_twitter')}
+                    placeholder="https://twitter.com/harvestdirect"
+                  />
+                  {form.formState.errors.social_twitter && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.social_twitter.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="social_linkedin">LinkedIn</Label>
+                  <Input
+                    id="social_linkedin"
+                    {...form.register('social_linkedin')}
+                    placeholder="https://linkedin.com/company/harvestdirect"
+                  />
+                  {form.formState.errors.social_linkedin && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.social_linkedin.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="social_youtube">YouTube</Label>
+                  <Input
+                    id="social_youtube"
+                    {...form.register('social_youtube')}
+                    placeholder="https://youtube.com/@harvestdirect"
+                  />
+                  {form.formState.errors.social_youtube && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.social_youtube.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="social_website">Website</Label>
+                  <Input
+                    id="social_website"
+                    {...form.register('social_website')}
+                    placeholder="https://harvestdirect.com"
+                  />
+                  {form.formState.errors.social_website && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.social_website.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end">
+            <Button 
+              type="submit" 
+              disabled={updateSettingMutation.isPending}
+              className="min-w-[120px]"
+            >
+              {updateSettingMutation.isPending ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Settings
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
     </AdminLayout>
   );
