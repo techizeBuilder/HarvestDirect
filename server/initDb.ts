@@ -1,7 +1,8 @@
 import { db } from './db';
-import { products, farmers, testimonials } from '@shared/schema';
+import { products, farmers, testimonials, discounts } from '@shared/schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
+import { discountData } from './discountData';
 import { sql } from 'drizzle-orm';
 
 /**
@@ -74,6 +75,16 @@ export async function initializeDatabase() {
       await db.insert(testimonials).values(testimonialsData);
     } else {
       console.log(`Found ${existingTestimonials[0].count} existing testimonials, skipping testimonial seeding.`);
+    }
+    
+    // Add discounts if they don't exist
+    const existingDiscounts = await db.select({ count: sql`count(*)` }).from(discounts);
+    
+    if (Number(existingDiscounts[0].count) === 0) {
+      console.log('Adding discount codes...');
+      await db.insert(discounts).values(discountData);
+    } else {
+      console.log(`Found ${existingDiscounts[0].count} existing discounts, skipping discount seeding.`);
     }
     
     console.log('Database initialization completed successfully!');

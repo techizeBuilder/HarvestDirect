@@ -1,921 +1,821 @@
 import { useState } from 'react';
-import AdminLayout from '@/components/admin/AdminLayout';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Edit,
-  Trash2,
-  Calendar,
-  Tag
-} from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon, Plus, Trash2, Edit, Copy, Eye } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { apiRequest } from '@/lib/queryClient';
+import AdminLayout from '@/components/admin/AdminLayout';
 
-// Sample discount data for demonstration
-const SAMPLE_DISCOUNTS = [
-  {
-    id: 1,
-    code: 'WELCOME20',
-    type: 'percentage',
-    value: 20,
-    description: 'Welcome discount for new customers',
-    minPurchase: 50,
-    usageLimit: 1,
-    perUser: true,
-    startDate: '2025-05-01',
-    endDate: '2025-06-30',
-    status: 'active',
-    used: 45,
-    applicableProducts: 'all',
-    applicableCategories: 'all'
-  },
-  {
-    id: 2,
-    code: 'SUMMER10',
-    type: 'percentage',
-    value: 10,
-    description: 'Summer sale discount',
-    minPurchase: 0,
-    usageLimit: 0,
-    perUser: false,
-    startDate: '2025-06-01',
-    endDate: '2025-08-31',
-    status: 'active',
-    used: 78,
-    applicableProducts: 'all',
-    applicableCategories: 'all'
-  },
-  {
-    id: 3,
-    code: 'FREESHIPPING',
-    type: 'shipping',
-    value: 100,
-    description: 'Free shipping on all orders',
-    minPurchase: 75,
-    usageLimit: 0,
-    perUser: false,
-    startDate: '2025-05-15',
-    endDate: '2025-06-15',
-    status: 'active',
-    used: 120,
-    applicableProducts: 'all',
-    applicableCategories: 'all'
-  },
-  {
-    id: 4,
-    code: 'COFFEELOVER',
-    type: 'percentage',
-    value: 15,
-    description: 'Discount on coffee products',
-    minPurchase: 0,
-    usageLimit: 0,
-    perUser: false,
-    startDate: '2025-04-01',
-    endDate: '2025-05-15',
-    status: 'expired',
-    used: 93,
-    applicableProducts: 'selected',
-    applicableCategories: 'Coffee & Tea'
-  },
-  {
-    id: 5,
-    code: 'FLAT25',
-    type: 'fixed',
-    value: 25,
-    description: 'Flat discount on orders above $100',
-    minPurchase: 100,
-    usageLimit: 1,
-    perUser: true,
-    startDate: '2025-07-01',
-    endDate: '2025-07-31',
-    status: 'scheduled',
-    used: 0,
-    applicableProducts: 'all',
-    applicableCategories: 'all'
-  }
-];
+// Form validation schema
+const discountFormSchema = z.object({
+  code: z.string().min(3, 'Code must be at least 3 characters').max(20, 'Code must be at most 20 characters'),
+  type: z.enum(['percentage', 'fixed', 'shipping']),
+  value: z.coerce.number().min(0, 'Value must be positive'),
+  description: z.string().min(5, 'Description must be at least 5 characters'),
+  minPurchase: z.coerce.number().min(0, 'Minimum purchase must be 0 or greater').optional(),
+  usageLimit: z.coerce.number().min(0, 'Usage limit must be 0 or greater').optional(),
+  perUser: z.boolean().optional(),
+  startDate: z.date(),
+  endDate: z.date(),
+  status: z.enum(['active', 'scheduled', 'expired', 'disabled']),
+  applicableProducts: z.string().optional(),
+  applicableCategories: z.string().optional(),
+});
 
-// Product categories for demonstration
-const PRODUCT_CATEGORIES = [
-  'Coffee & Tea',
-  'Dairy',
-  'Spices',
-  'Sweeteners',
-  'Oils',
-  'Snacks',
-  'Beverages'
-];
+type DiscountFormData = z.infer<typeof discountFormSchema>;
+
+interface Discount {
+  id: number;
+  code: string;
+  type: 'percentage' | 'fixed' | 'shipping';
+  value: number;
+  description: string;
+  minPurchase: number | null;
+  usageLimit: number | null;
+  perUser: boolean | null;
+  used: number | null;
+  startDate: string;
+  endDate: string;
+  status: 'active' | 'scheduled' | 'expired' | 'disabled';
+  applicableProducts: string | null;
+  applicableCategories: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function AdminDiscounts() {
-  const [discounts, setDiscounts] = useState(SAMPLE_DISCOUNTS);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedDiscount, setSelectedDiscount] = useState<any | null>(null);
-  const [formType, setFormType] = useState('percentage');
-  const [formData, setFormData] = useState({
-    code: '',
-    type: 'percentage',
-    value: 10,
-    description: '',
-    minPurchase: 0,
-    usageLimit: 0,
-    perUser: false,
-    startDate: '',
-    endDate: '',
-    applicableProducts: 'all',
-    applicableCategories: 'all'
-  });
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingDiscount, setEditingDiscount] = useState<Discount | null>(null);
+  const [viewingDiscount, setViewingDiscount] = useState<Discount | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   
-  const itemsPerPage = 10;
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Filter discounts based on search term and status
-  const filteredDiscounts = discounts.filter(discount => {
-    const matchesSearch = 
-      discount.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      discount.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || discount.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+  // Fetch discounts
+  const { data: discounts = [], isLoading, error } = useQuery({
+    queryKey: ['/api/admin/discounts'],
+    queryFn: () => apiRequest('/api/admin/discounts'),
   });
 
-  // Pagination calculations
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredDiscounts.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredDiscounts.length / itemsPerPage);
+  // Create discount mutation
+  const createDiscountMutation = useMutation({
+    mutationFn: (data: DiscountFormData) => apiRequest('/api/admin/discounts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/discounts'] });
+      setIsCreateModalOpen(false);
+      toast({
+        title: "Success",
+        description: "Discount created successfully",
+      });
+      form.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create discount",
+        variant: "destructive",
+      });
+    },
+  });
 
-  const openCreateDialog = () => {
-    // Set default form values for a new discount
-    const today = new Date().toISOString().split('T')[0];
-    const nextMonth = new Date();
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-    
-    setFormData({
+  // Update discount mutation
+  const updateDiscountMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<DiscountFormData> }) =>
+      apiRequest(`/api/admin/discounts/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/discounts'] });
+      setIsEditModalOpen(false);
+      setEditingDiscount(null);
+      toast({
+        title: "Success",
+        description: "Discount updated successfully",
+      });
+      editForm.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update discount",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete discount mutation
+  const deleteDiscountMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/admin/discounts/${id}`, {
+      method: 'DELETE',
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/discounts'] });
+      toast({
+        title: "Success",
+        description: "Discount deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete discount",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Create form
+  const form = useForm<DiscountFormData>({
+    resolver: zodResolver(discountFormSchema),
+    defaultValues: {
       code: '',
       type: 'percentage',
-      value: 10,
+      value: 0,
       description: '',
       minPurchase: 0,
       usageLimit: 0,
       perUser: false,
-      startDate: today,
-      endDate: nextMonth.toISOString().split('T')[0],
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      status: 'active',
       applicableProducts: 'all',
-      applicableCategories: 'all'
-    });
-    
-    setFormType('percentage');
-    setIsCreateDialogOpen(true);
+      applicableCategories: 'all',
+    },
+  });
+
+  // Edit form
+  const editForm = useForm<DiscountFormData>({
+    resolver: zodResolver(discountFormSchema),
+  });
+
+  const onCreateSubmit = (data: DiscountFormData) => {
+    createDiscountMutation.mutate(data);
   };
 
-  const openEditDialog = (discount: any) => {
-    setSelectedDiscount(discount);
-    setFormData({
+  const onEditSubmit = (data: DiscountFormData) => {
+    if (editingDiscount) {
+      updateDiscountMutation.mutate({ id: editingDiscount.id, data });
+    }
+  };
+
+  const handleEdit = (discount: Discount) => {
+    setEditingDiscount(discount);
+    editForm.reset({
       code: discount.code,
       type: discount.type,
       value: discount.value,
       description: discount.description,
-      minPurchase: discount.minPurchase,
-      usageLimit: discount.usageLimit,
-      perUser: discount.perUser,
-      startDate: discount.startDate,
-      endDate: discount.endDate,
-      applicableProducts: discount.applicableProducts,
-      applicableCategories: discount.applicableCategories
+      minPurchase: discount.minPurchase || 0,
+      usageLimit: discount.usageLimit || 0,
+      perUser: discount.perUser || false,
+      startDate: new Date(discount.startDate),
+      endDate: new Date(discount.endDate),
+      status: discount.status,
+      applicableProducts: discount.applicableProducts || 'all',
+      applicableCategories: discount.applicableCategories || 'all',
     });
-    
-    setFormType(discount.type);
-    setIsEditDialogOpen(true);
+    setIsEditModalOpen(true);
   };
 
-  const openDeleteDialog = (discount: any) => {
-    setSelectedDiscount(discount);
-    setIsDeleteDialogOpen(true);
+  const handleDelete = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this discount?')) {
+      deleteDiscountMutation.mutate(id);
+    }
   };
 
-  const handleCreateDiscount = () => {
-    // In a real application, you would call your API to create the discount
-    const newDiscount = {
-      id: Math.max(...discounts.map(d => d.id)) + 1,
-      code: formData.code,
-      type: formData.type,
-      value: formData.value,
-      description: formData.description,
-      minPurchase: formData.minPurchase,
-      usageLimit: formData.usageLimit,
-      perUser: formData.perUser,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      applicableProducts: formData.applicableProducts,
-      applicableCategories: formData.applicableCategories,
-      status: new Date(formData.startDate) > new Date() ? 'scheduled' : 'active',
-      used: 0
-    };
-    
-    setDiscounts([...discounts, newDiscount]);
-    setIsCreateDialogOpen(false);
-    
+  const handleView = (discount: Discount) => {
+    setViewingDiscount(discount);
+    setIsViewModalOpen(true);
+  };
+
+  const copyDiscountCode = (code: string) => {
+    navigator.clipboard.writeText(code);
     toast({
-      title: "Discount created",
-      description: `Discount code ${formData.code} has been created successfully.`,
+      title: "Copied",
+      description: `Discount code "${code}" copied to clipboard`,
     });
   };
 
-  const handleUpdateDiscount = () => {
-    if (selectedDiscount) {
-      // In a real application, you would call your API to update the discount
-      const updatedDiscounts = discounts.map(discount => {
-        if (discount.id === selectedDiscount.id) {
-          let status = discount.status;
-          const today = new Date();
-          const startDate = new Date(formData.startDate);
-          const endDate = new Date(formData.endDate);
-          
-          if (startDate > today) {
-            status = 'scheduled';
-          } else if (endDate < today) {
-            status = 'expired';
-          } else {
-            status = 'active';
-          }
-          
-          return {
-            ...discount,
-            code: formData.code,
-            type: formData.type,
-            value: formData.value,
-            description: formData.description,
-            minPurchase: formData.minPurchase,
-            usageLimit: formData.usageLimit,
-            perUser: formData.perUser,
-            startDate: formData.startDate,
-            endDate: formData.endDate,
-            applicableProducts: formData.applicableProducts,
-            applicableCategories: formData.applicableCategories,
-            status
-          };
-        }
-        return discount;
-      });
-      
-      setDiscounts(updatedDiscounts);
-      setIsEditDialogOpen(false);
-      
-      toast({
-        title: "Discount updated",
-        description: `Discount code ${formData.code} has been updated successfully.`,
-      });
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'active': return 'default';
+      case 'scheduled': return 'secondary';
+      case 'expired': return 'destructive';
+      case 'disabled': return 'outline';
+      default: return 'outline';
     }
   };
 
-  const handleDeleteDiscount = () => {
-    if (selectedDiscount) {
-      // In a real application, you would call your API to delete the discount
-      setDiscounts(discounts.filter(discount => discount.id !== selectedDiscount.id));
-      setIsDeleteDialogOpen(false);
-      
-      toast({
-        title: "Discount deleted",
-        description: `Discount code ${selectedDiscount.code} has been deleted.`,
-      });
+  const getTypeBadgeVariant = (type: string) => {
+    switch (type) {
+      case 'percentage': return 'default';
+      case 'fixed': return 'secondary';
+      case 'shipping': return 'outline';
+      default: return 'outline';
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    if (status === 'active') {
-      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Active</Badge>;
-    } else if (status === 'scheduled') {
-      return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Scheduled</Badge>;
-    } else {
-      return <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-100">Expired</Badge>;
+  const formatDiscountValue = (type: string, value: number) => {
+    switch (type) {
+      case 'percentage': return `${value}%`;
+      case 'fixed': return `₹${value}`;
+      case 'shipping': return 'Free Shipping';
+      default: return value.toString();
     }
   };
 
-  const handleFormChange = (field: string, value: any) => {
-    setFormData({
-      ...formData,
-      [field]: value
-    });
-  };
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading discounts...</div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-red-600">Error loading discounts</div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Discounts & Coupons</h1>
-            <p className="text-muted-foreground">Create and manage discount codes</p>
+            <h1 className="text-3xl font-bold tracking-tight">Discount Management</h1>
+            <p className="text-muted-foreground">
+              Create and manage discount codes and coupons
+            </p>
           </div>
-          <Button onClick={openCreateDialog}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Discount
-          </Button>
+          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Discount
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Discount</DialogTitle>
+                <DialogDescription>
+                  Create a new discount code or coupon for your customers
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onCreateSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="code"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Discount Code</FormLabel>
+                          <FormControl>
+                            <Input placeholder="SUMMER20" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Discount Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="percentage">Percentage</SelectItem>
+                              <SelectItem value="fixed">Fixed Amount</SelectItem>
+                              <SelectItem value="shipping">Free Shipping</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="value"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Value {form.watch('type') === 'percentage' ? '(%)' : '(₹)'}
+                          </FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="scheduled">Scheduled</SelectItem>
+                              <SelectItem value="disabled">Disabled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Describe your discount..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="minPurchase"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Minimum Purchase (₹)</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="usageLimit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Usage Limit (0 = unlimited)</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="perUser"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel>One per user</FormLabel>
+                          <div className="text-sm text-muted-foreground">
+                            Limit this discount to one use per customer
+                          </div>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="startDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Start Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) => date < new Date()}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="endDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>End Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) => date < new Date()}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsCreateModalOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={createDiscountMutation.isPending}>
+                      {createDiscountMutation.isPending ? 'Creating...' : 'Create Discount'}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        <Card>
-          <CardHeader className="py-4">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <CardTitle>Discount Codes</CardTitle>
-              <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search discounts..."
-                    className="pl-8"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <Select 
-                  value={statusFilter} 
-                  onValueChange={setStatusFilter}
-                >
-                  <SelectTrigger className="w-full sm:w-40">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Discounts</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="scheduled">Scheduled</SelectItem>
-                    <SelectItem value="expired">Expired</SelectItem>
-                  </SelectContent>
-                </Select>
+        {/* Statistics Cards */}
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Discounts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{discounts.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Discounts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {discounts.filter((d: Discount) => d.status === 'active').length}
               </div>
-            </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Scheduled Discounts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {discounts.filter((d: Discount) => d.status === 'scheduled').length}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Usage</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {discounts.reduce((sum: number, d: Discount) => sum + (d.used || 0), 0)}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Discounts Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>All Discounts</CardTitle>
+            <CardDescription>
+              Manage your discount codes and their settings
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Value</TableHead>
-                    <TableHead>Minimum Purchase</TableHead>
-                    <TableHead>Usage Limit</TableHead>
-                    <TableHead>Validity</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentItems.map((discount) => (
-                    <TableRow key={discount.id}>
-                      <TableCell className="font-medium">
-                        <div>
-                          <div className="font-mono">{discount.code}</div>
-                          <div className="text-xs text-muted-foreground mt-1">{discount.description}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {discount.type === 'percentage' ? 'Percentage' : 
-                         discount.type === 'fixed' ? 'Fixed Amount' : 'Free Shipping'}
-                      </TableCell>
-                      <TableCell>
-                        {discount.type === 'percentage' ? `${discount.value}%` : 
-                         discount.type === 'fixed' ? `$${discount.value.toFixed(2)}` : '100%'}
-                      </TableCell>
-                      <TableCell>
-                        {discount.minPurchase > 0 ? `$${discount.minPurchase.toFixed(2)}` : 'None'}
-                      </TableCell>
-                      <TableCell>
-                        {discount.usageLimit > 0 ? (
-                          <div>
-                            <div>{discount.used} / {discount.usageLimit}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {discount.perUser ? 'Per user' : 'Total'}
-                            </div>
-                          </div>
-                        ) : (
-                          'Unlimited'
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
-                          <div className="text-xs">
-                            <div>{discount.startDate}</div>
-                            <div>to {discount.endDate}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(discount.status)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => openEditDialog(discount)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => openDeleteDialog(discount)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <div className="space-y-4">
+              {discounts.map((discount: Discount) => (
+                <div key={discount.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-lg">{discount.code}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyDiscountCode(discount.code)}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Badge variant={getStatusBadgeVariant(discount.status)}>
+                        {discount.status}
+                      </Badge>
+                      <Badge variant={getTypeBadgeVariant(discount.type)}>
+                        {formatDiscountValue(discount.type, discount.value)}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{discount.description}</p>
+                    <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                      <span>Min: ₹{discount.minPurchase || 0}</span>
+                      <span>Used: {discount.used || 0}/{discount.usageLimit || '∞'}</span>
+                      <span>Valid until: {format(new Date(discount.endDate), 'MMM dd, yyyy')}</span>
+                      {discount.perUser && <span>One per user</span>}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleView(discount)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(discount)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(discount.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {discounts.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No discounts found. Create your first discount to get started.
+                </div>
+              )}
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center mt-6">
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
+        {/* Edit Modal */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Discount</DialogTitle>
+              <DialogDescription>
+                Update the discount details
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+                {/* Same form fields as create modal */}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Discount Code</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Discount Type</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="percentage">Percentage</SelectItem>
+                            <SelectItem value="fixed">Fixed Amount</SelectItem>
+                            <SelectItem value="shipping">Free Shipping</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="value"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Value {editForm.watch('type') === 'percentage' ? '(%)' : '(₹)'}
+                        </FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="scheduled">Scheduled</SelectItem>
+                            <SelectItem value="disabled">Disabled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={editForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditModalOpen(false)}
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    Cancel
                   </Button>
-                  <span className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRight className="h-4 w-4" />
+                  <Button type="submit" disabled={updateDiscountMutation.isPending}>
+                    {updateDiscountMutation.isPending ? 'Updating...' : 'Update Discount'}
                   </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* View Modal */}
+        <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Discount Details</DialogTitle>
+            </DialogHeader>
+            {viewingDiscount && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xl">{viewingDiscount.code}</span>
+                  <div className="space-x-2">
+                    <Badge variant={getStatusBadgeVariant(viewingDiscount.status)}>
+                      {viewingDiscount.status}
+                    </Badge>
+                    <Badge variant={getTypeBadgeVariant(viewingDiscount.type)}>
+                      {formatDiscountValue(viewingDiscount.type, viewingDiscount.value)}
+                    </Badge>
+                  </div>
+                </div>
+                <p className="text-muted-foreground">{viewingDiscount.description}</p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Minimum Purchase:</span>
+                    <span>₹{viewingDiscount.minPurchase || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Usage:</span>
+                    <span>{viewingDiscount.used || 0}/{viewingDiscount.usageLimit || '∞'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Valid From:</span>
+                    <span>{format(new Date(viewingDiscount.startDate), 'MMM dd, yyyy')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Valid Until:</span>
+                    <span>{format(new Date(viewingDiscount.endDate), 'MMM dd, yyyy')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>One per user:</span>
+                    <span>{viewingDiscount.perUser ? 'Yes' : 'No'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Created:</span>
+                    <span>{format(new Date(viewingDiscount.createdAt), 'MMM dd, yyyy')}</span>
+                  </div>
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {/* Create Discount Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Create New Discount</DialogTitle>
-            <DialogDescription>
-              Set up a new discount or coupon code for your store.
-            </DialogDescription>
-          </DialogHeader>
-          <Tabs defaultValue="basic" className="mt-4">
-            <TabsList className="grid grid-cols-3 mb-4">
-              <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="usage">Usage Limits</TabsTrigger>
-              <TabsTrigger value="restrictions">Restrictions</TabsTrigger>
-            </TabsList>
-            
-            {/* Basic Info Tab */}
-            <TabsContent value="basic" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="code">Coupon Code</Label>
-                <Input
-                  id="code"
-                  value={formData.code}
-                  onChange={(e) => handleFormChange('code', e.target.value.toUpperCase())}
-                  placeholder="e.g. SUMMER20"
-                  className="font-mono"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (internal)</Label>
-                <Input
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleFormChange('description', e.target.value)}
-                  placeholder="e.g. Summer sale discount"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Discount Type</Label>
-                <Select 
-                  value={formType} 
-                  onValueChange={(value) => {
-                    setFormType(value);
-                    handleFormChange('type', value);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percentage">Percentage Discount</SelectItem>
-                    <SelectItem value="fixed">Fixed Amount Discount</SelectItem>
-                    <SelectItem value="shipping">Free Shipping</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {formType !== 'shipping' && (
-                <div className="space-y-2">
-                  <Label htmlFor="value">
-                    {formType === 'percentage' ? 'Discount Percentage (%)' : 'Discount Amount ($)'}
-                  </Label>
-                  <Input
-                    id="value"
-                    type="number"
-                    value={formData.value}
-                    onChange={(e) => handleFormChange('value', parseFloat(e.target.value) || 0)}
-                    min={0}
-                    max={formType === 'percentage' ? 100 : undefined}
-                  />
-                </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="startDate">Start Date</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => handleFormChange('startDate', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="endDate">End Date</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => handleFormChange('endDate', e.target.value)}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-            
-            {/* Usage Limits Tab */}
-            <TabsContent value="usage" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="minPurchase">Minimum Purchase Amount ($)</Label>
-                <Input
-                  id="minPurchase"
-                  type="number"
-                  value={formData.minPurchase}
-                  onChange={(e) => handleFormChange('minPurchase', parseFloat(e.target.value) || 0)}
-                  min={0}
-                />
-                <p className="text-xs text-muted-foreground">Set to 0 for no minimum</p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="usageLimit">Usage Limit</Label>
-                <Input
-                  id="usageLimit"
-                  type="number"
-                  value={formData.usageLimit}
-                  onChange={(e) => handleFormChange('usageLimit', parseInt(e.target.value) || 0)}
-                  min={0}
-                />
-                <p className="text-xs text-muted-foreground">Set to 0 for unlimited usage</p>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="perUser"
-                  checked={formData.perUser}
-                  onCheckedChange={(checked) => handleFormChange('perUser', checked)}
-                  disabled={formData.usageLimit === 0}
-                />
-                <Label htmlFor="perUser">Limit usage to once per customer</Label>
-              </div>
-            </TabsContent>
-            
-            {/* Restrictions Tab */}
-            <TabsContent value="restrictions" className="space-y-4">
-              <div className="space-y-2">
-                <Label>Product Restrictions</Label>
-                <Select 
-                  value={formData.applicableProducts} 
-                  onValueChange={(value) => handleFormChange('applicableProducts', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Products</SelectItem>
-                    <SelectItem value="selected">Selected Products</SelectItem>
-                    <SelectItem value="categories">Selected Categories</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {formData.applicableProducts === 'categories' && (
-                <div className="space-y-2">
-                  <Label>Applicable Categories</Label>
-                  <Select 
-                    value={formData.applicableCategories} 
-                    onValueChange={(value) => handleFormChange('applicableCategories', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {PRODUCT_CATEGORIES.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              
-              {formData.applicableProducts === 'selected' && (
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    Product selection would be implemented here in a real application, allowing you to select specific products to which this discount applies.
-                  </p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateDiscount}>
-              <Tag className="h-4 w-4 mr-2" />
-              Create Discount
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Discount Dialog (Same structure as Create) */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Edit Discount</DialogTitle>
-            <DialogDescription>
-              Update the settings for this discount code.
-            </DialogDescription>
-          </DialogHeader>
-          {/* Same tabs and form as the Create Dialog */}
-          <Tabs defaultValue="basic" className="mt-4">
-            <TabsList className="grid grid-cols-3 mb-4">
-              <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="usage">Usage Limits</TabsTrigger>
-              <TabsTrigger value="restrictions">Restrictions</TabsTrigger>
-            </TabsList>
-            
-            {/* Basic Info Tab */}
-            <TabsContent value="basic" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-code">Coupon Code</Label>
-                <Input
-                  id="edit-code"
-                  value={formData.code}
-                  onChange={(e) => handleFormChange('code', e.target.value.toUpperCase())}
-                  placeholder="e.g. SUMMER20"
-                  className="font-mono"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-description">Description (internal)</Label>
-                <Input
-                  id="edit-description"
-                  value={formData.description}
-                  onChange={(e) => handleFormChange('description', e.target.value)}
-                  placeholder="e.g. Summer sale discount"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Discount Type</Label>
-                <Select 
-                  value={formType} 
-                  onValueChange={(value) => {
-                    setFormType(value);
-                    handleFormChange('type', value);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percentage">Percentage Discount</SelectItem>
-                    <SelectItem value="fixed">Fixed Amount Discount</SelectItem>
-                    <SelectItem value="shipping">Free Shipping</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {formType !== 'shipping' && (
-                <div className="space-y-2">
-                  <Label htmlFor="edit-value">
-                    {formType === 'percentage' ? 'Discount Percentage (%)' : 'Discount Amount ($)'}
-                  </Label>
-                  <Input
-                    id="edit-value"
-                    type="number"
-                    value={formData.value}
-                    onChange={(e) => handleFormChange('value', parseFloat(e.target.value) || 0)}
-                    min={0}
-                    max={formType === 'percentage' ? 100 : undefined}
-                  />
-                </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-startDate">Start Date</Label>
-                  <Input
-                    id="edit-startDate"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => handleFormChange('startDate', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-endDate">End Date</Label>
-                  <Input
-                    id="edit-endDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => handleFormChange('endDate', e.target.value)}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-            
-            {/* Usage Limits Tab */}
-            <TabsContent value="usage" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-minPurchase">Minimum Purchase Amount ($)</Label>
-                <Input
-                  id="edit-minPurchase"
-                  type="number"
-                  value={formData.minPurchase}
-                  onChange={(e) => handleFormChange('minPurchase', parseFloat(e.target.value) || 0)}
-                  min={0}
-                />
-                <p className="text-xs text-muted-foreground">Set to 0 for no minimum</p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-usageLimit">Usage Limit</Label>
-                <Input
-                  id="edit-usageLimit"
-                  type="number"
-                  value={formData.usageLimit}
-                  onChange={(e) => handleFormChange('usageLimit', parseInt(e.target.value) || 0)}
-                  min={0}
-                />
-                <p className="text-xs text-muted-foreground">Set to 0 for unlimited usage</p>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="edit-perUser"
-                  checked={formData.perUser}
-                  onCheckedChange={(checked) => handleFormChange('perUser', checked)}
-                  disabled={formData.usageLimit === 0}
-                />
-                <Label htmlFor="edit-perUser">Limit usage to once per customer</Label>
-              </div>
-            </TabsContent>
-            
-            {/* Restrictions Tab */}
-            <TabsContent value="restrictions" className="space-y-4">
-              <div className="space-y-2">
-                <Label>Product Restrictions</Label>
-                <Select 
-                  value={formData.applicableProducts} 
-                  onValueChange={(value) => handleFormChange('applicableProducts', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Products</SelectItem>
-                    <SelectItem value="selected">Selected Products</SelectItem>
-                    <SelectItem value="categories">Selected Categories</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {formData.applicableProducts === 'categories' && (
-                <div className="space-y-2">
-                  <Label>Applicable Categories</Label>
-                  <Select 
-                    value={formData.applicableCategories} 
-                    onValueChange={(value) => handleFormChange('applicableCategories', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {PRODUCT_CATEGORIES.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateDiscount}>
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Discount</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this discount code? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedDiscount && (
-            <div className="py-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-red-100 text-red-600 rounded-full p-2">
-                  <Tag className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="font-medium">{selectedDiscount.code}</p>
-                  <p className="text-sm text-muted-foreground">{selectedDiscount.description}</p>
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteDiscount}>
-              Delete Discount
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </AdminLayout>
   );
 }

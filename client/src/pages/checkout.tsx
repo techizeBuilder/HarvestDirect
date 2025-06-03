@@ -36,6 +36,74 @@ export default function Checkout() {
   const { cartItems, subtotal, shipping, total, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
+  const [discountCode, setDiscountCode] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
+  const [discountLoading, setDiscountLoading] = useState(false);
+  const [discountError, setDiscountError] = useState("");
+
+  // Calculate total with discount
+  const calculateTotal = () => {
+    let finalTotal = subtotal + shipping;
+    if (appliedDiscount) {
+      if (appliedDiscount.type === 'percentage') {
+        finalTotal = finalTotal - (finalTotal * appliedDiscount.value / 100);
+      } else if (appliedDiscount.type === 'fixed') {
+        finalTotal = Math.max(0, finalTotal - appliedDiscount.value);
+      } else if (appliedDiscount.type === 'shipping') {
+        finalTotal = finalTotal - shipping;
+      }
+    }
+    return finalTotal;
+  };
+
+  const applyDiscount = async () => {
+    if (!discountCode.trim()) {
+      setDiscountError("Please enter a discount code");
+      return;
+    }
+
+    setDiscountLoading(true);
+    setDiscountError("");
+
+    try {
+      const response = await fetch('/api/discounts/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: discountCode.trim(),
+          cartTotal: subtotal + shipping,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.valid && result.discount) {
+        setAppliedDiscount(result.discount);
+        toast({
+          title: "Discount Applied!",
+          description: `${result.discount.code} has been applied to your order`,
+        });
+      } else {
+        setDiscountError(result.error || "Invalid discount code");
+      }
+    } catch (error) {
+      setDiscountError("Failed to validate discount code");
+    } finally {
+      setDiscountLoading(false);
+    }
+  };
+
+  const removeDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountCode("");
+    setDiscountError("");
+    toast({
+      title: "Discount Removed",
+      description: "The discount has been removed from your order",
+    });
+  };
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
