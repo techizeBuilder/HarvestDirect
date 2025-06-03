@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Search,
   Download,
@@ -43,6 +44,13 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { PrintableDeliverySticker } from '@/components/admin/PrintableDeliverySticker';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 // Order type definition for API response
 interface OrderData {
@@ -90,9 +98,51 @@ export default function AdminOrders() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<number | null>(null);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState<any>(null);
+  const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
   const [printStickerOrder, setPrintStickerOrder] = useState<OrderData | null>(null);
   const ordersPerPage = 10;
   const { toast } = useToast();
+
+  // Fetch detailed order information
+  const fetchOrderDetails = async (orderId: number) => {
+    setOrderDetailsLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(`/api/admin/orders/${orderId}/details`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch order details');
+      }
+
+      const data = await response.json();
+      setSelectedOrderDetails(data);
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch order details",
+        variant: "destructive",
+      });
+    } finally {
+      setOrderDetailsLoading(false);
+    }
+  };
+
+  // Handle viewing order details
+  const handleViewOrderDetails = async (orderId: number) => {
+    setSelectedOrder(orderId);
+    await fetchOrderDetails(orderId);
+  };
 
   // Fetch orders from API
   const fetchOrders = async (page = 1, search = '', status = '') => {
@@ -344,7 +394,7 @@ export default function AdminOrders() {
                                   <Button 
                                     variant="ghost" 
                                     size="icon"
-                                    onClick={() => setSelectedOrder(order.id)}
+                                    onClick={() => handleViewOrderDetails(order.id)}
                                     title="View Order Details"
                                   >
                                     <Eye className="h-4 w-4" />
@@ -415,6 +465,177 @@ export default function AdminOrders() {
               )}
             </CardContent>
           </Card>
+
+          {/* Order Details Modal */}
+          <Dialog open={selectedOrder !== null} onOpenChange={() => {
+            setSelectedOrder(null);
+            setSelectedOrderDetails(null);
+          }}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Order Details #{selectedOrder}</DialogTitle>
+              </DialogHeader>
+              
+              {orderDetailsLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : selectedOrderDetails ? (
+                <div className="space-y-6">
+                  {/* Order Summary */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Order Status</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Badge variant={selectedOrderDetails.status === 'delivered' ? 'default' : 'secondary'}>
+                          {selectedOrderDetails.status?.charAt(0).toUpperCase() + selectedOrderDetails.status?.slice(1)}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Order Total</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">₹{selectedOrderDetails.total}</div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Order Date</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-sm">
+                          {new Date(selectedOrderDetails.createdAt).toLocaleDateString('en-IN', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Customer Information */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Customer Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium">Customer Name</Label>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedOrderDetails.user?.name || selectedOrderDetails.userName || 'Guest Customer'}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">Email</Label>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedOrderDetails.user?.email || selectedOrderDetails.userEmail || 'No email provided'}
+                        </p>
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label className="text-sm font-medium">Shipping Address</Label>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedOrderDetails.shippingAddress || 'No address provided'}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Payment Information */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Payment Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium">Payment Method</Label>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedOrderDetails.paymentMethod || 'Not specified'}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">Payment ID</Label>
+                        <p className="text-sm text-muted-foreground font-mono">
+                          {selectedOrderDetails.paymentId || 'Not available'}
+                        </p>
+                      </div>
+                      {selectedOrderDetails.payment && (
+                        <>
+                          <div>
+                            <Label className="text-sm font-medium">Payment Status</Label>
+                            <p className="text-sm text-muted-foreground">
+                              {selectedOrderDetails.payment.status || 'Unknown'}
+                            </p>
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium">Amount Paid</Label>
+                            <p className="text-sm text-muted-foreground">
+                              ₹{selectedOrderDetails.payment.amount || selectedOrderDetails.total}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Order Items */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Order Items</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {selectedOrderDetails.items && selectedOrderDetails.items.length > 0 ? (
+                        <div className="space-y-4">
+                          {selectedOrderDetails.items.map((item: any, index: number) => (
+                            <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                              <div className="flex items-center space-x-4">
+                                {item.product?.imageUrl && (
+                                  <img
+                                    src={item.product.imageUrl}
+                                    alt={item.product.name}
+                                    className="w-16 h-16 rounded object-cover"
+                                  />
+                                )}
+                                <div>
+                                  <h4 className="font-medium">{item.product?.name || 'Product Name'}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    SKU: {item.product?.sku || 'N/A'}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Quantity: {item.quantity}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-medium">₹{item.price}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Total: ₹{item.price * item.quantity}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">No items found for this order</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Failed to load order details
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* Print Delivery Sticker Modal */}
           {printStickerOrder && (

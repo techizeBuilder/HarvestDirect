@@ -1104,6 +1104,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get detailed order information for admin
+  app.get(`${apiPrefix}/admin/orders/:id/details`, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      
+      if (!orderId) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+
+      // Get the order details
+      const order = await storage.getOrderById(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Get order items with product details
+      const orderItems = await storage.getOrderItemsByOrderId(orderId);
+      
+      // Get user details if userId exists
+      let user = null;
+      if (order.userId) {
+        user = await storage.getUserById(order.userId);
+      }
+
+      // Get payment details if available
+      let payment = null;
+      try {
+        const payments = await storage.getPaymentsByUserId(order.userId || 0);
+        payment = payments.find(p => p.orderId === orderId);
+      } catch (error) {
+        console.log('Payment details not found for order:', orderId);
+      }
+
+      // Build comprehensive order details response
+      const orderDetails = {
+        ...order,
+        user: user ? {
+          id: user.id,
+          name: user.name,
+          email: user.email
+        } : null,
+        payment: payment ? {
+          id: payment.id,
+          amount: payment.amount,
+          status: payment.status,
+          razorpayPaymentId: payment.razorpayPaymentId
+        } : null,
+        items: await Promise.all(orderItems.map(async (item) => {
+          const product = await storage.getProductById(item.productId);
+          return {
+            ...item,
+            product: product ? {
+              id: product.id,
+              name: product.name,
+              sku: product.sku,
+              imageUrl: product.imageUrl
+            } : null
+          };
+        }))
+      };
+
+      res.json(orderDetails);
+    } catch (error) {
+      console.error('Order details fetch error:', error);
+      res.status(500).json({ message: "Failed to fetch order details" });
+    }
+  });
+
 
   // Initialize Razorpay and Email service when environment variables are available
   if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
