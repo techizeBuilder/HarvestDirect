@@ -72,7 +72,10 @@ export default function AdminDiscounts() {
   // Fetch discounts
   const { data: discounts = [], isLoading, error } = useQuery({
     queryKey: ['/api/admin/discounts'],
-    queryFn: () => apiRequest('/api/admin/discounts'),
+    queryFn: async () => {
+      const response = await apiRequest('/api/admin/discounts');
+      return Array.isArray(response) ? response : [];
+    },
   });
 
   // Create discount mutation
@@ -538,7 +541,7 @@ export default function AdminDiscounts() {
               <CardTitle className="text-sm font-medium">Total Discounts</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{discounts.length}</div>
+              <div className="text-2xl font-bold">{Array.isArray(discounts) ? discounts.length : 0}</div>
             </CardContent>
           </Card>
           <Card>
@@ -547,7 +550,7 @@ export default function AdminDiscounts() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {discounts.filter((d: Discount) => d.status === 'active').length}
+                {Array.isArray(discounts) ? discounts.filter((d: Discount) => d.status === 'active').length : 0}
               </div>
             </CardContent>
           </Card>
@@ -557,7 +560,7 @@ export default function AdminDiscounts() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {discounts.filter((d: Discount) => d.status === 'scheduled').length}
+                {Array.isArray(discounts) ? discounts.filter((d: Discount) => d.status === 'scheduled').length : 0}
               </div>
             </CardContent>
           </Card>
@@ -567,7 +570,7 @@ export default function AdminDiscounts() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {discounts.reduce((sum: number, d: Discount) => sum + (d.used || 0), 0)}
+                {Array.isArray(discounts) ? discounts.reduce((sum: number, d: Discount) => sum + (d.used || 0), 0) : 0}
               </div>
             </CardContent>
           </Card>
@@ -583,7 +586,7 @@ export default function AdminDiscounts() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {discounts.map((discount: Discount) => (
+              {Array.isArray(discounts) && discounts.map((discount: Discount) => (
                 <div key={discount.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center space-x-2">
@@ -635,7 +638,7 @@ export default function AdminDiscounts() {
                   </div>
                 </div>
               ))}
-              {discounts.length === 0 && (
+              {(!Array.isArray(discounts) || discounts.length === 0) && (
                 <div className="text-center py-8 text-muted-foreground">
                   No discounts found. Create your first discount to get started.
                 </div>
