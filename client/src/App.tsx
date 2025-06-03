@@ -39,7 +39,7 @@ import AdminTeamMembers from "@/pages/admin/team-members";
 
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
-import { SiteProvider } from "@/context/SiteContext";
+
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import Layout from "@/components/Layout";
@@ -70,9 +70,8 @@ function App() {
               {/* Main Store Routes - Wrapped in Layout */}
               <Route>
                 {() => (
-                  <SiteProvider>
-                    <Layout>
-                      <Switch>
+                  <Layout>
+                    <Switch>
                       <Route path="/" component={Home} />
                       <Route path="/products" component={AllProducts} />
                       <Route path="/products/:id" component={ProductDetail} />
@@ -96,9 +95,8 @@ function App() {
                       
                       {/* 404 Route */}
                       <Route component={NotFound} />
-                      </Switch>
-                    </Layout>
-                  </SiteProvider>
+                    </Switch>
+                  </Layout>
                 )}
               </Route>
             </Switch>

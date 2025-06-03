@@ -1243,7 +1243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Site Settings Routes for Branding & Social Links
+
 
 
 
