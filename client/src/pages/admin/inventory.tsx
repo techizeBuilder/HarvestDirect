@@ -48,10 +48,19 @@ export default function AdminInventory() {
   // Update stock mutation
   const updateStockMutation = useMutation({
     mutationFn: async ({ productId, newStock }: { productId: number; newStock: number }) => {
-      return apiRequest(`/api/admin/products/${productId}/stock`, {
-        method: 'PATCH',
-        body: { stockQuantity: newStock },
+      const response = await fetch(`/api/admin/products/${productId}/stock`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ stockQuantity: newStock }),
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update stock');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/products'] });
@@ -79,7 +88,14 @@ export default function AdminInventory() {
   });
 
   // Get unique categories
-  const categories = [...new Set(products.map((p: Product) => p.category))];
+  const categories: string[] = [];
+  const categorySet = new Set<string>();
+  products.forEach((p: Product) => {
+    if (!categorySet.has(p.category)) {
+      categorySet.add(p.category);
+      categories.push(p.category);
+    }
+  });
 
   const handleStockEdit = (productId: number, currentStock: number) => {
     setEditingStock({ ...editingStock, [productId]: currentStock });
