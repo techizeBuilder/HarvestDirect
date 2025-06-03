@@ -37,7 +37,7 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
     
     const user = await storage.getUserById(decoded.userId);
     if (!user) {
@@ -162,8 +162,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get farmer by ID
   app.get(`${apiPrefix}/farmers/:id`, async (req, res) => {
     try {
-      const id = req.params.id;
-      if (!id) {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid farmer ID" });
       }
       
@@ -229,11 +229,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { productId, quantity } = req.body;
       const sessionId = (req as any).sessionId;
       
-      if (!productId || typeof quantity !== 'number' || quantity <= 0) {
+      if (typeof productId !== 'number' || typeof quantity !== 'number' || quantity <= 0) {
         return res.status(400).json({ message: "Invalid product ID or quantity" });
       }
       
-      const cart = await storage.addToCart(sessionId, productId.toString(), quantity);
+      const cart = await storage.addToCart(sessionId, productId, quantity);
       res.json(cart);
     } catch (error) {
       res.status(500).json({ message: "Failed to add item to cart" });
@@ -243,11 +243,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update cart item
   app.put(`${apiPrefix}/cart/items/:productId`, async (req, res) => {
     try {
-      const productId = req.params.productId;
+      const productId = parseInt(req.params.productId);
       const { quantity } = req.body;
       const sessionId = (req as any).sessionId;
       
-      if (!productId || typeof quantity !== 'number') {
+      if (isNaN(productId) || typeof quantity !== 'number') {
         return res.status(400).json({ message: "Invalid product ID or quantity" });
       }
       
@@ -261,10 +261,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Remove item from cart
   app.delete(`${apiPrefix}/cart/items/:productId`, async (req, res) => {
     try {
-      const productId = req.params.productId;
+      const productId = parseInt(req.params.productId);
       const sessionId = (req as any).sessionId;
       
-      if (!productId) {
+      if (isNaN(productId)) {
         return res.status(400).json({ message: "Invalid product ID" });
       }
       
@@ -388,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Password verified, generating token');
         
         // Generate JWT token
-        const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+        const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
         
         // Return token and user data without password
         const { password: _, ...userWithoutPassword } = user;
@@ -633,7 +633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/payments/history`, authenticate, async (req, res) => {
     try {
       const user = (req as any).user;
-      const payments = await storage.getPaymentsByUserId(user._id);
+      const payments = await storage.getPaymentsByUserId(user.id);
       
       res.json({ payments });
     } catch (error) {
@@ -702,7 +702,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/subscriptions`, authenticate, async (req, res) => {
     try {
       const user = (req as any).user;
-      const subscriptions = await storage.getSubscriptionsByUserId(user._id);
+      const subscriptions = await storage.getSubscriptionsByUserId(user.id);
       
       res.json({ subscriptions });
     } catch (error) {
@@ -714,12 +714,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/orders/history`, authenticate, async (req, res) => {
     try {
       const user = (req as any).user;
-      const orders = await storage.getOrdersByUserId(user._id);
+      const orders = await storage.getOrdersByUserId(user.id);
       
       // Fetch order items for each order
       const ordersWithItems = await Promise.all(
         orders.map(async (order) => {
-          const items = await storage.getOrderItemsByOrderId(order._id);
+          const items = await storage.getOrderItemsByOrderId(order.id);
           return {
             ...order,
             items
