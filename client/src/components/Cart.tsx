@@ -95,7 +95,7 @@ export default function Cart() {
                         </div>
                         <div className="text-right">
                           <p className="text-foreground font-medium">
-                            ${(item.product.price * item.quantity).toFixed(2)}
+                            ₹{(item.product.price * item.quantity).toFixed(2)}
                           </p>
                           <Button 
                             variant="link" 
@@ -116,15 +116,15 @@ export default function Cart() {
                 <div className="p-6 border-t border-border/20">
                   <div className="flex justify-between mb-4">
                     <span className="text-foreground">Subtotal</span>
-                    <span className="text-foreground font-semibold">${subtotal.toFixed(2)}</span>
+                    <span className="text-foreground font-semibold">₹{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between mb-6">
                     <span className="text-foreground">Shipping</span>
-                    <span className="text-foreground font-semibold">${shipping.toFixed(2)}</span>
+                    <span className="text-foreground font-semibold">₹{shipping.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg mb-8">
                     <span className="text-foreground font-bold">Total</span>
-                    <span className="text-foreground font-bold">${total.toFixed(2)}</span>
+                    <span className="text-foreground font-bold">₹{total.toFixed(2)}</span>
                   </div>
                   <Link href="/checkout">
                     <Button 

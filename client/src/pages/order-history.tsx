@@ -237,7 +237,7 @@ export default function OrderHistory() {
                             <div key={discount.id} className="flex justify-between text-green-600">
                               <span>Code: {discount.code}</span>
                               <span>
-                                {discount.type === 'percentage' ? `${discount.value}%` : `$${discount.value}`}
+                                {discount.type === 'percentage' ? `${discount.value}%` : `₹${discount.value}`}
                               </span>
                             </div>
                           ))}
@@ -245,7 +245,7 @@ export default function OrderHistory() {
                       )}
                       <div className="flex justify-between font-semibold">
                         <span>Total:</span>
-                        <span>${order.total.toFixed(2)}</span>
+                        <span>₹{order.total.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -292,11 +292,11 @@ export default function OrderHistory() {
                                 <div className="text-sm text-gray-500">Category: {item.product.category}</div>
                               )}
                               <div className="text-sm text-gray-600">
-                                Quantity: {item.quantity} × ${item.price.toFixed(2)}
+                                Quantity: {item.quantity} × ₹{item.price.toFixed(2)}
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="font-semibold">${(item.price * item.quantity).toFixed(2)}</div>
+                              <div className="font-semibold">₹{(item.price * item.quantity).toFixed(2)}</div>
                               <div className="text-sm text-gray-500">Total</div>
                             </div>
                           </div>

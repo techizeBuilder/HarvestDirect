@@ -562,7 +562,7 @@ export default function Checkout() {
               <div className="space-y-4 text-sm text-muted-foreground">
                 <div className="flex items-start">
                   <Truck className="h-5 w-5 mr-2 text-primary flex-shrink-0 mt-0.5" />
-                  <p>Free shipping on orders over $50. Standard delivery 3-5 business days.</p>
+                  <p>Free shipping on orders over ₹50. Standard delivery 3-5 business days.</p>
                 </div>
                 <div className="flex items-start">
                   <Shield className="h-5 w-5 mr-2 text-primary flex-shrink-0 mt-0.5" />
