@@ -33,6 +33,8 @@ export interface IStorage {
   getProductById(id: number): Promise<Product | undefined>;
   getProductsByCategory(category: string): Promise<Product[]>;
   getFeaturedProducts(): Promise<Product[]>;
+  updateProductStock(productId: number, quantity: number): Promise<Product>;
+  validateStockAvailability(productId: number, requestedQuantity: number): Promise<boolean>;
   
   // Enhanced Products
   getAllEnhancedProducts(): Promise<any[]>;
@@ -227,6 +229,31 @@ export class MemStorage implements IStorage {
     return Array.from(this.products.values()).filter(
       product => product.featured
     );
+  }
+
+  async updateProductStock(productId: number, quantity: number): Promise<Product> {
+    const product = this.products.get(productId);
+    if (!product) {
+      throw new Error(`Product with id ${productId} not found`);
+    }
+    
+    const updatedProduct: Product = {
+      ...product,
+      stockQuantity: quantity,
+      updatedAt: new Date()
+    };
+    
+    this.products.set(productId, updatedProduct);
+    return updatedProduct;
+  }
+
+  async validateStockAvailability(productId: number, requestedQuantity: number): Promise<boolean> {
+    const product = this.products.get(productId);
+    if (!product) {
+      return false;
+    }
+    
+    return product.stockQuantity >= requestedQuantity;
   }
 
   async getAllEnhancedProducts(): Promise<any[]> {
@@ -759,6 +786,33 @@ export class DatabaseStorage implements IStorage {
   async getFeaturedProducts(): Promise<Product[]> {
     const featuredProducts = await db.select().from(products).where(eq(products.featured, true));
     return featuredProducts;
+  }
+
+  async updateProductStock(productId: number, quantity: number): Promise<Product> {
+    const [updatedProduct] = await db
+      .update(products)
+      .set({ 
+        stockQuantity: quantity,
+        updatedAt: new Date()
+      })
+      .where(eq(products.id, productId))
+      .returning();
+    
+    if (!updatedProduct) {
+      throw new Error(`Product with id ${productId} not found`);
+    }
+    
+    return updatedProduct;
+  }
+
+  async validateStockAvailability(productId: number, requestedQuantity: number): Promise<boolean> {
+    const [product] = await db.select().from(products).where(eq(products.id, productId));
+    
+    if (!product) {
+      return false;
+    }
+    
+    return product.stockQuantity >= requestedQuantity;
   }
 
   async getAllEnhancedProducts(): Promise<any[]> {
