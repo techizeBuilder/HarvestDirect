@@ -29,19 +29,13 @@ let razorpay: Razorpay;
 // Email configuration
 let transporter: nodemailer.Transporter;
 
-// Auth middleware - For demonstration, create authenticated user session
+// Auth middleware - Use existing user with orders for demonstration
 const authenticate = async (req: Request, res: Response, next: NextFunction) => {
-  // Create or get user from session/database for demonstration
-  let user = await storage.getUserByEmail("demo@harvestdirect.com");
+  // Use the existing user that has orders in the database
+  const user = await storage.getUserById(4);
   
   if (!user) {
-    // Create demo user if doesn't exist
-    user = await storage.createUser({
-      name: "Demo User",
-      email: "demo@harvestdirect.com",
-      password: "demo_password",
-      role: "user"
-    });
+    return res.status(401).json({ message: 'User not found' });
   }
 
   (req as any).user = user;
