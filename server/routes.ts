@@ -14,7 +14,8 @@ import {
   insertSubscriptionSchema,
   insertProductReviewSchema,
   insertContactMessageSchema,
-  insertTeamMemberSchema
+  insertTeamMemberSchema,
+  insertDiscountSchema
 } from "@shared/schema";
 import adminRouter from './admin';
 
@@ -1169,6 +1170,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Order details fetch error:', error);
       res.status(500).json({ message: "Failed to fetch order details" });
+    }
+  });
+
+  // Discount API Routes
+  app.get('/api/admin/discounts', async (req, res) => {
+    try {
+      const discounts = await storage.getAllDiscounts();
+      res.json(discounts);
+    } catch (error) {
+      console.error('Discounts fetch error:', error);
+      res.status(500).json({ message: "Failed to fetch discounts" });
+    }
+  });
+
+  app.post('/api/admin/discounts', async (req, res) => {
+    try {
+      const validationResult = insertDiscountSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ message: "Invalid discount data", errors: validationResult.error.issues });
+      }
+
+      const discount = await storage.createDiscount(validationResult.data);
+      res.json(discount);
+    } catch (error) {
+      console.error('Discount creation error:', error);
+      res.status(500).json({ message: "Failed to create discount" });
+    }
+  });
+
+  app.put('/api/admin/discounts/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const discount = await storage.updateDiscount(parseInt(id), req.body);
+      res.json(discount);
+    } catch (error) {
+      console.error('Discount update error:', error);
+      res.status(500).json({ message: "Failed to update discount" });
+    }
+  });
+
+  app.delete('/api/admin/discounts/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteDiscount(parseInt(id));
+      res.json({ message: "Discount deleted successfully" });
+    } catch (error) {
+      console.error('Discount deletion error:', error);
+      res.status(500).json({ message: "Failed to delete discount" });
+    }
+  });
+
+  // Discount validation and application for checkout
+  app.post('/api/discounts/validate', async (req, res) => {
+    try {
+      const { code, cartTotal, userId } = req.body;
+      const validation = await storage.validateDiscount(code, userId, cartTotal);
+      res.json(validation);
+    } catch (error) {
+      console.error('Discount validation error:', error);
+      res.status(500).json({ message: "Failed to validate discount" });
+    }
+  });
+
+  app.post('/api/discounts/apply', async (req, res) => {
+    try {
+      const { discountId, userId, sessionId, orderId } = req.body;
+      const usage = await storage.applyDiscount(discountId, userId, sessionId, orderId);
+      res.json(usage);
+    } catch (error) {
+      console.error('Discount application error:', error);
+      res.status(500).json({ message: "Failed to apply discount" });
+    }
+  });
+
+  // Public route to get active discounts for customer view
+  app.get('/api/discounts/active', async (req, res) => {
+    try {
+      const activeDiscounts = await storage.getActiveDiscounts();
+      // Only return essential info for public view
+      const publicDiscounts = activeDiscounts.map(discount => ({
+        id: discount.id,
+        code: discount.code,
+        type: discount.type,
+        value: discount.value,
+        description: discount.description,
+        minPurchase: discount.minPurchase,
+        endDate: discount.endDate
+      }));
+      res.json(publicDiscounts);
+    } catch (error) {
+      console.error('Active discounts fetch error:', error);
+      res.status(500).json({ message: "Failed to fetch active discounts" });
     }
   });
 

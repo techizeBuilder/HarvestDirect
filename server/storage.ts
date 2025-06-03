@@ -1507,12 +1507,12 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Check minimum purchase requirement
-    if (cartTotal && cartTotal < discount.minPurchase) {
+    if (cartTotal && discount.minPurchase && cartTotal < discount.minPurchase) {
       return { valid: false, error: `Minimum purchase amount is ₹${discount.minPurchase}` };
     }
 
     // Check usage limits
-    if (discount.usageLimit > 0 && discount.used >= discount.usageLimit) {
+    if (discount.usageLimit && discount.usageLimit > 0 && discount.used && discount.used >= discount.usageLimit) {
       return { valid: false, error: "Discount usage limit exceeded" };
     }
 
@@ -1545,16 +1545,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDiscountUsage(discountId: number, userId?: number): Promise<number> {
-    const usageQuery = db.select({ count: sql<number>`count(*)` })
-      .from(discountUsage)
-      .where(eq(discountUsage.discountId, discountId));
-
     if (userId) {
-      usageQuery.where(eq(discountUsage.userId, userId));
+      const [result] = await db.select({ count: sql<number>`count(*)` })
+        .from(discountUsage)
+        .where(and(
+          eq(discountUsage.discountId, discountId),
+          eq(discountUsage.userId, userId)
+        ));
+      return result?.count || 0;
+    } else {
+      const [result] = await db.select({ count: sql<number>`count(*)` })
+        .from(discountUsage)
+        .where(eq(discountUsage.discountId, discountId));
+      return result?.count || 0;
     }
-
-    const [result] = await usageQuery;
-    return result?.count || 0;
   }
 }
 
