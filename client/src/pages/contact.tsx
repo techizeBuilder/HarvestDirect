@@ -165,7 +165,7 @@ export default function Contact() {
             <div className="bg-background p-6 rounded-lg">
               <h3 className="font-heading text-forest text-xl font-semibold mb-3">What are your shipping options?</h3>
               <p className="text-olive">
-                We offer standard shipping (3-5 business days) and expedited shipping (1-2 business days) options. Free standard shipping is available for orders over $50.
+                We offer standard shipping (3-5 business days) and expedited shipping (1-2 business days) options. Free standard shipping is available for orders over ₹50.
               </p>
             </div>
             

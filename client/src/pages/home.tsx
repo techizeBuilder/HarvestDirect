@@ -201,7 +201,7 @@ export default function Home() {
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-forest text-xl font-bold">$12.50</span>
+                <span className="text-forest text-xl font-bold">₹12.50</span>
                 <Button className="bg-primary hover:bg-primary/90 text-white">
                   View Details
                 </Button>
