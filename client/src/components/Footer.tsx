@@ -2,10 +2,13 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useSiteSettings } from "@/context/SiteContext";
+import { Facebook, Instagram, Twitter, Linkedin, Youtube, Globe } from "lucide-react";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { settings } = useSiteSettings();
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,26 +66,83 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           {/* Company Info */}
           <div>
-            <h3 className="font-heading text-2xl font-bold mb-6">
-              Harvest<span className="text-[#DDA15E]">Direct</span>
-            </h3>
+            <div className="flex items-center space-x-3 mb-6">
+              {settings.siteLogo && (
+                <img 
+                  src={settings.siteLogo} 
+                  alt={settings.siteName}
+                  className="h-8 w-8 object-contain"
+                />
+              )}
+              <h3 className="font-heading text-2xl font-bold text-white">
+                {settings.siteName}
+              </h3>
+            </div>
             <p className="text-white/90 mb-6 leading-relaxed">
-              Connecting conscious consumers directly with traditional farmers who grow food the way nature intended.
+              {settings.siteTagline}
             </p>
             <div className="flex space-x-5 mt-4">
-              {/* Social Links */}
-              <a href="#" className="text-white hover:text-[#DDA15E] transition-all duration-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-              </a>
-              <a href="#" className="text-white hover:text-[#DDA15E] transition-all duration-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-              </a>
-              <a href="#" className="text-white hover:text-[#DDA15E] transition-all duration-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg>
-              </a>
-              <a href="#" className="text-white hover:text-[#DDA15E] transition-all duration-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-              </a>
+              {/* Dynamic Social Links */}
+              {settings.socialLinks.facebook && (
+                <a 
+                  href={settings.socialLinks.facebook} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-[#DDA15E] transition-all duration-300"
+                >
+                  <Facebook className="h-5 w-5" />
+                </a>
+              )}
+              {settings.socialLinks.instagram && (
+                <a 
+                  href={settings.socialLinks.instagram} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-[#DDA15E] transition-all duration-300"
+                >
+                  <Instagram className="h-5 w-5" />
+                </a>
+              )}
+              {settings.socialLinks.twitter && (
+                <a 
+                  href={settings.socialLinks.twitter} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-[#DDA15E] transition-all duration-300"
+                >
+                  <Twitter className="h-5 w-5" />
+                </a>
+              )}
+              {settings.socialLinks.linkedin && (
+                <a 
+                  href={settings.socialLinks.linkedin} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-[#DDA15E] transition-all duration-300"
+                >
+                  <Linkedin className="h-5 w-5" />
+                </a>
+              )}
+              {settings.socialLinks.youtube && (
+                <a 
+                  href={settings.socialLinks.youtube} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-[#DDA15E] transition-all duration-300"
+                >
+                  <Youtube className="h-5 w-5" />
+                </a>
+              )}
+              {settings.socialLinks.website && (
+                <a 
+                  href={settings.socialLinks.website} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-[#DDA15E] transition-all duration-300"
+                >
+                  <Globe className="h-5 w-5" />
+                </a>
+              )}
             </div>
           </div>
 

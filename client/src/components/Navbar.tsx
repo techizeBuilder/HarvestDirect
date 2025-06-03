@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useSiteSettings } from "@/context/SiteContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -19,6 +20,7 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const { cartItems, openCart } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
+  const { settings } = useSiteSettings();
   const [location, navigate] = useLocation();
   
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
@@ -79,9 +81,16 @@ export default function Navbar() {
         }`}
       >
         <div className="container mx-auto px-4 lg:px-8 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center space-x-3">
+            {settings.siteLogo && (
+              <img 
+                src={settings.siteLogo} 
+                alt={settings.siteName}
+                className="h-8 w-8 object-contain"
+              />
+            )}
             <span className="text-forest font-heading text-2xl font-bold">
-              Harvest<span className="text-primary">Direct</span>
+              {settings.siteName}
             </span>
           </Link>
 

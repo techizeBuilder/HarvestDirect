@@ -81,9 +81,6 @@ export default function AdminSettings() {
       apiRequest('/api/admin/site-settings', {
         method: 'POST',
         body: JSON.stringify(setting),
-        headers: {
-          'Content-Type': 'application/json',
-        },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/site-settings'] });
