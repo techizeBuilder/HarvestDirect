@@ -520,7 +520,7 @@ export default function Checkout() {
                     </div>
                     <div className="text-right">
                       <p className="text-foreground font-medium">
-                        ${(item.product.price * item.quantity).toFixed(2)}
+                        ₹{(item.product.price * item.quantity).toFixed(2)}
                       </p>
                     </div>
                   </div>
