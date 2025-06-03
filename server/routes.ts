@@ -1186,8 +1186,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/discounts', async (req, res) => {
     try {
-      const validationResult = insertDiscountSchema.safeParse(req.body);
+      // Convert date strings to Date objects
+      const requestData = {
+        ...req.body,
+        startDate: new Date(req.body.startDate),
+        endDate: new Date(req.body.endDate),
+      };
+
+      const validationResult = insertDiscountSchema.safeParse(requestData);
       if (!validationResult.success) {
+        console.error('Discount validation error:', validationResult.error.issues);
         return res.status(400).json({ message: "Invalid discount data", errors: validationResult.error.issues });
       }
 
@@ -1202,7 +1210,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/admin/discounts/:id', async (req, res) => {
     try {
       const { id } = req.params;
-      const discount = await storage.updateDiscount(parseInt(id), req.body);
+      
+      // Convert date strings to Date objects
+      const requestData = {
+        ...req.body,
+        ...(req.body.startDate && { startDate: new Date(req.body.startDate) }),
+        ...(req.body.endDate && { endDate: new Date(req.body.endDate) }),
+      };
+
+      const validationResult = insertDiscountSchema.partial().safeParse(requestData);
+      if (!validationResult.success) {
+        console.error('Discount update validation error:', validationResult.error.issues);
+        return res.status(400).json({ message: "Invalid discount data", errors: validationResult.error.issues });
+      }
+
+      const discount = await storage.updateDiscount(parseInt(id), validationResult.data);
       res.json(discount);
     } catch (error) {
       console.error('Discount update error:', error);

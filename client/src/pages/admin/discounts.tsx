@@ -77,7 +77,7 @@ export default function AdminDiscounts() {
 
   // Create discount mutation
   const createDiscountMutation = useMutation({
-    mutationFn: (data: DiscountFormData) => apiRequest('/api/admin/discounts', {
+    mutationFn: (data: any) => apiRequest('/api/admin/discounts', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
@@ -101,7 +101,7 @@ export default function AdminDiscounts() {
 
   // Update discount mutation
   const updateDiscountMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<DiscountFormData> }) =>
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
       apiRequest(`/api/admin/discounts/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
@@ -171,12 +171,22 @@ export default function AdminDiscounts() {
   });
 
   const onCreateSubmit = (data: DiscountFormData) => {
-    createDiscountMutation.mutate(data);
+    const formattedData = {
+      ...data,
+      startDate: data.startDate.toISOString(),
+      endDate: data.endDate.toISOString(),
+    };
+    createDiscountMutation.mutate(formattedData);
   };
 
   const onEditSubmit = (data: DiscountFormData) => {
     if (editingDiscount) {
-      updateDiscountMutation.mutate({ id: editingDiscount.id, data });
+      const formattedData = {
+        ...data,
+        startDate: data.startDate.toISOString(),
+        endDate: data.endDate.toISOString(),
+      };
+      updateDiscountMutation.mutate({ id: editingDiscount.id, data: formattedData });
     }
   };
 
