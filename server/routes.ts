@@ -584,6 +584,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No items in cart to create order" });
       }
       
+      // Validate stock availability for all items before creating order
+      const stockValidationPromises = cart.items.map(async (item) => {
+        const isAvailable = await storage.validateStockAvailability(item.product.id, item.quantity);
+        if (!isAvailable) {
+          const product = await storage.getProductById(item.product.id);
+          throw new Error(`Insufficient stock for ${item.product.name}. Available: ${product?.stockQuantity || 0}, Requested: ${item.quantity}`);
+        }
+        return true;
+      });
+      
+      try {
+        await Promise.all(stockValidationPromises);
+      } catch (stockError) {
+        return res.status(400).json({ message: stockError.message });
+      }
+      
       // Create the order
       const order = await storage.createOrder({
         userId: user.id,
@@ -595,7 +611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentMethod: 'razorpay'
       });
       
-      // Create order items
+      // Create order items with automatic stock deduction
       for (const item of cart.items) {
         await storage.createOrderItem({
           orderId: order.id,
