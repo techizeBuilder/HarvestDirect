@@ -28,14 +28,14 @@ const discountFormSchema = z.object({
   type: z.enum(['percentage', 'fixed', 'shipping']),
   value: z.coerce.number().min(0, 'Value must be positive'),
   description: z.string().min(5, 'Description must be at least 5 characters'),
-  minPurchase: z.coerce.number().min(0, 'Minimum purchase must be 0 or greater').optional(),
-  usageLimit: z.coerce.number().min(0, 'Usage limit must be 0 or greater').optional(),
-  perUser: z.boolean().optional(),
+  minPurchase: z.coerce.number().min(0, 'Minimum purchase must be 0 or greater').default(0),
+  usageLimit: z.coerce.number().min(0, 'Usage limit must be 0 or greater').default(0),
+  perUser: z.boolean().default(false),
   startDate: z.date(),
   endDate: z.date(),
   status: z.enum(['active', 'scheduled', 'expired', 'disabled']),
-  applicableProducts: z.string().optional(),
-  applicableCategories: z.string().optional(),
+  applicableProducts: z.string().default('all'),
+  applicableCategories: z.string().default('all'),
 });
 
 type DiscountFormData = z.infer<typeof discountFormSchema>;
@@ -72,10 +72,7 @@ export default function AdminDiscounts() {
   // Fetch discounts
   const { data: discounts = [], isLoading, error } = useQuery({
     queryKey: ['/api/admin/discounts'],
-    queryFn: async () => {
-      const response = await apiRequest('/api/admin/discounts');
-      return Array.isArray(response) ? response : [];
-    },
+    queryFn: () => apiRequest('/api/admin/discounts'),
   });
 
   // Create discount mutation

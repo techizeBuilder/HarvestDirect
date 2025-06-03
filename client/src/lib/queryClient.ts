@@ -10,7 +10,7 @@ async function throwIfResNotOk(res: Response) {
 export async function apiRequest(
   url: string,
   options?: RequestInit,
-): Promise<Response> {
+): Promise<any> {
   // Get admin token if this is an admin request
   const isAdminRequest = url.includes('/admin/');
   const headers: Record<string, string> = {
@@ -35,7 +35,8 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  return res;
+  await throwIfResNotOk(res);
+  return res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
