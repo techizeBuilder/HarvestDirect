@@ -63,16 +63,14 @@ interface OrderHistoryResponse {
 }
 
 export default function OrderHistory() {
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const { data: orderHistory, isLoading, error } = useQuery<OrderHistoryResponse>({
     queryKey: ['/api/orders/history'],
-    enabled: isAuthenticated && !!token,
+    enabled: isAuthenticated,
     queryFn: async () => {
       const response = await fetch('/api/orders/history', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include' // Use session-based authentication
       });
       
       if (!response.ok) {
