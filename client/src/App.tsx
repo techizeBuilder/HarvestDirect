@@ -31,7 +31,7 @@ import AdminUsers from "@/pages/admin/users";
 import AdminFarmers from "@/pages/admin/farmers";
 import AdminInventory from "@/pages/admin/inventory";
 import AdminDiscounts from "@/pages/admin/discounts";
-import AdminBranding from "@/pages/admin/branding";
+
 import AdminSettings from "@/pages/admin/settings";
 import AdminNewsletter from "@/pages/admin/newsletter";
 import AdminMessagesWithLayout from "@/pages/admin/messages";
@@ -64,7 +64,7 @@ function App() {
               <Route path="/admin/messages" component={AdminMessagesWithLayout} />
               <Route path="/admin/inventory" component={AdminInventory} />
               <Route path="/admin/discounts" component={AdminDiscounts} />
-              <Route path="/admin/branding" component={AdminBranding} />
+
               <Route path="/admin/settings" component={AdminSettings} />
               
               {/* Main Store Routes - Wrapped in Layout */}
