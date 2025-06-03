@@ -2,10 +2,13 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useSiteSettings } from "@/context/SiteContext";
+import { Facebook, Instagram, Twitter, Linkedin, Youtube, Globe } from "lucide-react";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { settings } = useSiteSettings();
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,6 +226,78 @@ export default function Footer() {
           </div>
         </div>
         
+        {/* Social Media Links */}
+        {(settings.socialLinks.facebook || settings.socialLinks.instagram || settings.socialLinks.twitter || 
+          settings.socialLinks.linkedin || settings.socialLinks.youtube || settings.socialLinks.website) && (
+          <div className="border-t border-white/20 pt-8 pb-6">
+            <div className="text-center">
+              <h4 className="text-white font-bold text-lg mb-4">Follow Us</h4>
+              <div className="flex justify-center space-x-4">
+                {settings.socialLinks.facebook && (
+                  <a 
+                    href={settings.socialLinks.facebook} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-white/10 hover:bg-[#DDA15E] text-white p-3 rounded-full transition-all duration-300"
+                  >
+                    <Facebook className="h-5 w-5" />
+                  </a>
+                )}
+                {settings.socialLinks.instagram && (
+                  <a 
+                    href={settings.socialLinks.instagram} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-white/10 hover:bg-[#DDA15E] text-white p-3 rounded-full transition-all duration-300"
+                  >
+                    <Instagram className="h-5 w-5" />
+                  </a>
+                )}
+                {settings.socialLinks.twitter && (
+                  <a 
+                    href={settings.socialLinks.twitter} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-white/10 hover:bg-[#DDA15E] text-white p-3 rounded-full transition-all duration-300"
+                  >
+                    <Twitter className="h-5 w-5" />
+                  </a>
+                )}
+                {settings.socialLinks.linkedin && (
+                  <a 
+                    href={settings.socialLinks.linkedin} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-white/10 hover:bg-[#DDA15E] text-white p-3 rounded-full transition-all duration-300"
+                  >
+                    <Linkedin className="h-5 w-5" />
+                  </a>
+                )}
+                {settings.socialLinks.youtube && (
+                  <a 
+                    href={settings.socialLinks.youtube} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-white/10 hover:bg-[#DDA15E] text-white p-3 rounded-full transition-all duration-300"
+                  >
+                    <Youtube className="h-5 w-5" />
+                  </a>
+                )}
+                {settings.socialLinks.website && (
+                  <a 
+                    href={settings.socialLinks.website} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-white/10 hover:bg-[#DDA15E] text-white p-3 rounded-full transition-all duration-300"
+                  >
+                    <Globe className="h-5 w-5" />
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Copyright */}
         <div className="border-t border-white/20 pt-8 text-center">
           <p className="text-white/80 text-sm mb-2">© {new Date().getFullYear()} HarvestDirect. All rights reserved.</p>
