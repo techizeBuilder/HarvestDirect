@@ -727,25 +727,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get all user orders
+  // Get all user orders with complete details
   app.get(`${apiPrefix}/orders/history`, authenticate, async (req, res) => {
     try {
       const user = (req as any).user;
       const orders = await storage.getOrdersByUserId(user.id);
       
-      // Fetch order items for each order
-      const ordersWithItems = await Promise.all(
+      // Fetch comprehensive order details for each order
+      const ordersWithDetails = await Promise.all(
         orders.map(async (order) => {
-          const items = await storage.getOrderItemsByOrderId(order.id);
+          // Get order items with product details
+          const orderItems = await storage.getOrderItemsByOrderId(order.id);
+          const itemsWithProducts = await Promise.all(
+            orderItems.map(async (item) => {
+              const product = await storage.getProductById(item.productId);
+              return {
+                ...item,
+                product: product ? {
+                  id: product.id,
+                  name: product.name,
+                  sku: product.sku,
+                  imageUrl: product.imageUrl,
+                  category: product.category
+                } : null
+              };
+            })
+          );
+
+          // Get payment details
+          let payment = null;
+          try {
+            const payments = await storage.getPaymentsByUserId(user.id);
+            payment = payments.find(p => p.orderId === order.id);
+          } catch (error) {
+            console.log('Payment details not found for order:', order.id);
+          }
+
+          // Get applied discounts
+          let appliedDiscounts = [];
+          try {
+            if (order.discountId) {
+              const discount = await storage.getDiscountById(order.discountId);
+              if (discount) {
+                appliedDiscounts.push({
+                  id: discount.id,
+                  code: discount.code,
+                  type: discount.type,
+                  value: discount.value,
+                  description: discount.description
+                });
+              }
+            }
+          } catch (error) {
+            console.log('Discount details not found for order:', order.id);
+          }
+
           return {
             ...order,
-            items
+            items: itemsWithProducts,
+            payment: payment ? {
+              id: payment.id,
+              amount: payment.amount,
+              status: payment.status,
+              method: payment.razorpayPaymentId ? 'Razorpay' : 'Unknown',
+              razorpayPaymentId: payment.razorpayPaymentId
+            } : null,
+            appliedDiscounts,
+            shippingAddress: order.shippingAddress || 'Default address',
+            billingAddress: order.billingAddress || order.shippingAddress || 'Default address'
           };
         })
       );
       
-      res.json({ orders: ordersWithItems });
+      res.json({ orders: ordersWithDetails });
     } catch (error) {
+      console.error('Order history fetch error:', error);
       res.status(500).json({ message: "Failed to fetch order history" });
     }
   });

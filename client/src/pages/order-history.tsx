@@ -6,12 +6,37 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import { Package, Calendar, CreditCard, MapPin, ArrowLeft } from 'lucide-react';
 
+interface Product {
+  id: number;
+  name: string;
+  sku: string;
+  imageUrl: string;
+  category: string;
+}
+
 interface OrderItem {
   id: number;
   orderId: number;
   productId: number;
   quantity: number;
   price: number;
+  product: Product | null;
+}
+
+interface Payment {
+  id: number;
+  amount: number;
+  status: string;
+  method: string;
+  razorpayPaymentId: string | null;
+}
+
+interface AppliedDiscount {
+  id: number;
+  code: string;
+  type: string;
+  value: number;
+  description: string;
 }
 
 interface Order {
@@ -22,12 +47,15 @@ interface Order {
   total: number;
   status: string;
   shippingAddress: string;
+  billingAddress: string;
   paymentMethod: string;
   cancellationReason: string | null;
   deliveredAt: string | null;
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
+  payment: Payment | null;
+  appliedDiscounts: AppliedDiscount[];
 }
 
 interface OrderHistoryResponse {
@@ -192,8 +220,31 @@ export default function OrderHistory() {
                       </div>
                       <div className="flex justify-between">
                         <span>Payment Method:</span>
-                        <span className="capitalize">{order.paymentMethod}</span>
+                        <span className="capitalize">
+                          {order.payment?.method || order.paymentMethod || 'Unknown'}
+                        </span>
                       </div>
+                      {order.payment?.razorpayPaymentId && (
+                        <div className="flex justify-between">
+                          <span>Payment ID:</span>
+                          <span className="text-xs font-mono">
+                            {order.payment.razorpayPaymentId.slice(-8)}
+                          </span>
+                        </div>
+                      )}
+                      {order.appliedDiscounts && order.appliedDiscounts.length > 0 && (
+                        <div className="space-y-1">
+                          <span className="text-green-600 font-medium">Applied Discounts:</span>
+                          {order.appliedDiscounts.map((discount) => (
+                            <div key={discount.id} className="flex justify-between text-green-600">
+                              <span>Code: {discount.code}</span>
+                              <span>
+                                {discount.type === 'percentage' ? `${discount.value}%` : `$${discount.value}`}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <div className="flex justify-between font-semibold">
                         <span>Total:</span>
                         <span>${order.total.toFixed(2)}</span>
@@ -207,6 +258,13 @@ export default function OrderHistory() {
                       Shipping Address
                     </h4>
                     <p className="text-sm text-gray-600">{order.shippingAddress}</p>
+                    
+                    {order.billingAddress && order.billingAddress !== order.shippingAddress && (
+                      <>
+                        <h4 className="font-semibold mb-2 mt-4">Billing Address</h4>
+                        <p className="text-sm text-gray-600">{order.billingAddress}</p>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -215,14 +273,34 @@ export default function OrderHistory() {
                     <Separator className="my-4" />
                     <div>
                       <h4 className="font-semibold mb-3">Order Items</h4>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {order.items.map((item) => (
-                          <div key={item.id} className="flex justify-between items-center py-2 border rounded-lg px-3">
-                            <div>
-                              <span className="font-medium">Product ID: {item.productId}</span>
-                              <span className="text-sm text-gray-600 ml-2">Qty: {item.quantity}</span>
+                          <div key={item.id} className="flex items-center gap-4 p-3 border rounded-lg">
+                            {item.product?.imageUrl && (
+                              <img 
+                                src={item.product.imageUrl} 
+                                alt={item.product.name}
+                                className="w-16 h-16 object-cover rounded-md"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <div className="font-medium">
+                                {item.product?.name || `Product ID: ${item.productId}`}
+                              </div>
+                              {item.product?.sku && (
+                                <div className="text-sm text-gray-500">SKU: {item.product.sku}</div>
+                              )}
+                              {item.product?.category && (
+                                <div className="text-sm text-gray-500">Category: {item.product.category}</div>
+                              )}
+                              <div className="text-sm text-gray-600">
+                                Quantity: {item.quantity} × ${item.price.toFixed(2)}
+                              </div>
                             </div>
-                            <span className="font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                            <div className="text-right">
+                              <div className="font-semibold">${(item.price * item.quantity).toFixed(2)}</div>
+                              <div className="text-sm text-gray-500">Total</div>
+                            </div>
                           </div>
                         ))}
                       </div>
