@@ -1,8 +1,9 @@
 import { db } from './db';
-import { products, farmers, testimonials, discounts } from '@shared/schema';
+import { products, farmers, testimonials, discounts, siteSettings } from '@shared/schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
 import { discountData } from './discountData';
+import { storeSettingsData } from './storeSettingsData';
 import { sql } from 'drizzle-orm';
 
 /**
@@ -87,8 +88,16 @@ export async function initializeDatabase() {
       console.log(`Found ${existingDiscounts[0].count} existing discounts, skipping discount seeding.`);
     }
     
-
+    // Add site settings if they don't exist
+    const existingSiteSettings = await db.select({ count: sql`count(*)` }).from(siteSettings);
     
+    if (Number(existingSiteSettings[0].count) === 0) {
+      console.log('Adding store settings...');
+      await db.insert(siteSettings).values(storeSettingsData);
+    } else {
+      console.log(`Found ${existingSiteSettings[0].count} existing site settings, skipping settings seeding.`);
+    }
+
     console.log('Database initialization completed successfully!');
     
   } catch (error) {

@@ -390,6 +390,24 @@ export const insertDiscountUsageSchema = createInsertSchema(discountUsage).omit(
 export type InsertDiscountUsage = z.infer<typeof insertDiscountUsageSchema>;
 export type DiscountUsage = typeof discountUsage.$inferSelect;
 
+// Site Settings Schema for store information and social media
+export const siteSettings = pgTable("site_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  type: text("type").notNull().default("text"), // text, image, json
+  description: text("description"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertSiteSettingSchema = createInsertSchema(siteSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type InsertSiteSetting = z.infer<typeof insertSiteSettingSchema>;
+export type SiteSetting = typeof siteSettings.$inferSelect;
+
 
 
 // Cart with items

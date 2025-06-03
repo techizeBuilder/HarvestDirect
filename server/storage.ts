@@ -18,10 +18,10 @@ import {
   TeamMember, InsertTeamMember,
   Discount, InsertDiscount,
   DiscountUsage, InsertDiscountUsage,
-
+  SiteSetting, InsertSiteSetting,
   products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews,
   users, payments, subscriptions, subscriptionStatusEnum, contactMessages, orders, orderItems, teamMembers,
-  discounts, discountUsage
+  discounts, discountUsage, siteSettings
 } from '@shared/schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
@@ -123,6 +123,12 @@ export interface IStorage {
   validateDiscount(code: string, userId?: number, cartTotal?: number): Promise<{ valid: boolean; discount?: Discount; error?: string }>;
   applyDiscount(discountId: number, userId?: number, sessionId?: string, orderId?: number): Promise<DiscountUsage>;
   getDiscountUsage(discountId: number, userId?: number): Promise<number>;
+
+  // Site Settings Methods
+  getSiteSetting(key: string): Promise<SiteSetting | undefined>;
+  getAllSiteSettings(): Promise<SiteSetting[]>;
+  upsertSiteSetting(setting: InsertSiteSetting): Promise<SiteSetting>;
+  deleteSiteSetting(key: string): Promise<void>;
 
 
 }
@@ -1564,7 +1570,41 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Site Settings Methods
+  async getSiteSetting(key: string): Promise<SiteSetting | undefined> {
+    const [setting] = await db.select().from(siteSettings).where(eq(siteSettings.key, key));
+    return setting;
+  }
 
+  async getAllSiteSettings(): Promise<SiteSetting[]> {
+    const settings = await db.select().from(siteSettings);
+    return settings;
+  }
+
+  async upsertSiteSetting(setting: InsertSiteSetting): Promise<SiteSetting> {
+    const [upsertedSetting] = await db
+      .insert(siteSettings)
+      .values({
+        ...setting,
+        updatedAt: new Date()
+      })
+      .onConflictDoUpdate({
+        target: siteSettings.key,
+        set: {
+          value: setting.value,
+          type: setting.type,
+          description: setting.description,
+          updatedAt: new Date()
+        }
+      })
+      .returning();
+    
+    return upsertedSetting;
+  }
+
+  async deleteSiteSetting(key: string): Promise<void> {
+    await db.delete(siteSettings).where(eq(siteSettings.key, key));
+  }
 }
 
 // Use the database storage implementation
