@@ -557,6 +557,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shippingAddress
       } = req.body;
       
+      console.log('Payment verification request:', {
+        userId: user.id,
+        sessionId,
+        razorpayPaymentId,
+        razorpayOrderId,
+        amount,
+        currency
+      });
+      
+      // Validate required fields
+      if (!razorpayPaymentId || !razorpayOrderId || !razorpaySignature) {
+        return res.status(400).json({ message: "Missing required payment fields" });
+      }
+      
       // Verify the payment signature
       const body = razorpayOrderId + "|" + razorpayPaymentId;
       const expectedSignature = crypto
@@ -565,8 +579,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .digest("hex");
       
       if (expectedSignature !== razorpaySignature) {
+        console.error('Payment signature verification failed:', {
+          expected: expectedSignature,
+          received: razorpaySignature
+        });
         return res.status(400).json({ message: "Invalid payment signature" });
       }
+      
+      console.log('Payment signature verified successfully');
       
       // Get the current cart
       const cart = await storage.getCart(sessionId);

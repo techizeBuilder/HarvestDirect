@@ -246,21 +246,22 @@ export default function Account() {
 
   return (
     <Layout>
-      <div className="container mx-auto py-10">
-        <h1 className="text-3xl font-bold mb-6">My Account</h1>
-        
-        <div className="mb-6">
-          <Button 
-            onClick={() => navigate('/order-history')} 
-            variant="outline" 
-            className="mb-4"
-          >
-            View Order History
-          </Button>
-        </div>
-        
-        <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-8 w-full grid grid-cols-4">
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8 max-w-6xl">
+          <h1 className="text-3xl font-bold mb-8 text-foreground">My Account</h1>
+          
+          <div className="mb-6">
+            <Button 
+              onClick={() => navigate('/order-history')} 
+              variant="outline" 
+              className="mb-4"
+            >
+              View Order History
+            </Button>
+          </div>
+          
+          <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="mb-8 w-full grid grid-cols-4">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="delivered-orders">Delivered Orders</TabsTrigger>
             <TabsTrigger value="payments">Payment History</TabsTrigger>
@@ -561,16 +562,17 @@ export default function Account() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
 
-      {/* Product Rating Modal */}
-      <ProductRatingModal
-        isOpen={ratingModal.isOpen}
-        onClose={() => setRatingModal({ isOpen: false, orderId: 0, productId: 0, productName: '' })}
-        orderId={ratingModal.orderId}
-        productId={ratingModal.productId}
-        productName={ratingModal.productName}
-      />
+        {/* Product Rating Modal */}
+        <ProductRatingModal
+          isOpen={ratingModal.isOpen}
+          onClose={() => setRatingModal({ isOpen: false, orderId: 0, productId: 0, productName: '' })}
+          orderId={ratingModal.orderId}
+          productId={ratingModal.productId}
+          productName={ratingModal.productName}
+        />
+        </div>
+      </div>
     </Layout>
   );
 }
