@@ -261,11 +261,10 @@ export default function Account() {
           </div>
           
           <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-8 w-full grid grid-cols-4">
+            <TabsList className="mb-8 w-full grid grid-cols-3">
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="delivered-orders">Delivered Orders</TabsTrigger>
               <TabsTrigger value="payments">Payment History</TabsTrigger>
-              <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
             </TabsList>
           
           <TabsContent value="profile">
@@ -453,7 +452,7 @@ export default function Account() {
                               </CardDescription>
                             </div>
                             <div className="text-right">
-                              <div className="font-semibold">${order.total.toFixed(2)}</div>
+                              <div className="font-semibold">₹{order.total.toFixed(2)}</div>
                               <Badge variant="outline" className="text-green-700 border-green-300">
                                 Delivered
                               </Badge>
@@ -467,7 +466,7 @@ export default function Account() {
                                 <div className="flex-1">
                                   <h4 className="font-medium">{item.productName || 'Product'}</h4>
                                   <p className="text-sm text-gray-600">
-                                    Quantity: {item.quantity} • Price: ${item.price.toFixed(2)}
+                                    Quantity: {item.quantity} • Price: ₹{item.price.toFixed(2)}
                                   </p>
                                 </div>
                                 <div className="flex items-center space-x-2">
@@ -510,57 +509,7 @@ export default function Account() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="subscriptions">
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Subscriptions</CardTitle>
-                <CardDescription>
-                  Manage your active subscriptions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="text-center py-4">Loading subscriptions...</div>
-                ) : subscriptions.length > 0 ? (
-                  <div className="space-y-6">
-                    {subscriptions.map((subscription: any) => (
-                      <div key={subscription.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-center mb-2">
-                          <h3 className="font-semibold text-lg">{subscription.planName}</h3>
-                          <span className={`inline-block px-2 py-1 rounded text-xs ${
-                            subscription.status === 'active' ? 'bg-green-100 text-green-800' :
-                            subscription.status === 'canceled' ? 'bg-red-100 text-red-800' :
-                            'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {subscription.status}
-                          </span>
-                        </div>
-                        <div className="text-sm text-gray-600 mb-4">
-                          <div>Start Date: {new Date(subscription.startDate).toLocaleDateString()}</div>
-                          <div>End Date: {new Date(subscription.endDate).toLocaleDateString()}</div>
-                          <div className="mt-1">Subscription ID: {subscription.razorpaySubscriptionId}</div>
-                        </div>
-                        {subscription.status === 'active' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => handleCancelSubscription(subscription.id)}
-                            disabled={isLoading}
-                          >
-                            Cancel Subscription
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    You don't have any active subscriptions.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+
         </Tabs>
 
         {/* Product Rating Modal */}
