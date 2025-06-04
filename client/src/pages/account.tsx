@@ -262,11 +262,11 @@ export default function Account() {
           
           <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="mb-8 w-full grid grid-cols-4">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="delivered-orders">Delivered Orders</TabsTrigger>
-            <TabsTrigger value="payments">Payment History</TabsTrigger>
-            <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-          </TabsList>
+              <TabsTrigger value="profile">Profile</TabsTrigger>
+              <TabsTrigger value="delivered-orders">Delivered Orders</TabsTrigger>
+              <TabsTrigger value="payments">Payment History</TabsTrigger>
+              <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
+            </TabsList>
           
           <TabsContent value="profile">
             <Card>
