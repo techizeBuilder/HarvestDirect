@@ -2,8 +2,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@shared/schema";
 import { AddToCartButton } from "@/components/ui/add-to-cart-button";
+import { RatingDisplay } from "@/components/ui/rating-display";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { Star, Leaf, Shield, Crown } from "lucide-react";
 
 interface ProductCardProps {
@@ -13,6 +15,17 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const hasDiscount = product.discountPrice && product.discountPrice < product.price;
   const displayPrice = hasDiscount ? product.discountPrice : product.price;
+
+  // Fetch product reviews to calculate rating
+  const { data: reviews = [] } = useQuery({
+    queryKey: [`/api/products/${product.id}/reviews`],
+    enabled: !!product.id,
+  });
+
+  // Calculate average rating from reviews
+  const averageRating = reviews && Array.isArray(reviews) && reviews.length > 0 
+    ? reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / reviews.length 
+    : 0;
 
   return (
     <motion.div 
@@ -78,6 +91,16 @@ export default function ProductCard({ product }: ProductCardProps) {
           <p className="text-olive text-sm mb-3 line-clamp-2">
             {product.shortDescription || product.description}
           </p>
+
+          {/* Rating Display */}
+          <div className="mb-3">
+            <RatingDisplay 
+              rating={averageRating} 
+              totalReviews={reviews.length} 
+              size="sm"
+              showCount={reviews.length > 0}
+            />
+          </div>
 
           {/* Stock Status */}
           {product.stockQuantity && product.stockQuantity <= 10 && (

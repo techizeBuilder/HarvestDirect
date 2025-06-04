@@ -170,15 +170,45 @@ export default function ProductReviewSystem({ productId }: ProductReviewSystemPr
     <div className="mt-8 border-t pt-8">
       <h2 className="text-2xl font-bold mb-4">Customer Reviews</h2>
       
-      {/* Display average rating */}
+      {/* Display comprehensive rating summary */}
       {!loadingReviews && reviews && Array.isArray(reviews) && reviews.length > 0 && (
-        <div className="flex items-center mb-6">
-          <div className="flex items-center mr-2">
-            {renderStars(roundedRating)}
+        <div className="bg-background p-6 rounded-lg mb-8 border">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Overall Rating */}
+            <div className="flex items-center space-x-4">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-primary">{averageRating.toFixed(1)}</div>
+                <div className="flex items-center justify-center mb-2">
+                  {renderStars(roundedRating)}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+                </div>
+              </div>
+            </div>
+            
+            {/* Rating Breakdown */}
+            <div className="space-y-2">
+              {[5, 4, 3, 2, 1].map((starCount) => {
+                const count = reviews.filter((review: any) => review.rating === starCount).length;
+                const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                
+                return (
+                  <div key={starCount} className="flex items-center space-x-2 text-sm">
+                    <span className="w-2">{starCount}</span>
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-yellow-400 h-2 rounded-full transition-all duration-300" 
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                    <span className="w-8 text-right">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <span className="text-lg font-medium">
-            {averageRating.toFixed(1)} out of 5 ({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})
-          </span>
         </div>
       )}
 
@@ -261,17 +291,30 @@ export default function ProductReviewSystem({ productId }: ProductReviewSystemPr
         ) : (
           <div className="divide-y">
             {reviews && Array.isArray(reviews) && reviews.map((review: any, index: number) => (
-              <div key={index} className="py-4">
-                <div className="flex items-center mb-2">
-                  <div className="flex mr-2">
-                    {renderStars(review.rating)}
+              <div key={index} className="py-6 first:pt-0 last:pb-0">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex">
+                      {renderStars(review.rating)}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-foreground">{review.customerName || "Verified Customer"}</span>
+                      {review.verified && (
+                        <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                          Verified Purchase
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <span className="font-medium">{review.userName || "Customer"}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(review.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </span>
                 </div>
-                <p className="text-gray-600 italic text-sm mb-2">
-                  {new Date(review.createdAt).toLocaleDateString()}
-                </p>
-                <p className="text-gray-800">{review.review}</p>
+                <p className="text-foreground leading-relaxed">{review.reviewText}</p>
               </div>
             ))}
           </div>

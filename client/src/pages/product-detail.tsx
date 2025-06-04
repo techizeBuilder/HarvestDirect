@@ -3,6 +3,7 @@ import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { AddToCartButton } from "@/components/ui/add-to-cart-button";
+import { RatingDisplay } from "@/components/ui/rating-display";
 import { Separator } from "@/components/ui/separator";
 import { MapPin, Leaf, Shield, Award, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
