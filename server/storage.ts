@@ -121,6 +121,7 @@ export interface IStorage {
   updateDiscount(id: number, discount: Partial<InsertDiscount>): Promise<Discount>;
   deleteDiscount(id: number): Promise<void>;
   validateDiscount(code: string, userId?: number, cartTotal?: number): Promise<{ valid: boolean; discount?: Discount; error?: string }>;
+  validateDiscountById(id: number, userId?: number, cartTotal?: number): Promise<{ valid: boolean; discount?: Discount; error?: string }>;
   applyDiscount(discountId: number, userId?: number, sessionId?: string, orderId?: number): Promise<DiscountUsage>;
   getDiscountUsage(discountId: number, userId?: number): Promise<number>;
 
@@ -1501,6 +1502,46 @@ export class DatabaseStorage implements IStorage {
     
     if (!discount) {
       return { valid: false, error: "Invalid discount code" };
+    }
+
+    const now = new Date();
+
+    // Check if discount is active
+    if (discount.status !== 'active') {
+      return { valid: false, error: "Discount is not active" };
+    }
+
+    // Check date validity
+    if (now < discount.startDate || now > discount.endDate) {
+      return { valid: false, error: "Discount has expired or not yet active" };
+    }
+
+    // Check minimum purchase requirement
+    if (cartTotal && discount.minPurchase && cartTotal < discount.minPurchase) {
+      return { valid: false, error: `Minimum purchase amount is ₹${discount.minPurchase}` };
+    }
+
+    // Check usage limits
+    if (discount.usageLimit && discount.usageLimit > 0 && discount.used && discount.used >= discount.usageLimit) {
+      return { valid: false, error: "Discount usage limit exceeded" };
+    }
+
+    // Check per-user usage limits
+    if (discount.perUser && userId) {
+      const userUsage = await this.getDiscountUsage(discount.id, userId);
+      if (userUsage > 0) {
+        return { valid: false, error: "You have already used this discount" };
+      }
+    }
+
+    return { valid: true, discount };
+  }
+
+  async validateDiscountById(id: number, userId?: number, cartTotal?: number): Promise<{ valid: boolean; discount?: Discount; error?: string }> {
+    const discount = await this.getDiscountById(id);
+    
+    if (!discount) {
+      return { valid: false, error: "Invalid discount" };
     }
 
     const now = new Date();

@@ -48,6 +48,9 @@ export default function Checkout() {
     queryKey: ['/api/discounts/active'],
   });
 
+  // Type assertion for availableDiscounts
+  const discounts = (availableDiscounts as any[]) || [];
+
   // Calculate total with discount
   const calculateTotal = () => {
     let finalTotal = subtotal + shipping;
@@ -464,7 +467,7 @@ export default function Checkout() {
                           <SelectValue placeholder={discountsLoading ? "Loading discounts..." : "Select a discount"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {availableDiscounts.map((discount: any) => (
+                          {discounts.map((discount: any) => (
                             <SelectItem key={discount.id} value={discount.id.toString()}>
                               <div className="flex justify-between items-center w-full">
                                 <span className="font-medium">{discount.code}</span>
