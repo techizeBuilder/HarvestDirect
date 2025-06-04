@@ -38,6 +38,17 @@ export default function ProductDetail() {
     enabled: !!product?.farmerId
   });
 
+  // Get product reviews for rating display
+  const { data: reviews = [] } = useQuery({
+    queryKey: [`/api/products/${productId}/reviews`],
+    enabled: !isNaN(productId)
+  });
+
+  // Calculate average rating from reviews
+  const averageRating = reviews && Array.isArray(reviews) && reviews.length > 0 
+    ? reviews.reduce((sum: number, review: any) => sum + review.rating, 0) / reviews.length 
+    : 0;
+
   // Get related products (same category)
   const { data: relatedProducts = [] } = useQuery<any[]>({
     queryKey: [`/api/products/category/${product?.category}`],
@@ -114,6 +125,17 @@ export default function ProductDetail() {
               <h1 className="font-heading text-forest text-3xl md:text-4xl font-bold mt-3 mb-4">
                 {product?.name || "Product Name"}
               </h1>
+
+              {/* Rating Display */}
+              <div className="mb-4">
+                <RatingDisplay 
+                  rating={averageRating} 
+                  totalReviews={reviews.length} 
+                  size="md"
+                  showCount={true}
+                />
+              </div>
+
               <p className="text-olive text-lg mb-6">
                 {product?.description || "This premium product is grown using traditional methods by our partner farmers, ensuring exceptional quality and authentic flavor."}
               </p>
