@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { ChevronLeft, CreditCard, Truck, Shield, Check } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,10 +38,15 @@ export default function Checkout() {
   const { cartItems, subtotal, shipping, total, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
-  const [discountCode, setDiscountCode] = useState("");
+  const [selectedDiscountId, setSelectedDiscountId] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
   const [discountError, setDiscountError] = useState("");
+
+  // Fetch available discounts
+  const { data: availableDiscounts = [], isLoading: discountsLoading } = useQuery({
+    queryKey: ['/api/discounts/active'],
+  });
 
   // Calculate total with discount
   const calculateTotal = () => {
@@ -56,9 +63,9 @@ export default function Checkout() {
     return finalTotal;
   };
 
-  const applyDiscount = async () => {
-    if (!discountCode.trim()) {
-      setDiscountError("Please enter a discount code");
+  const applyDiscount = async (discountId: string) => {
+    if (!discountId) {
+      setDiscountError("Please select a discount");
       return;
     }
 
@@ -72,7 +79,7 @@ export default function Checkout() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          code: discountCode.trim(),
+          id: discountId,
           cartTotal: subtotal + shipping,
         }),
       });
@@ -97,12 +104,19 @@ export default function Checkout() {
 
   const removeDiscount = () => {
     setAppliedDiscount(null);
-    setDiscountCode("");
+    setSelectedDiscountId("");
     setDiscountError("");
     toast({
       title: "Discount Removed",
       description: "The discount has been removed from your order",
     });
+  };
+
+  const handleDiscountSelect = (discountId: string) => {
+    setSelectedDiscountId(discountId);
+    if (discountId && !appliedDiscount) {
+      applyDiscount(discountId);
+    }
   };
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -436,28 +450,35 @@ export default function Checkout() {
                   />
                 </div>
                 
-                {/* Discount Code Section */}
+                {/* Discount Selection Section */}
                 <div className="bg-white p-6 rounded-lg shadow-sm">
-                  <h2 className="text-xl font-heading font-semibold text-forest mb-6">Discount Code</h2>
+                  <h2 className="text-xl font-heading font-semibold text-forest mb-6">Apply Discount</h2>
                   <div className="space-y-4">
                     <div className="flex gap-2">
-                      <Input
-                        placeholder="Enter discount code"
-                        value={discountCode}
-                        onChange={(e) => setDiscountCode(e.target.value)}
-                        disabled={discountLoading || !!appliedDiscount}
-                        className="flex-1"
-                      />
-                      {!appliedDiscount ? (
-                        <Button
-                          type="button"
-                          onClick={applyDiscount}
-                          disabled={discountLoading || !discountCode.trim()}
-                          variant="outline"
-                        >
-                          {discountLoading ? "Applying..." : "Apply"}
-                        </Button>
-                      ) : (
+                      <Select
+                        value={selectedDiscountId}
+                        onValueChange={handleDiscountSelect}
+                        disabled={discountLoading || !!appliedDiscount || discountsLoading}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder={discountsLoading ? "Loading discounts..." : "Select a discount"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableDiscounts.map((discount: any) => (
+                            <SelectItem key={discount.id} value={discount.id.toString()}>
+                              <div className="flex justify-between items-center w-full">
+                                <span className="font-medium">{discount.code}</span>
+                                <span className="text-sm text-gray-600 ml-2">
+                                  {discount.type === 'percentage' && `${discount.value}% off`}
+                                  {discount.type === 'fixed' && `₹${discount.value} off`}
+                                  {discount.type === 'shipping' && 'Free Shipping'}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {appliedDiscount && (
                         <Button
                           type="button"
                           onClick={removeDiscount}

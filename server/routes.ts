@@ -1400,11 +1400,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get active discounts for checkout
+  app.get('/api/discounts/active', async (req, res) => {
+    try {
+      const discounts = await storage.getActiveDiscounts();
+      res.json(discounts);
+    } catch (error) {
+      console.error('Active discounts fetch error:', error);
+      res.status(500).json({ message: "Failed to fetch active discounts" });
+    }
+  });
+
   // Discount validation and application for checkout
   app.post('/api/discounts/validate', async (req, res) => {
     try {
-      const { code, cartTotal, userId } = req.body;
-      const validation = await storage.validateDiscount(code, userId, cartTotal);
+      const { code, id, cartTotal, userId } = req.body;
+      let validation;
+      
+      if (id) {
+        // Validate by discount ID
+        validation = await storage.validateDiscountById(id, userId, cartTotal);
+      } else {
+        // Validate by discount code (fallback)
+        validation = await storage.validateDiscount(code, userId, cartTotal);
+      }
+      
       res.json(validation);
     } catch (error) {
       console.error('Discount validation error:', error);
