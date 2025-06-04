@@ -588,10 +588,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         await Promise.all(stockValidationPromises);
       } catch (stockError) {
-        return res.status(400).json({ message: stockError.message });
+        return res.status(400).json({ message: stockError instanceof Error ? stockError.message : 'Stock validation failed' });
       }
       
+      console.log('Starting order creation process...');
+      
       // Create the order
+      console.log('Creating order with data:', {
+        userId: user.id,
+        sessionId,
+        paymentId: razorpayPaymentId,
+        total: amount / 100,
+        status: 'confirmed',
+        shippingAddress: shippingAddress || 'No address provided',
+        paymentMethod: 'razorpay'
+      });
+      
       const order = await storage.createOrder({
         userId: user.id,
         sessionId,
@@ -602,8 +614,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentMethod: 'razorpay'
       });
       
+      console.log('Order created successfully:', order);
+      
       // Create order items with automatic stock deduction
+      console.log('Creating order items for', cart.items.length, 'items');
       for (const item of cart.items) {
+        console.log('Processing order item:', {
+          orderId: order.id,
+          productId: item.product.id,
+          quantity: item.quantity,
+          price: item.product.price
+        });
+        
         await storage.createOrderItem({
           orderId: order.id,
           productId: item.product.id,
@@ -612,7 +634,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      console.log('All order items created successfully');
+      
       // Record the payment with order reference
+      console.log('Recording payment with order reference');
       const payment = await storage.createPayment({
         userId: user.id,
         orderId: order.id,
@@ -622,8 +647,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'completed'
       });
       
+      console.log('Payment recorded successfully:', payment);
+      
       // Clear the cart after successful order creation
+      console.log('Clearing cart for sessionId:', sessionId);
       await storage.clearCart(sessionId);
+      console.log('Cart cleared successfully');
       
       res.json({ 
         message: "Payment successful and order created", 
@@ -632,7 +661,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Payment verification error:', error);
-      res.status(500).json({ message: "Payment verification failed" });
+      
+      // Provide detailed error information for debugging
+      let errorMessage = "Payment verification failed";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        console.error('Detailed error:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+      }
+      
+      res.status(500).json({ 
+        message: errorMessage,
+        details: error instanceof Error ? error.message : "Unknown error occurred"
+      });
     }
   });
   
