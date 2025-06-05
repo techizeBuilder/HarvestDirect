@@ -338,7 +338,25 @@ export default function AdminProducts() {
       farmerId: 1,
       featured: false
     });
+    setUploadedImages([]);
     setIsCreateDialogOpen(true);
+  };
+
+  // Handle image upload
+  const handleImageUpload = (imagePath: string, thumbnailPath: string) => {
+    setUploadedImages(prev => [...prev, imagePath]);
+    form.setValue('imageUrl', imagePath);
+  };
+
+  // Handle image removal
+  const handleImageRemove = (imagePath: string) => {
+    setUploadedImages(prev => prev.filter(img => img !== imagePath));
+    if (uploadedImages.length === 1) {
+      form.setValue('imageUrl', '');
+    } else {
+      const remainingImages = uploadedImages.filter(img => img !== imagePath);
+      form.setValue('imageUrl', remainingImages[0] || '');
+    }
   };
 
   // Handle form submission for creating/editing
@@ -713,19 +731,16 @@ export default function AdminProducts() {
                   />
                 </div>
                 
-                <FormField
-                  control={form.control}
-                  name="imageUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Image URL</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div>
+                  <FormLabel>Product Images</FormLabel>
+                  <ImageUpload
+                    onImageUpload={handleImageUpload}
+                    onImageRemove={handleImageRemove}
+                    existingImages={uploadedImages}
+                    maxImages={5}
+                    multiple={true}
+                  />
+                </div>
                 
                 <FormField
                   control={form.control}
@@ -897,19 +912,16 @@ export default function AdminProducts() {
                   />
                 </div>
                 
-                <FormField
-                  control={form.control}
-                  name="imageUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Image URL</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div>
+                  <FormLabel>Product Images</FormLabel>
+                  <ImageUpload
+                    onImageUpload={handleImageUpload}
+                    onImageRemove={handleImageRemove}
+                    existingImages={uploadedImages}
+                    maxImages={5}
+                    multiple={true}
+                  />
+                </div>
                 
                 <FormField
                   control={form.control}
