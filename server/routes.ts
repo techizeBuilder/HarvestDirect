@@ -18,6 +18,9 @@ import {
   insertDiscountSchema
 } from "@shared/schema";
 import adminRouter from './admin';
+import imageRouter from './imageRoutes';
+import path from 'path';
+import express from 'express';
 
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -61,8 +64,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.use(getSessionId);
 
+  // Serve uploaded images statically
+  app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
+
   // Register admin routes
   app.use(`${apiPrefix}/admin`, adminRouter);
+
+  // Register image upload routes
+  app.use(`${apiPrefix}/images`, imageRouter);
 
   // Get all products (from enhanced products)
   app.get(`${apiPrefix}/products`, async (req, res) => {

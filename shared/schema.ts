@@ -30,6 +30,8 @@ export const products = pgTable("products", {
   sku: text("sku"),
   imageUrl: text("image_url").notNull(),
   imageUrls: text("image_urls").array(),
+  thumbnailUrl: text("thumbnail_url"),
+  localImagePaths: text("local_image_paths").array(),
   videoUrl: text("video_url"),
   farmerId: integer("farmer_id").notNull(),
   stockQuantity: integer("stock_quantity").notNull().default(100),
