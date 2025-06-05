@@ -61,6 +61,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import ImageUpload from '@/components/admin/ImageUpload';
 
 // Type for Product
 interface Product {
@@ -93,7 +94,7 @@ const productFormSchema = z.object({
   price: z.number().min(0.01, "Price must be greater than 0"),
   category: z.string().min(1, "Please select a category"),
   stockQuantity: z.number().int().min(0, "Stock quantity must be 0 or greater"),
-  imageUrl: z.string().url("Please enter a valid image URL"),
+  imageUrl: z.string().min(1, "Please upload at least one image"),
   farmerId: z.number().int().positive("Please select a valid farmer"),
   featured: z.boolean().optional()
 });
@@ -112,6 +113,7 @@ export default function AdminProducts() {
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [farmers, setFarmers] = useState<{id: number, name: string}[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const productsPerPage = 10;
   const { toast } = useToast();
 
