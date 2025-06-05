@@ -19,6 +19,7 @@ import {
 } from "@shared/schema";
 import adminRouter from './admin';
 import imageRouter from './imageRoutes';
+import { exportDatabase, exportTable } from './databaseExport';
 import path from 'path';
 import express from 'express';
 
@@ -1470,6 +1471,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Active discounts fetch error:', error);
       res.status(500).json({ message: "Failed to fetch active discounts" });
+    }
+  });
+
+  // Database Export API Routes
+  app.get('/api/admin/database/export', async (req, res) => {
+    try {
+      console.log('Starting database export...');
+      const exportPath = await exportDatabase();
+      
+      res.json({ 
+        message: "Database exported successfully",
+        filePath: exportPath,
+        downloadUrl: `/api/admin/database/download/${path.basename(exportPath)}`
+      });
+    } catch (error) {
+      console.error('Database export error:', error);
+      res.status(500).json({ message: "Failed to export database" });
+    }
+  });
+
+  // Download exported database file
+  app.get('/api/admin/database/download/:filename', (req, res) => {
+    try {
+      const filename = req.params.filename;
+      const filePath = path.join(process.cwd(), 'exports', filename);
+      
+      // Security check - ensure file is in exports directory
+      if (!filePath.startsWith(path.join(process.cwd(), 'exports'))) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // Check if file exists
+      if (!require('fs').existsSync(filePath)) {
+        return res.status(404).json({ message: "Export file not found" });
+      }
+      
+      res.download(filePath, filename, (err) => {
+        if (err) {
+          console.error('File download error:', err);
+          res.status(500).json({ message: "Failed to download file" });
+        }
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      res.status(500).json({ message: "Failed to download export file" });
+    }
+  });
+
+  // Export specific table
+  app.get('/api/admin/database/export/:tableName', async (req, res) => {
+    try {
+      const tableName = req.params.tableName;
+      const exportPath = await exportTable(tableName);
+      
+      res.json({ 
+        message: `Table ${tableName} exported successfully`,
+        filePath: exportPath,
+        downloadUrl: `/api/admin/database/download/${path.basename(exportPath)}`
+      });
+    } catch (error) {
+      console.error(`Table export error for ${req.params.tableName}:`, error);
+      res.status(500).json({ message: `Failed to export table ${req.params.tableName}` });
     }
   });
 
