@@ -161,6 +161,8 @@ export default function EnhancedAdminProducts() {
   const [productToEdit, setProductToEdit] = useState<EnhancedProduct | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [farmers, setFarmers] = useState<{id: number, name: string, location: string}[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [primaryImage, setPrimaryImage] = useState<string>('');
   const productsPerPage = 10;
   const { toast } = useToast();
 
@@ -392,6 +394,34 @@ export default function EnhancedAdminProducts() {
     setIsEditDialogOpen(true);
   };
 
+  // Handle primary image upload
+  const handlePrimaryImageUpload = (imagePath: string, thumbnailPath: string) => {
+    setPrimaryImage(imagePath);
+    form.setValue('imageUrl', imagePath);
+  };
+
+  // Handle additional images upload
+  const handleAdditionalImageUpload = (imagePath: string, thumbnailPath: string) => {
+    setUploadedImages(prev => [...prev, imagePath]);
+    const currentImages = form.getValues('imageUrls');
+    const imageArray = currentImages ? currentImages.split(',').map(img => img.trim()).filter(img => img) : [];
+    imageArray.push(imagePath);
+    form.setValue('imageUrls', imageArray.join(','));
+  };
+
+  // Handle image removal
+  const handleImageRemove = (imagePath: string) => {
+    if (imagePath === primaryImage) {
+      setPrimaryImage('');
+      form.setValue('imageUrl', '');
+    } else {
+      setUploadedImages(prev => prev.filter(img => img !== imagePath));
+      const currentImages = form.getValues('imageUrls');
+      const imageArray = currentImages ? currentImages.split(',').map(img => img.trim()).filter(img => img && img !== imagePath) : [];
+      form.setValue('imageUrls', imageArray.join(','));
+    }
+  };
+
   // Set up form for creating
   const setupCreateForm = () => {
     form.reset({
@@ -419,6 +449,8 @@ export default function EnhancedAdminProducts() {
       enableInstagramShare: true,
       featured: false
     });
+    setUploadedImages([]);
+    setPrimaryImage('');
     setIsCreateDialogOpen(true);
   };
 
@@ -1007,41 +1039,33 @@ export default function EnhancedAdminProducts() {
 
                     {/* Media Tab */}
                     <TabsContent value="media" className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="imageUrl"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Primary Image URL</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://example.com/image.jpg" {...field} />
-                            </FormControl>
-                            <FormDescription>Main product image displayed in listings</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div>
+                        <FormLabel>Primary Image</FormLabel>
+                        <FormDescription className="mb-3">
+                          Main product image displayed in listings
+                        </FormDescription>
+                        <ImageUpload
+                          onImageUpload={handlePrimaryImageUpload}
+                          onImageRemove={handleImageRemove}
+                          existingImages={primaryImage ? [primaryImage] : []}
+                          maxImages={1}
+                          multiple={false}
+                        />
+                      </div>
 
-                      <FormField
-                        control={form.control}
-                        name="imageUrls"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Additional Images</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
-                                rows={3}
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Multiple image URLs separated by commas for product gallery
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div>
+                        <FormLabel>Additional Images</FormLabel>
+                        <FormDescription className="mb-3">
+                          Multiple images for product gallery (up to 5 images)
+                        </FormDescription>
+                        <ImageUpload
+                          onImageUpload={handleAdditionalImageUpload}
+                          onImageRemove={handleImageRemove}
+                          existingImages={uploadedImages}
+                          maxImages={5}
+                          multiple={true}
+                        />
+                      </div>
 
                       <FormField
                         control={form.control}
