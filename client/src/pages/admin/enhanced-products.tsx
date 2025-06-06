@@ -126,7 +126,7 @@ const enhancedProductFormSchema = z.object({
   premiumQuality: z.boolean().default(false),
   
   // Media
-  imageUrl: z.string().url("Please enter a valid image URL"),
+  imageUrl: z.string().optional(),
   imageUrls: z.string().optional(),
   videoUrl: z.string().url().optional().or(z.literal("")),
   
@@ -457,18 +457,34 @@ export default function EnhancedAdminProducts() {
   // Handle form submission for creating/editing
   const onSubmit = async (data: z.infer<typeof enhancedProductFormSchema>) => {
     try {
+      console.log('Form submission started with data:', data);
+      
       const token = localStorage.getItem('adminToken');
       if (!token) {
         throw new Error('Authentication required');
       }
 
+      // Ensure we have an image URL from uploads
+      if (!data.imageUrl && !primaryImage) {
+        toast({
+          title: 'Validation Error',
+          description: 'Please upload a primary image',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Use uploaded image if available
+      const finalImageUrl = primaryImage || data.imageUrl;
+
       // Process image URLs if provided
       const imageUrls = data.imageUrls 
         ? data.imageUrls.split(',').map(url => url.trim()).filter(url => url)
-        : [];
+        : uploadedImages;
 
       const requestData = {
         ...data,
+        imageUrl: finalImageUrl,
         imageUrls: imageUrls.length > 0 ? imageUrls : null,
         videoUrl: data.videoUrl || null,
         discountPrice: data.discountPrice || null,
@@ -477,6 +493,8 @@ export default function EnhancedAdminProducts() {
         metaDescription: data.metaDescription || null,
         slug: data.slug || null
       };
+
+      console.log('Sending request data:', requestData);
 
       let response;
       
@@ -502,8 +520,11 @@ export default function EnhancedAdminProducts() {
         });
       }
       
+      const responseData = await response.json();
+      console.log('Response:', response.status, responseData);
+      
       if (!response.ok) {
-        throw new Error(productToEdit ? 'Failed to update product' : 'Failed to create product');
+        throw new Error(responseData.message || (productToEdit ? 'Failed to update product' : 'Failed to create product'));
       }
       
       fetchProducts(currentPage);
@@ -517,7 +538,14 @@ export default function EnhancedAdminProducts() {
       setIsEditDialogOpen(false);
       setIsCreateDialogOpen(false);
       setProductToEdit(null);
+      setUploadedImages([]);
+      setPrimaryImage('');
+      
+      // Reset form
+      form.reset();
+      
     } catch (err) {
+      console.error('Form submission error:', err);
       toast({
         title: 'Error',
         description: err instanceof Error ? err.message : 'Failed to save product',
