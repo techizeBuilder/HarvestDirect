@@ -163,7 +163,7 @@ export default function EnhancedAdminProducts() {
   const [farmers, setFarmers] = useState<{id: number, name: string, location: string}[]>([]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [primaryImage, setPrimaryImage] = useState<string>('');
-  const productsPerPage = 10;
+  const productsPerPage = 5;
   const { toast } = useToast();
 
   // Form for creating/editing products
@@ -732,31 +732,36 @@ export default function EnhancedAdminProducts() {
                   </Table>
 
                   {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-center space-x-2 mt-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage <= 1}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        Previous
-                      </Button>
-                      <span className="text-sm text-muted-foreground">
-                        Page {currentPage} of {totalPages}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage >= totalPages}
-                      >
-                        Next
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {(currentPage - 1) * productsPerPage + 1} to {Math.min(currentPage * productsPerPage, products.length * totalPages)} of {products.length * totalPages} products
                     </div>
-                  )}
+                    {totalPages > 1 && (
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage <= 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Previous
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage >= totalPages}
+                        >
+                          Next
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
             </CardContent>
