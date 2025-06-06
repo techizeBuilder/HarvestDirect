@@ -26,12 +26,24 @@ export default function AdminInventory() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [editingStock, setEditingStock] = useState<{ [key: number]: number }>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(10);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch all products with React Query
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ['/api/admin/products'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/products?limit=50&sort=id&order=desc', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+          'Cache-Control': 'no-cache'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch products');
+      return response.json();
+    },
     select: (data: any) => data.products || [],
   });
 
@@ -86,6 +98,17 @@ export default function AdminInventory() {
     const matchesCategory = !selectedCategory || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  // Pagination calculations
+  const totalProducts = filteredProducts.length;
+  const totalPages = Math.ceil(totalProducts / productsPerPage);
+  const startIndex = (currentPage - 1) * productsPerPage;
+  const endIndex = startIndex + productsPerPage;
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   // Get unique categories
   const categories: string[] = [];
@@ -244,7 +267,7 @@ export default function AdminInventory() {
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredProducts.map((product: Product) => (
+                          {currentProducts.map((product: Product) => (
                             <tr key={product.id} className="border-b hover:bg-muted/50">
                               <td className="p-2">
                                 <div className="flex items-center gap-3">
@@ -327,6 +350,46 @@ export default function AdminInventory() {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  )}
+                  
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="mt-6 flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        Showing {startIndex + 1} to {Math.min(endIndex, totalProducts)} of {totalProducts} products
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePageChange(page)}
+                            className="w-8 h-8 p-0"
+                          >
+                            {page}
+                          </Button>
+                        ))}
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>
