@@ -207,9 +207,10 @@ export default function EnhancedAdminProducts() {
         throw new Error('Authentication required');
       }
       
-      const response = await fetch(`/api/admin/products?page=${page}&limit=${productsPerPage}`, {
+      const response = await fetch(`/api/admin/products?page=${page}&limit=${productsPerPage}&sort=id&order=desc`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
         }
       });
       
@@ -527,7 +528,13 @@ export default function EnhancedAdminProducts() {
         throw new Error(responseData.message || (productToEdit ? 'Failed to update product' : 'Failed to create product'));
       }
       
-      fetchProducts(currentPage);
+      // Refresh to first page to show newly created product
+      if (productToEdit) {
+        fetchProducts(currentPage);
+      } else {
+        fetchProducts(1);
+        setCurrentPage(1);
+      }
       
       toast({
         title: productToEdit ? "Product updated" : "Product created",
