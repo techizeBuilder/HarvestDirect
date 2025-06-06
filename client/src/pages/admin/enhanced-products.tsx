@@ -465,7 +465,7 @@ export default function EnhancedAdminProducts() {
       }
 
       // Ensure we have an image URL from uploads
-      if (!data.imageUrl && !primaryImage) {
+      if (!primaryImage) {
         toast({
           title: 'Validation Error',
           description: 'Please upload a primary image',
@@ -474,8 +474,8 @@ export default function EnhancedAdminProducts() {
         return;
       }
 
-      // Use uploaded image if available
-      const finalImageUrl = primaryImage || data.imageUrl;
+      // Use uploaded image
+      const finalImageUrl = primaryImage;
 
       // Process image URLs if provided
       const imageUrls = data.imageUrls 
