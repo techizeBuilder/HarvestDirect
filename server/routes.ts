@@ -74,26 +74,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register image upload routes
   app.use(`${apiPrefix}/images`, imageRouter);
 
-  // Get all products (from enhanced products)
+  // Get all products
   app.get(`${apiPrefix}/products`, async (req, res) => {
     try {
-      const enhancedProducts = await storage.getAllEnhancedProducts();
-      // Convert enhanced products to standard product format
-      const products = enhancedProducts.map((ep: any) => ({
-        id: ep.id,
-        name: ep.name,
-        description: ep.description,
-        shortDescription: ep.shortDescription || (ep.description.length > 100 ? ep.description.substring(0, 100) + "..." : ep.description),
-        price: ep.price,
-        discountPrice: ep.discountPrice,
-        category: ep.category,
-        sku: ep.sku || `EP-${ep.id}`,
-        imageUrl: ep.imageUrl,
-        imageUrls: ep.imageUrls || [ep.imageUrl],
-        stock: ep.stockQuantity,
-        featured: ep.featured || ep.premiumQuality,
-        farmerId: ep.farmerId
-      }));
+      // Add cache-busting headers
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
+      const products = await storage.getAllProducts();
       res.json(products);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch products" });

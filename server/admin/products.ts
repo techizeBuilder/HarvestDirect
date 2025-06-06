@@ -7,6 +7,13 @@ import { z } from 'zod';
 // GET all products with pagination, sorting and filtering
 export const getAllProducts = async (req: Request, res: Response) => {
   try {
+    // Add cache-busting headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
     const { 
       page = '1', 
       limit = '10', 
