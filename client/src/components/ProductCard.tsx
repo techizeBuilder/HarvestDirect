@@ -45,9 +45,9 @@ export default function ProductCard({ product }: ProductCardProps) {
             <motion.img 
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.5 }}
-              src={product.imageUrl || '/images/products/placeholder.jpg'} 
+              src={product.imageUrl.startsWith('http') ? product.imageUrl : `/api/images/serve/${product.imageUrl.replace(/^\/+/, '')}`} 
               onError={(e) => {
-                e.currentTarget.src = '/images/products/placeholder.jpg';
+                e.currentTarget.src = '/api/images/placeholder.png';
               }}
               alt={product.name} 
               className="w-full h-full object-cover transition-transform duration-500"

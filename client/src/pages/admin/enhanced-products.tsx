@@ -621,9 +621,13 @@ export default function EnhancedAdminProducts() {
                             <TableCell>
                               <div className="flex items-center space-x-3">
                                 <img 
-                                  src={product.imageUrl} 
+                                  src={product.imageUrl.startsWith('http') ? product.imageUrl : `/api/images/serve/${product.imageUrl.replace(/^\/+/, '')}`} 
                                   alt={product.name}
                                   className="w-10 h-10 rounded object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = '/api/images/placeholder.png';
+                                  }}
                                 />
                                 <div>
                                   <p className="font-medium">{product.name}</p>

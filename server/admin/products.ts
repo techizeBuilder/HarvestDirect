@@ -119,15 +119,30 @@ export const getProductById = async (req: Request, res: Response) => {
 // CREATE product
 export const createProduct = async (req: Request, res: Response) => {
   try {
+    // Add cache-busting headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
     // Validate request body
     const productData = insertProductSchema.parse(req.body);
+
+    // Process image URLs to ensure local image paths are stored properly
+    const processedData = {
+      ...productData,
+      localImagePaths: productData.imageUrls || null,
+      updatedAt: new Date()
+    };
 
     // Insert product
     const [newProduct] = await db
       .insert(products)
-      .values(productData)
+      .values(processedData)
       .returning();
 
+    console.log('Product created successfully:', newProduct.id, newProduct.name);
     res.status(201).json(newProduct);
   } catch (error) {
     console.error('Error creating product:', error);
@@ -144,16 +159,30 @@ export const createProduct = async (req: Request, res: Response) => {
 // UPDATE product
 export const updateProduct = async (req: Request, res: Response) => {
   try {
+    // Add cache-busting headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
     const { id } = req.params;
     const productId = parseInt(id);
 
     // Validate request body
     const productData = insertProductSchema.parse(req.body);
 
+    // Process image URLs to ensure local image paths are stored properly
+    const processedData = {
+      ...productData,
+      localImagePaths: productData.imageUrls || null,
+      updatedAt: new Date()
+    };
+
     // Update product
     const [updatedProduct] = await db
       .update(products)
-      .set(productData)
+      .set(processedData)
       .where(eq(products.id, productId))
       .returning();
 
@@ -161,6 +190,7 @@ export const updateProduct = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    console.log('Product updated successfully:', updatedProduct.id, updatedProduct.name);
     res.json(updatedProduct);
   } catch (error) {
     console.error('Error updating product:', error);
