@@ -73,6 +73,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import ImageUpload from '@/components/admin/ImageUpload';
 
 // Enhanced Product type with all fields
 interface EnhancedProduct {
