@@ -391,6 +391,11 @@ export default function EnhancedAdminProducts() {
       enableInstagramShare: product.enableInstagramShare !== false,
       featured: product.featured || false
     });
+    
+    // Set existing images for the upload components
+    setPrimaryImage(product.imageUrl);
+    setUploadedImages(product.imageUrls || []);
+    
     setProductToEdit(product);
     setIsEditDialogOpen(true);
   };
@@ -627,19 +632,27 @@ export default function EnhancedAdminProducts() {
                           <TableRow key={product.id}>
                             <TableCell>
                               <div className="flex items-center space-x-3">
-                                <img 
-                                  src={product.imageUrl.startsWith('http') ? product.imageUrl : `/api/images/serve/${product.imageUrl.replace(/^\/+/, '')}`} 
-                                  alt={product.name}
-                                  className="w-10 h-10 rounded object-cover"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.src = '/api/images/placeholder.png';
-                                  }}
-                                />
+                                <div className="relative">
+                                  <img 
+                                    src={product.imageUrl.startsWith('http') ? product.imageUrl : product.imageUrl} 
+                                    alt={product.name}
+                                    className="w-12 h-12 rounded object-cover border"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.src = '/api/images/placeholder.png';
+                                    }}
+                                  />
+                                  {product.imageUrls && product.imageUrls.length > 0 && (
+                                    <div className="absolute -bottom-1 -right-1 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                      +{product.imageUrls.length}
+                                    </div>
+                                  )}
+                                </div>
                                 <div>
                                   <p className="font-medium">{product.name}</p>
+                                  <p className="text-sm text-muted-foreground">{product.shortDescription}</p>
                                   {product.sku && (
-                                    <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
+                                    <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>
                                   )}
                                 </div>
                               </div>
@@ -710,8 +723,20 @@ export default function EnhancedAdminProducts() {
                                   variant="ghost" 
                                   size="icon"
                                   onClick={() => setupEditForm(product)}
+                                  title="Edit Product"
                                 >
                                   <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => {
+                                    setProductToEdit(product);
+                                    setIsImageGalleryOpen(true);
+                                  }}
+                                  title="View Images"
+                                >
+                                  <Eye className="h-4 w-4" />
                                 </Button>
                                 <Button 
                                   variant="ghost" 
