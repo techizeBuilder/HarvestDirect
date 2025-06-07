@@ -26,8 +26,12 @@ import {
   ChevronRight,
   Filter,
   Loader2,
-  Printer
+  Printer,
+  FileSpreadsheet,
+  ChevronDown
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import {
   Select,
   SelectContent,
@@ -246,24 +250,177 @@ export default function AdminOrders() {
     }
   };
 
-  const handleExportCSV = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        throw new Error('Authentication required');
+  const [isExporting, setIsExporting] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+
+  // Fetch all orders for export (without pagination)
+  const fetchAllOrdersForExport = async () => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch('/api/admin/orders/export', {
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch orders for export');
+    }
+
+    return response.json();
+  };
+
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    try {
+      const data = await fetchAllOrdersForExport();
       
-      // Here you would implement CSV export functionality
+      // Prepare CSV data
+      const csvData = data.orders.map((order: any) => ({
+        'Order ID': `ORD-${order.id}`,
+        'Customer Name': order.userName || 'Guest Customer',
+        'Customer Email': order.userEmail || 'No email',
+        'Order Date': new Date(order.createdAt).toLocaleDateString('en-IN'),
+        'Total Amount': `₹${order.total}`,
+        'Payment Method': order.paymentMethod || 'N/A',
+        'Status': order.status,
+        'Shipping Address': order.shippingAddress || 'N/A',
+        'Payment ID': order.paymentId || 'N/A',
+        'Items Count': order.items?.length || 0,
+        'Delivered Date': order.deliveredAt ? new Date(order.deliveredAt).toLocaleDateString('en-IN') : 'Not delivered',
+        'Cancellation Reason': order.cancellationReason || 'N/A'
+      }));
+
+      // Convert to CSV
+      const csvContent = [
+        Object.keys(csvData[0]).join(','),
+        ...csvData.map(row => Object.values(row).map(val => `"${val}"`).join(','))
+      ].join('\n');
+
+      // Download CSV
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const fileName = `orders_export_${new Date().toISOString().split('T')[0]}.csv`;
+      saveAs(blob, fileName);
+
       toast({
-        title: "Export started",
-        description: "The order data is being exported as CSV.",
+        title: "CSV Export Complete",
+        description: `Successfully exported ${data.orders.length} orders to CSV.`,
       });
     } catch (err) {
       toast({
-        title: 'Error',
-        description: 'Failed to export orders',
+        title: 'Export Error',
+        description: err instanceof Error ? err.message : 'Failed to export orders',
         variant: 'destructive',
       });
+    } finally {
+      setIsExporting(false);
+      setShowExportMenu(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setIsExporting(true);
+    try {
+      const data = await fetchAllOrdersForExport();
+      
+      // Create workbook with multiple sheets
+      const workbook = XLSX.utils.book_new();
+
+      // Main orders sheet
+      const ordersData = data.orders.map((order: any) => ({
+        'Order ID': `ORD-${order.id}`,
+        'Customer Name': order.userName || 'Guest Customer',
+        'Customer Email': order.userEmail || 'No email',
+        'Order Date': new Date(order.createdAt).toLocaleDateString('en-IN'),
+        'Total Amount': order.total,
+        'Payment Method': order.paymentMethod || 'N/A',
+        'Status': order.status,
+        'Shipping Address': order.shippingAddress || 'N/A',
+        'Billing Address': order.billingAddress || 'Same as shipping',
+        'Payment ID': order.paymentId || 'N/A',
+        'Items Count': order.items?.length || 0,
+        'Delivered Date': order.deliveredAt ? new Date(order.deliveredAt).toLocaleDateString('en-IN') : 'Not delivered',
+        'Cancellation Reason': order.cancellationReason || 'N/A',
+        'Created At': new Date(order.createdAt).toLocaleString('en-IN'),
+        'Updated At': new Date(order.updatedAt).toLocaleString('en-IN')
+      }));
+
+      const ordersSheet = XLSX.utils.json_to_sheet(ordersData);
+      XLSX.utils.book_append_sheet(workbook, ordersSheet, 'Orders');
+
+      // Order items details sheet
+      const itemsData: any[] = [];
+      data.orders.forEach((order: any) => {
+        if (order.items && order.items.length > 0) {
+          order.items.forEach((item: any) => {
+            itemsData.push({
+              'Order ID': `ORD-${order.id}`,
+              'Product Name': item.product?.name || 'Unknown Product',
+              'Product SKU': item.product?.sku || 'N/A',
+              'Category': item.product?.category || 'N/A',
+              'Quantity': item.quantity,
+              'Unit Price': item.price,
+              'Total Price': item.price * item.quantity,
+              'Farmer': item.product?.farmer?.name || 'N/A',
+              'Order Status': order.status,
+              'Order Date': new Date(order.createdAt).toLocaleDateString('en-IN')
+            });
+          });
+        }
+      });
+
+      if (itemsData.length > 0) {
+        const itemsSheet = XLSX.utils.json_to_sheet(itemsData);
+        XLSX.utils.book_append_sheet(workbook, itemsSheet, 'Order Items');
+      }
+
+      // Summary sheet
+      const statusCounts = data.orders.reduce((acc: any, order: any) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      }, {});
+
+      const totalRevenue = data.orders.reduce((sum: number, order: any) => sum + order.total, 0);
+      const averageOrderValue = totalRevenue / data.orders.length;
+
+      const summaryData = [
+        { Metric: 'Total Orders', Value: data.orders.length },
+        { Metric: 'Total Revenue', Value: `₹${totalRevenue.toFixed(2)}` },
+        { Metric: 'Average Order Value', Value: `₹${averageOrderValue.toFixed(2)}` },
+        { Metric: 'Export Date', Value: new Date().toLocaleDateString('en-IN') },
+        { Metric: '', Value: '' },
+        { Metric: 'Status Breakdown', Value: '' },
+        ...Object.entries(statusCounts).map(([status, count]) => ({
+          Metric: `${status.charAt(0).toUpperCase() + status.slice(1)} Orders`,
+          Value: count
+        }))
+      ];
+
+      const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+
+      // Generate Excel file
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const fileName = `orders_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      saveAs(blob, fileName);
+
+      toast({
+        title: "Excel Export Complete",
+        description: `Successfully exported ${data.orders.length} orders to Excel with detailed sheets.`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Export Error',
+        description: err instanceof Error ? err.message : 'Failed to export orders',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExporting(false);
+      setShowExportMenu(false);
     }
   };
 
@@ -297,10 +454,29 @@ export default function AdminOrders() {
               <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
               <p className="text-muted-foreground">Manage customer orders</p>
             </div>
-            <Button onClick={handleExportCSV}>
-              <Download className="h-4 w-4 mr-2" />
-              Export Orders
-            </Button>
+            <DropdownMenu open={showExportMenu} onOpenChange={setShowExportMenu}>
+              <DropdownMenuTrigger asChild>
+                <Button disabled={isExporting}>
+                  {isExporting ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  {isExporting ? 'Exporting...' : 'Export Orders'}
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleExportCSV} disabled={isExporting}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportExcel} disabled={isExporting}>
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Export as Excel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <Card>
