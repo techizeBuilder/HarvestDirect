@@ -74,20 +74,27 @@ export default function AllProducts() {
   };
 
   // Get products with pagination
-  const { data: productsResponse, isLoading } = useQuery<PaginatedProductsResponse>({ 
+  const { data: productsResponse, isLoading, error } = useQuery<PaginatedProductsResponse>({ 
     queryKey: ['/api/products', currentPage, searchQuery, selectedCategory, priceRange, sortBy, sortOrder],
     queryFn: async () => {
       const queryString = buildQueryParams();
+      console.log('Fetching products with query:', queryString);
       const response = await fetch(`/api/products?${queryString}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch products');
+        throw new Error(`Failed to fetch products: ${response.status}`);
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Products response:', data);
+      return data;
     }
   });
 
   const allProducts = productsResponse?.products || [];
   const pagination = productsResponse?.pagination;
+  
+  console.log('All products:', allProducts);
+  console.log('Is loading:', isLoading);
+  console.log('Error:', error);
   
   // Set up animations
   const { setupScrollAnimation } = useAnimations();
