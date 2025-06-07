@@ -15,8 +15,11 @@ import {
   insertProductReviewSchema,
   insertContactMessageSchema,
   insertTeamMemberSchema,
-  insertDiscountSchema
+  insertDiscountSchema,
+  products
 } from "@shared/schema";
+import { db } from './db';
+import { eq, sql, desc, asc } from 'drizzle-orm';
 import adminRouter from './admin';
 import imageRouter from './imageRoutes';
 import { exportDatabase, exportTable } from './databaseExport';
@@ -87,6 +90,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const products = await storage.getAllProducts();
       res.json(products);
     } catch (error) {
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  // Get all products with pagination (user-facing)
+  app.get(`${apiPrefix}/products`, async (req, res) => {
+    try {
+      const allProducts = await storage.getAllProducts();
+      const { 
+        page = '1', 
+        limit = '12', 
+        search = '',
+        category = '',
+        minPrice = '',
+        maxPrice = '',
+        sortBy = 'id',
+        sortOrder = 'desc'
+      } = req.query as Record<string, string>;
+
+      const pageNumber = parseInt(page);
+      const limitNumber = parseInt(limit);
+      
+      // Apply filters
+      let filteredProducts = allProducts.filter(product => {
+        // Search filter
+        if (search) {
+          const searchTerm = search.toLowerCase();
+          const matchesSearch = product.name.toLowerCase().includes(searchTerm) ||
+                              product.description.toLowerCase().includes(searchTerm) ||
+                              product.shortDescription.toLowerCase().includes(searchTerm);
+          if (!matchesSearch) return false;
+        }
+        
+        // Category filter
+        if (category && category !== 'all') {
+          if (product.category !== category) return false;
+        }
+        
+        // Price filters
+        if (minPrice) {
+          const min = parseFloat(minPrice);
+          if (!isNaN(min) && product.price < min) return false;
+        }
+        
+        if (maxPrice) {
+          const max = parseFloat(maxPrice);
+          if (!isNaN(max) && product.price > max) return false;
+        }
+        
+        return true;
+      });
+
+      // Apply sorting
+      filteredProducts.sort((a, b) => {
+        let comparison = 0;
+        
+        if (sortBy === 'price') {
+          comparison = a.price - b.price;
+        } else if (sortBy === 'name') {
+          comparison = a.name.localeCompare(b.name);
+        } else {
+          comparison = a.id - b.id;
+        }
+        
+        return sortOrder === 'asc' ? comparison : -comparison;
+      });
+
+      // Calculate pagination
+      const total = filteredProducts.length;
+      const totalPages = Math.ceil(total / limitNumber);
+      const offset = (pageNumber - 1) * limitNumber;
+      const paginatedProducts = filteredProducts.slice(offset, offset + limitNumber);
+
+      res.json({
+        products: paginatedProducts,
+        pagination: {
+          total,
+          page: pageNumber,
+          limit: limitNumber,
+          totalPages,
+          hasNextPage: pageNumber < totalPages,
+          hasPrevPage: pageNumber > 1
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching products:', error);
       res.status(500).json({ message: "Failed to fetch products" });
     }
   });

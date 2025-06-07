@@ -18,21 +18,75 @@ const useSearchParams = () => {
   return new URLSearchParams(location.split("?")[1] || "");
 };
 
+interface PaginatedProductsResponse {
+  products: Product[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
 export default function AllProducts() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
   const searchParam = searchParams.get("search");
   
-  // State for filters
+  // State for filters and pagination
   const [searchQuery, setSearchQuery] = useState(searchParam || "");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryParam);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 20]);
   const [showFilters, setShowFilters] = useState(false);
-  
-  // Get all products
-  const { data: allProducts = [], isLoading } = useQuery({ 
-    queryKey: ['/api/products'] 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState('id');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const productsPerPage = 12;
+
+  // Build query parameters
+  const buildQueryParams = () => {
+    const params = new URLSearchParams();
+    params.set('page', currentPage.toString());
+    params.set('limit', productsPerPage.toString());
+    params.set('sortBy', sortBy);
+    params.set('sortOrder', sortOrder);
+    
+    if (searchQuery.trim()) {
+      params.set('search', searchQuery.trim());
+    }
+    
+    if (selectedCategory && selectedCategory !== 'all') {
+      params.set('category', selectedCategory);
+    }
+    
+    if (priceRange[0] > 0) {
+      params.set('minPrice', priceRange[0].toString());
+    }
+    
+    if (priceRange[1] < 20) {
+      params.set('maxPrice', priceRange[1].toString());
+    }
+    
+    return params.toString();
+  };
+
+  // Get products with pagination
+  const { data: productsResponse, isLoading } = useQuery<PaginatedProductsResponse>({ 
+    queryKey: ['/api/products', currentPage, searchQuery, selectedCategory, priceRange, sortBy, sortOrder],
+    queryFn: async () => {
+      const queryString = buildQueryParams();
+      const response = await fetch(`/api/products?${queryString}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+      return response.json();
+    }
   });
+
+  const allProducts = productsResponse?.products || [];
+  const pagination = productsResponse?.pagination;
   
   // Set up animations
   const { setupScrollAnimation } = useAnimations();
