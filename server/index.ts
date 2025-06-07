@@ -38,12 +38,21 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize database with seed data
-  try {
-    await initializeDatabase();
-    log('Database initialized successfully with seed data');
-  } catch (error) {
-    log('Error initializing database: ' + error);
+  // Test database connection first
+  const { testDatabaseConnection } = await import('./db');
+  const dbConnected = await testDatabaseConnection();
+  
+  if (dbConnected) {
+    // Initialize database with seed data
+    try {
+      await initializeDatabase();
+      log('Database initialized successfully with seed data');
+    } catch (error) {
+      log('Error initializing database: ' + error);
+      // Continue without database initialization if it fails
+    }
+  } else {
+    log('Warning: Database connection failed, continuing without database initialization');
   }
   
   const server = await registerRoutes(app);
