@@ -77,7 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register image upload routes
   app.use(`${apiPrefix}/images`, imageRouter);
 
-  // Get all products
+  // Get all products with pagination (user-facing)
   app.get(`${apiPrefix}/products`, async (req, res) => {
     try {
       // Add cache-busting headers
@@ -87,16 +87,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'Expires': '0'
       });
       
-      const products = await storage.getAllProducts();
-      res.json(products);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch products" });
-    }
-  });
-
-  // Get all products with pagination (user-facing)
-  app.get(`${apiPrefix}/products`, async (req, res) => {
-    try {
       const allProducts = await storage.getAllProducts();
       const { 
         page = '1', 
