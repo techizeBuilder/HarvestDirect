@@ -163,6 +163,7 @@ export default function EnhancedAdminProducts() {
   const [farmers, setFarmers] = useState<{id: number, name: string, location: string}[]>([]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [primaryImage, setPrimaryImage] = useState<string>('');
+  const [isImageGalleryOpen, setIsImageGalleryOpen] = useState(false);
   const productsPerPage = 5;
   const { toast } = useToast();
 
@@ -1303,6 +1304,62 @@ export default function EnhancedAdminProducts() {
                   </DialogFooter>
                 </form>
               </Form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Image Gallery Dialog */}
+          <Dialog open={isImageGalleryOpen} onOpenChange={setIsImageGalleryOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Product Images - {productToEdit?.name}</DialogTitle>
+                <DialogDescription>
+                  View all images associated with this product
+                </DialogDescription>
+              </DialogHeader>
+              {productToEdit && (
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Primary Image</h4>
+                    <img
+                      src={productToEdit.imageUrl}
+                      alt={`${productToEdit.name} - Primary`}
+                      className="w-full max-w-md h-64 object-cover rounded-lg border"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/api/images/placeholder.png';
+                      }}
+                    />
+                  </div>
+                  {productToEdit.imageUrls && productToEdit.imageUrls.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Additional Images ({productToEdit.imageUrls.length})</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {productToEdit.imageUrls.map((imageUrl, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={imageUrl}
+                              alt={`${productToEdit.name} - Image ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg border"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/api/images/placeholder.png';
+                              }}
+                            />
+                            <div className="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs rounded px-1">
+                              {index + 1}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {(!productToEdit.imageUrls || productToEdit.imageUrls.length === 0) && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No additional images available
+                    </div>
+                  )}
+                </div>
+              )}
             </DialogContent>
           </Dialog>
 

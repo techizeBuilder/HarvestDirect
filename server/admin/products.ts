@@ -243,17 +243,57 @@ export const deleteProduct = async (req: Request, res: Response) => {
     const { id } = req.params;
     const productId = parseInt(id);
 
-    // Delete product
+    // Get product before deletion to clean up images
+    const [productToDelete] = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, productId));
+
+    if (!productToDelete) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // Collect all image paths for cleanup
+    const imagesToDelete: string[] = [];
+    
+    // Add primary image
+    if (productToDelete.imageUrl) {
+      imagesToDelete.push(productToDelete.imageUrl);
+    }
+    
+    // Add additional images
+    if (productToDelete.imageUrls && productToDelete.imageUrls.length > 0) {
+      imagesToDelete.push(...productToDelete.imageUrls);
+    }
+    
+    // Add local image paths
+    if (productToDelete.localImagePaths && productToDelete.localImagePaths.length > 0) {
+      imagesToDelete.push(...productToDelete.localImagePaths);
+    }
+
+    // Delete product from database
     const [deletedProduct] = await db
       .delete(products)
       .where(eq(products.id, productId))
       .returning();
 
-    if (!deletedProduct) {
-      return res.status(404).json({ message: 'Product not found' });
+    // Clean up image files after successful database deletion
+    if (imagesToDelete.length > 0) {
+      try {
+        const { deleteImageFiles } = await import('../imageUpload');
+        deleteImageFiles(imagesToDelete);
+        console.log(`Cleaned up ${imagesToDelete.length} image files for product ${productId}`);
+      } catch (cleanupError) {
+        console.error('Error cleaning up image files:', cleanupError);
+        // Don't fail the deletion if image cleanup fails
+      }
     }
 
-    res.json({ message: 'Product deleted successfully', product: deletedProduct });
+    res.json({ 
+      message: 'Product deleted successfully', 
+      product: deletedProduct,
+      imagesDeleted: imagesToDelete.length 
+    });
   } catch (error) {
     console.error('Error deleting product:', error);
     res.status(500).json({ message: 'Failed to delete product', error: String(error) });

@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { upload, processImage, deleteImageFiles } from './imageUpload';
 import { storage } from './storage';
+import path from 'path';
+import fs from 'fs';
 
 const router = Router();
 
@@ -93,6 +95,29 @@ router.delete('/delete/product-image', async (req, res) => {
       success: false,
       message: 'Failed to delete image',
       error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Serve uploaded images
+router.get('/serve/:imagePath(*)', async (req, res) => {
+  try {
+    const imagePath = req.params.imagePath;
+    const fullPath = path.join(process.cwd(), 'public', imagePath);
+    
+    // Check if file exists
+    if (!fs.existsSync(fullPath)) {
+      // Return placeholder image if original doesn't exist
+      const placeholderPath = path.join(process.cwd(), 'public/uploads/products/placeholder.webp');
+      return res.sendFile(placeholderPath);
+    }
+    
+    res.sendFile(fullPath);
+  } catch (error) {
+    console.error('Image serving error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to serve image'
     });
   }
 });
