@@ -184,6 +184,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       
       if (response.ok) {
         setCartItems([]);
+        // Fetch updated cart data to ensure synchronization
+        await fetchCartData();
       }
     } catch (error) {
       console.error("Error clearing cart:", error);

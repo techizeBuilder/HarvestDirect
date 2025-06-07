@@ -135,7 +135,7 @@ export default function Payment() {
         handler: async function (response: any) {
           try {
             // Verify payment with the server
-            const verifyResponse = await apiRequest('/api/payments/verify', {
+            const verifyData = await apiRequest('/api/payments/verify', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -151,13 +151,6 @@ export default function Payment() {
                 shippingAddress: 'Default address' // You can get this from form data if needed
               })
             });
-
-            if (!verifyResponse.ok) {
-              const errorData = await verifyResponse.json();
-              throw new Error(errorData.message || 'Payment verification failed');
-            }
-
-            const verifyData = await verifyResponse.json();
             
             // Clear the cart from frontend context
             await clearCart();
