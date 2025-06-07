@@ -33,12 +33,17 @@ type NewsletterFormData = z.infer<typeof newsletterSchema>;
 
 export default function Home() {
   // Get products and farmers data
-  const { data: allProducts = [] } = useQuery<Product[]>({
+  const { data: productsResponse } = useQuery({
     queryKey: ["/api/products"],
+    queryFn: async () => {
+      const response = await fetch('/api/products?limit=50');
+      return response.json();
+    }
   });
   
   // Filter featured products on the frontend
-  const products = allProducts.filter(product => product.featured);
+  const allProducts = productsResponse?.products || [];
+  const products = allProducts.filter((product: Product) => product.featured);
 
   const { data: farmers = [] } = useQuery<Farmer[]>({
     queryKey: ["/api/farmers/featured"],
