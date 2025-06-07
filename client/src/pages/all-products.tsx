@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ProductCard from "@/components/ProductCard";
 import { ArrowLeft, ArrowRight, Search, Filter, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -95,11 +96,17 @@ export default function AllProducts() {
     setupScrollAnimation();
   }, []);
 
+  // Reset pagination when filters change
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [searchQuery, selectedCategory, priceRange]);
+
   // Update search input when URL search param changes
   useEffect(() => {
     if (searchParam) {
       setSearchQuery(searchParam);
-      // Also update the input field value
       const searchInput = document.getElementById("product-search") as HTMLInputElement;
       if (searchInput) {
         searchInput.value = searchParam;
@@ -107,34 +114,33 @@ export default function AllProducts() {
     }
   }, [searchParam]);
   
-  // Filter products
-  const filteredProducts = allProducts.filter((product: Product) => {
-    // Filter by search query
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Filter by category
-    const matchesCategory = !selectedCategory || product.category === selectedCategory;
-    
-    // Filter by price range
-    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
-    
-    return matchesSearch && matchesCategory && matchesPrice;
-  });
-  
   // Categories for filter
   const categories = [
     { id: "all", name: "All Products", value: null },
-    { id: "coffee-tea", name: "Coffee & Tea", value: ProductCategory.COFFEE_TEA },
-    { id: "spices", name: "Spices", value: ProductCategory.SPICES },
-    { id: "grains", name: "Grains", value: ProductCategory.GRAINS },
-    { id: "others", name: "Others", value: ProductCategory.OTHERS }
+    { id: "coffee-tea", name: "Coffee & Tea", value: "Coffee & Tea" },
+    { id: "spices", name: "Spices", value: "Spices" },
+    { id: "grains", name: "Grains", value: "Grains" },
+    { id: "others", name: "Others", value: "Others" }
   ];
-  
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Debounced search handler
-  const handleSearchChange = debounce((value: string) => {
+  const debouncedSearchChange = debounce((value: string) => {
     setSearchQuery(value);
   }, 300);
+
+  const handleCategoryChange = (category: string | null) => {
+    setSelectedCategory(category);
+  };
+
+  const handlePriceRangeChange = (newRange: [number, number]) => {
+    setPriceRange(newRange);
+  };
   
   // Reset filters
   const resetFilters = () => {
@@ -219,7 +225,7 @@ export default function AllProducts() {
                         id="product-search"
                         placeholder="Search products..."
                         className="pl-10"
-                        onChange={(e) => handleSearchChange(e.target.value)}
+                        onChange={(e) => debouncedSearchChange(e.target.value)}
                         defaultValue={searchQuery}
                       />
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -272,49 +278,84 @@ export default function AllProducts() {
           
           {/* Products Grid */}
           <div className="lg:col-span-3">
-            {filteredProducts.length > 0 ? (
+            {allProducts.length > 0 ? (
               <>
                 <div className="mb-6 flex justify-between items-center">
                   <p className="text-muted-foreground">
-                    Showing <span className="font-medium text-foreground">{filteredProducts.length}</span> products
+                    Showing <span className="font-medium text-foreground">{allProducts.length}</span> of{' '}
+                    <span className="font-medium text-foreground">{pagination?.total || 0}</span> products
                   </p>
-                  {/* Could add sorting options here */}
+                  {/* Sort options */}
+                  <div className="flex items-center gap-2">
+                    <Select value={sortBy} onValueChange={(value) => setSortBy(value)}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="id">Newest</SelectItem>
+                        <SelectItem value="name">Name</SelectItem>
+                        <SelectItem value="price">Price</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    >
+                      {sortOrder === 'asc' ? '↑' : '↓'}
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredProducts.map((product) => (
+                  {allProducts.map((product) => (
                     <div key={product.id} className="scroll-animation">
                       <ProductCard product={product} />
                     </div>
                   ))}
                 </div>
                 
-                {/* Pagination - would implement with real API */}
-                <div className="mt-12 flex justify-center">
-                  <div className="flex items-center space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      disabled
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      className="bg-primary text-white hover:bg-primary-dark"
-                    >
-                      1
-                    </Button>
-                    <Button variant="outline">2</Button>
-                    <Button variant="outline">3</Button>
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                    >
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
+                {/* Pagination */}
+                {pagination && pagination.totalPages > 1 && (
+                  <div className="mt-12 flex justify-center">
+                    <div className="flex items-center space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        disabled={!pagination.hasPrevPage}
+                        onClick={() => handlePageChange(currentPage - 1)}
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      {/* Page numbers */}
+                      {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                        const startPage = Math.max(1, currentPage - 2);
+                        const pageNum = startPage + i;
+                        if (pageNum > pagination.totalPages) return null;
+                        
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            onClick={() => handlePageChange(pageNum)}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                      
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        disabled={!pagination.hasNextPage}
+                        onClick={() => handlePageChange(currentPage + 1)}
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </>
             ) : (
               <div className="text-center py-20 bg-white rounded-lg">
