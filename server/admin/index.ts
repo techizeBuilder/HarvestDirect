@@ -133,6 +133,7 @@ adminRouter.patch('/products/:id/stock', authenticateAdmin, productController.up
 
 // Order routes
 adminRouter.get('/orders', authenticateAdmin, orderController.getAllOrders);
+adminRouter.get('/orders/export', authenticateAdmin, orderController.exportOrders);
 adminRouter.get('/orders/:id', authenticateAdmin, orderController.getOrderById);
 adminRouter.patch('/orders/:id/status', authenticateAdmin, orderController.updateOrderStatus);
 adminRouter.delete('/orders/:id', authenticateAdmin, orderController.deleteOrder);

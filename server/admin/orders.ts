@@ -329,11 +329,9 @@ export const exportOrders = async (req: Request, res: Response) => {
       id: orders.id,
       userId: orders.userId,
       sessionId: orders.sessionId,
-      paymentId: orders.paymentId,
       total: orders.total,
       status: orders.status,
       shippingAddress: orders.shippingAddress,
-      billingAddress: orders.billingAddress,
       paymentMethod: orders.paymentMethod,
       cancellationReason: orders.cancellationReason,
       deliveredAt: orders.deliveredAt,
@@ -346,7 +344,7 @@ export const exportOrders = async (req: Request, res: Response) => {
     .leftJoin(users, eq(orders.userId, users.id))
     .orderBy(desc(orders.createdAt));
 
-    // Get all order items with product and farmer details
+    // Get all order items with product details
     const allOrderItems = await db.select({
       orderId: orderItems.orderId,
       productId: orderItems.productId,
@@ -354,14 +352,10 @@ export const exportOrders = async (req: Request, res: Response) => {
       price: orderItems.price,
       productName: products.name,
       productSku: products.sku,
-      productCategory: products.category,
-      productImageUrl: products.imageUrl,
-      farmerName: farmers.name,
-      farmerLocation: farmers.location
+      productCategory: products.category
     })
     .from(orderItems)
-    .leftJoin(products, eq(orderItems.productId, products.id))
-    .leftJoin(farmers, eq(products.farmerId, farmers.id));
+    .leftJoin(products, eq(orderItems.productId, products.id));
 
     // Group order items by order ID
     const itemsByOrderId: Record<number, any[]> = {};
@@ -373,16 +367,9 @@ export const exportOrders = async (req: Request, res: Response) => {
         productId: item.productId,
         quantity: item.quantity,
         price: item.price,
-        product: {
-          name: item.productName,
-          sku: item.productSku,
-          category: item.productCategory,
-          imageUrl: item.productImageUrl,
-          farmer: {
-            name: item.farmerName,
-            location: item.farmerLocation
-          }
-        }
+        productName: item.productName,
+        productSku: item.productSku,
+        productCategory: item.productCategory
       });
     });
 
