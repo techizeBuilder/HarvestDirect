@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, ChevronRight, FolderOpen, Folder } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import AdminLayout from "@/components/admin/AdminLayout";
 
 interface Category {
   id: number;
@@ -271,20 +272,23 @@ export default function CategoryManagement() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center items-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading categories...</p>
+      <AdminLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading categories...</p>
+            </div>
           </div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+    <AdminLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-forest">Category Management</h1>
           <p className="text-muted-foreground mt-2">
@@ -603,6 +607,7 @@ export default function CategoryManagement() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
