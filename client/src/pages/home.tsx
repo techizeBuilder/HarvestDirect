@@ -62,6 +62,11 @@ export default function Home() {
   // Get subcategories when a category is selected
   const { data: subcategories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories", selectedCategory, "subcategories"],
+    queryFn: async () => {
+      if (!selectedCategory) return [];
+      const response = await fetch(`/api/categories/${selectedCategory}/subcategories`);
+      return response.json();
+    },
     enabled: !!selectedCategory,
   });
 
