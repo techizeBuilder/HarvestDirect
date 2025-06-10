@@ -61,9 +61,16 @@ export default function ProductCard({ product }: ProductCardProps) {
                 {product.name}
               </h3>
             </Link>
-            <span className="bg-secondary/20 text-secondary-dark px-2 py-1 rounded-full text-xs font-semibold">
-              {product.category}
-            </span>
+            <div className="flex flex-wrap gap-1">
+              <span className="bg-secondary/20 text-secondary-dark px-2 py-1 rounded-full text-xs font-semibold">
+                {product.category}
+              </span>
+              {product.subcategory && (
+                <span className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
+                  {product.subcategory}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Product Attributes */}

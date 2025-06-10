@@ -39,12 +39,17 @@ export default function AllProducts() {
   // State for filters and pagination
   const [searchQuery, setSearchQuery] = useState(searchParam || "");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryParam);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 20]);
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('id');
   const [sortOrder, setSortOrder] = useState('desc');
   const productsPerPage = 12;
+
+  // State for categories and subcategories
+  const [mainCategories, setMainCategories] = useState<any[]>([]);
+  const [subcategories, setSubcategories] = useState<any[]>([]);
 
   // Build query parameters
   const buildQueryParams = () => {
@@ -60,6 +65,10 @@ export default function AllProducts() {
     
     if (selectedCategory && selectedCategory !== 'all') {
       params.set('category', selectedCategory);
+    }
+
+    if (selectedSubcategory && selectedSubcategory !== 'all') {
+      params.set('subcategory', selectedSubcategory);
     }
     
     if (priceRange[0] > 0) {

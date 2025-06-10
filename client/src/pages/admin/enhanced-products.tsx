@@ -241,7 +241,44 @@ export default function EnhancedAdminProducts() {
     }
   };
   
-  // Fetch categories
+  // Fetch main categories
+  const fetchMainCategories = async () => {
+    try {
+      const response = await fetch('/api/categories/main', {
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMainCategories(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch main categories:', error);
+    }
+  };
+
+  // Fetch subcategories for a specific parent category
+  const fetchSubcategories = async (parentId: number) => {
+    try {
+      const response = await fetch(`/api/categories/${parentId}/subcategories`, {
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSubcategories(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch subcategories:', error);
+      setSubcategories([]);
+    }
+  };
+
+  // Fetch categories (existing function for backward compatibility)
   const fetchCategories = async () => {
     try {
       const token = localStorage.getItem('adminToken');
@@ -284,8 +321,23 @@ export default function EnhancedAdminProducts() {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+    fetchMainCategories();
     fetchFarmers();
   }, []);
+
+  // Handle category change to load subcategories
+  const handleCategoryChange = (categoryName: string) => {
+    const selectedCategory = mainCategories.find(cat => cat.name === categoryName);
+    if (selectedCategory) {
+      setSelectedCategoryId(selectedCategory.id);
+      fetchSubcategories(selectedCategory.id);
+      // Clear subcategory when category changes
+      form.setValue('subcategory', '');
+    } else {
+      setSelectedCategoryId(null);
+      setSubcategories([]);
+    }
+  };
 
   // Filter products based on search term
   const filteredProducts = products.filter(product => 
@@ -854,20 +906,62 @@ export default function EnhancedAdminProducts() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Category</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select 
+                                onValueChange={(value) => {
+                                  field.onChange(value);
+                                  handleCategoryChange(value);
+                                }} 
+                                defaultValue={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select a category" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {categories.map((category) => (
-                                    <SelectItem key={category} value={category}>
-                                      {category}
+                                  {mainCategories.map((category) => (
+                                    <SelectItem key={category.id} value={category.name}>
+                                      {category.name}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="subcategory"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Subcategory (Optional)</FormLabel>
+                              <Select 
+                                onValueChange={field.onChange} 
+                                defaultValue={field.value}
+                                disabled={subcategories.length === 0}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder={
+                                      subcategories.length === 0 
+                                        ? "Select a category first" 
+                                        : "Select a subcategory"
+                                    } />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {subcategories.map((subcategory) => (
+                                    <SelectItem key={subcategory.id} value={subcategory.name}>
+                                      {subcategory.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormDescription>
+                                Choose a specific subcategory to help customers find your product more easily
+                              </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
