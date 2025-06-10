@@ -84,6 +84,7 @@ interface EnhancedProduct {
   price: number;
   discountPrice?: number;
   category: string;
+  subcategory?: string;
   sku?: string;
   stockQuantity: number;
   imageUrl: string;
@@ -113,6 +114,7 @@ const enhancedProductFormSchema = z.object({
   shortDescription: z.string().min(10, "Short description must be at least 10 characters"),
   description: z.string().min(20, "Full description must be at least 20 characters"),
   category: z.string().min(1, "Please select a category"),
+  subcategory: z.string().optional(),
   
   // Pricing & Inventory
   price: z.number().min(0.01, "Price must be greater than 0"),
@@ -160,6 +162,9 @@ export default function EnhancedAdminProducts() {
   const [productToDelete, setProductToDelete] = useState<EnhancedProduct | null>(null);
   const [productToEdit, setProductToEdit] = useState<EnhancedProduct | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
+  const [mainCategories, setMainCategories] = useState<{id: number, name: string, slug: string}[]>([]);
+  const [subcategories, setSubcategories] = useState<{id: number, name: string, slug: string, parentId: number}[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [farmers, setFarmers] = useState<{id: number, name: string, location: string}[]>([]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [primaryImage, setPrimaryImage] = useState<string>('');
@@ -177,6 +182,7 @@ export default function EnhancedAdminProducts() {
       price: 0,
       discountPrice: undefined,
       category: "",
+      subcategory: "",
       sku: "",
       stockQuantity: 0,
       imageUrl: "",
