@@ -12,6 +12,8 @@ import OurProcess from "@/pages/our-process";
 import Contact from "@/pages/contact";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 import Account from "@/pages/account";
 import OrderHistory from "@/pages/order-history";
 import Payment from "@/pages/payment";
@@ -86,6 +88,8 @@ function App() {
                         <Route path="/contact" component={Contact} />
                         <Route path="/login" component={Login} />
                         <Route path="/register" component={Register} />
+                        <Route path="/forgot-password" component={ForgotPassword} />
+                        <Route path="/reset-password" component={ResetPassword} />
                         <Route path="/account" component={Account} />
                         <Route path="/order-history" component={OrderHistory} />
                         <Route path="/payment" component={Payment} />
