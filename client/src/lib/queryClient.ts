@@ -54,6 +54,12 @@ export const getQueryFn: <T>(options: {
       if (adminToken) {
         headers['Authorization'] = `Bearer ${adminToken}`;
       }
+    } else {
+      // For regular user API calls, use user JWT token
+      const userToken = localStorage.getItem('token');
+      if (userToken) {
+        headers['Authorization'] = `Bearer ${userToken}`;
+      }
     }
 
     const res = await fetch(url, {
