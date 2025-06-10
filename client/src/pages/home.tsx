@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AnimatedText } from "@/components/ui/animated-text";
 import { ParallaxSection } from "@/components/ui/parallax-section";
 import ProductCard from "@/components/ProductCard";
@@ -19,7 +20,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAnimations } from "@/hooks/use-animations";
 import { ChevronDown, Leaf, Truck, Sprout, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
-import type { Product, Farmer, Testimonial as TestimonialType, TeamMember } from "@shared/schema";
+import type { Product, Farmer, Testimonial as TestimonialType, TeamMember, Category } from "@shared/schema";
 
 const newsletterSchema = z.object({
   name: z.string().optional(),
@@ -32,6 +33,10 @@ const newsletterSchema = z.object({
 type NewsletterFormData = z.infer<typeof newsletterSchema>;
 
 export default function Home() {
+  // State for category and subcategory filtering
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<number | null>(null);
+
   // Get products and farmers data
   const { data: productsResponse } = useQuery({
     queryKey: ["/api/products"],
@@ -49,6 +54,17 @@ export default function Home() {
     queryKey: ["/api/farmers/featured"],
   });
 
+  // Get categories for filtering
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories/main"],
+  });
+
+  // Get subcategories when a category is selected
+  const { data: subcategories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories", selectedCategory, "subcategories"],
+    enabled: !!selectedCategory,
+  });
+
   const { data: testimonials = [] } = useQuery<TestimonialType[]>({
     queryKey: ["/api/testimonials"],
   });
@@ -60,15 +76,23 @@ export default function Home() {
   // Animation controller for scroll animations
   const { setupScrollAnimation } = useAnimations();
 
-  // Category buttons state
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const categoryButtons = [
-    { id: "all", label: "All Products" },
-    { id: "coffee-tea", label: "Coffee & Tea" },
-    { id: "spices", label: "Spices" },
-    { id: "grains", label: "Grains" },
-    { id: "others", label: "Others" },
-  ];
+  // Filter products based on selected category and subcategory
+  const filteredProducts = products.filter((product: Product) => {
+    if (!selectedCategory && !selectedSubcategory) return true;
+    
+    const selectedCategoryName = categories.find(cat => cat.id === selectedCategory)?.name;
+    const selectedSubcategoryName = subcategories.find(sub => sub.id === selectedSubcategory)?.name;
+    
+    if (selectedSubcategory) {
+      return product.subcategory === selectedSubcategoryName;
+    }
+    
+    if (selectedCategory) {
+      return product.category === selectedCategoryName;
+    }
+    
+    return true;
+  });
 
   // Set up scroll animations
   useEffect(() => {
@@ -332,46 +356,68 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Category Navigation */}
-          <div className="flex flex-wrap justify-center gap-3 mb-12 scroll-animation">
-            {categoryButtons.map((button) => (
+          {/* Category and Subcategory Navigation */}
+          <div className="flex flex-col items-center gap-4 mb-12 scroll-animation">
+            {/* Category Selection */}
+            <div className="flex flex-wrap justify-center gap-3">
               <Button
-                key={button.id}
-                variant={
-                  selectedCategory === (button.id === "all" ? null : button.id)
-                    ? "default"
-                    : "outline"
-                }
+                variant={!selectedCategory ? "default" : "outline"}
                 className="px-5 py-2 rounded-full font-medium transition duration-200"
-                onClick={() =>
-                  setSelectedCategory(button.id === "all" ? null : button.id)
-                }
+                onClick={() => {
+                  setSelectedCategory(null);
+                  setSelectedSubcategory(null);
+                }}
               >
-                {button.label}
+                All Products
               </Button>
-            ))}
+              {categories.map((category) => (
+                <Button
+                  key={category.id}
+                  variant={selectedCategory === category.id ? "default" : "outline"}
+                  className="px-5 py-2 rounded-full font-medium transition duration-200"
+                  onClick={() => {
+                    setSelectedCategory(category.id);
+                    setSelectedSubcategory(null);
+                  }}
+                >
+                  {category.name}
+                </Button>
+              ))}
+            </div>
+
+            {/* Subcategory Selection */}
+            {selectedCategory && subcategories.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button
+                  variant={!selectedSubcategory ? "default" : "outline"}
+                  size="sm"
+                  className="px-4 py-1 rounded-full text-sm transition duration-200"
+                  onClick={() => setSelectedSubcategory(null)}
+                >
+                  All {categories.find(cat => cat.id === selectedCategory)?.name}
+                </Button>
+                {subcategories.map((subcategory) => (
+                  <Button
+                    key={subcategory.id}
+                    variant={selectedSubcategory === subcategory.id ? "default" : "outline"}
+                    size="sm"
+                    className="px-4 py-1 rounded-full text-sm transition duration-200"
+                    onClick={() => setSelectedSubcategory(subcategory.id)}
+                  >
+                    {subcategory.name}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Products Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {products
-              .filter(
-                (product: any) =>
-                  !selectedCategory ||
-                  (selectedCategory === "coffee-tea" &&
-                    product.category === "Coffee & Tea") ||
-                  (selectedCategory === "spices" &&
-                    product.category === "Spices") ||
-                  (selectedCategory === "grains" &&
-                    product.category === "Grains") ||
-                  (selectedCategory === "others" &&
-                    product.category === "Others"),
-              )
-              .map((product: any) => (
-                <div key={product.id} className="scroll-animation">
-                  <ProductCard product={product} />
-                </div>
-              ))}
+            {filteredProducts.map((product: Product) => (
+              <div key={product.id} className="scroll-animation">
+                <ProductCard product={product} />
+              </div>
+            ))}
           </div>
 
           <div className="text-center mt-12">
