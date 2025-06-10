@@ -58,6 +58,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { icon: <Mail className="h-5 w-5" />, label: 'Newsletter', path: '/admin/newsletter' },
     { icon: <MessageSquare className="h-5 w-5" />, label: 'Messages', path: '/admin/messages' },
     { icon: <Tag className="h-5 w-5" />, label: 'Discounts', path: '/admin/discounts' },
+    { icon: <FolderTree className="h-5 w-5" />, label: 'Category Management', path: '/admin/category-management' },
 
     { icon: <Settings className="h-5 w-5" />, label: 'Settings', path: '/admin/settings' },
   ];
