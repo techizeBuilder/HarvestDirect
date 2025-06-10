@@ -1410,9 +1410,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrdersByUserId(userId: number): Promise<Order[]> {
-    return await db.select().from(orders)
+    console.log('Querying orders for user ID:', userId);
+    const result = await db.select().from(orders)
       .where(eq(orders.userId, userId))
       .orderBy(desc(orders.createdAt));
+    console.log('Found orders count:', result.length, 'for user:', userId);
+    return result;
   }
 
   async getOrderById(id: number): Promise<Order | undefined> {

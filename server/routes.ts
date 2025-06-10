@@ -1050,7 +1050,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(`${apiPrefix}/orders/history`, authenticate, async (req, res) => {
     try {
       const user = (req as any).user;
+      console.log('Fetching orders for user ID:', user.id);
       const orders = await storage.getOrdersByUserId(user.id);
+      console.log('Retrieved orders:', orders.length, 'for user', user.id);
       
       // Fetch comprehensive order details for each order
       const ordersWithDetails = await Promise.all(
