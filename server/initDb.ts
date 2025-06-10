@@ -1,9 +1,10 @@
 import { db } from './db';
-import { products, farmers, testimonials, discounts, siteSettings, users, orders, orderItems, payments } from '@shared/schema';
+import { products, farmers, testimonials, discounts, siteSettings, users, orders, orderItems, payments, categories } from '@shared/schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
 import { discountData } from './discountData';
 import { storeSettingsData } from './storeSettingsData';
+import { categoryData, subcategoryData } from './categoryData';
 import { sql } from 'drizzle-orm';
 
 /**
@@ -167,6 +168,47 @@ export async function initializeDatabase() {
       
     } else {
       console.log(`Found ${existingOrders[0].count} existing orders, skipping order seeding.`);
+    }
+
+    // Add categories if they don't exist
+    const existingCategories = await db.select({ count: sql`count(*)` }).from(categories);
+    
+    if (Number(existingCategories[0].count) === 0) {
+      console.log('Adding categories...');
+      
+      // First, add main categories
+      const insertedCategories = await db.insert(categories).values(categoryData).returning();
+      
+      // Then add subcategories with proper parent references
+      const categoryMap = new Map();
+      insertedCategories.forEach(cat => {
+        categoryMap.set(cat.slug, cat.id);
+      });
+      
+      // Map subcategories to their parent categories
+      const subcategoriesWithParents = subcategoryData.map(subcat => {
+        let parentId = null;
+        
+        // Determine parent category based on subcategory type
+        if (['arabica-coffee', 'robusta-coffee', 'green-tea', 'black-tea', 'herbal-tea'].includes(subcat.slug)) {
+          parentId = categoryMap.get('coffee-tea');
+        } else if (['whole-spices', 'ground-spices', 'spice-blends', 'medicinal-spices'].includes(subcat.slug)) {
+          parentId = categoryMap.get('spices');
+        } else if (['rice-varieties', 'wheat-products', 'millets', 'pulses-lentils'].includes(subcat.slug)) {
+          parentId = categoryMap.get('grains');
+        } else if (['honey-sweeteners', 'oils-ghee', 'dry-fruits-nuts', 'pickles-preserves'].includes(subcat.slug)) {
+          parentId = categoryMap.get('others');
+        }
+        
+        return {
+          ...subcat,
+          parentId
+        };
+      });
+      
+      await db.insert(categories).values(subcategoriesWithParents);
+    } else {
+      console.log(`Found ${existingCategories[0].count} existing categories, skipping category seeding.`);
     }
 
     console.log('Database initialization completed successfully!');

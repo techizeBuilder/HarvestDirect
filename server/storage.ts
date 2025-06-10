@@ -1656,6 +1656,59 @@ export class DatabaseStorage implements IStorage {
   async deleteSiteSetting(key: string): Promise<void> {
     await db.delete(siteSettings).where(eq(siteSettings.key, key));
   }
+
+  // Category management methods
+  async getAllCategories(): Promise<Category[]> {
+    return await db.select().from(categories).orderBy(categories.sortOrder, categories.name);
+  }
+
+  async getMainCategories(): Promise<Category[]> {
+    return await db.select().from(categories)
+      .where(and(
+        sql`${categories.parentId} IS NULL`,
+        eq(categories.isActive, true)
+      ))
+      .orderBy(categories.sortOrder, categories.name);
+  }
+
+  async getSubcategoriesByParent(parentId: number): Promise<Category[]> {
+    return await db.select().from(categories)
+      .where(and(
+        eq(categories.parentId, parentId),
+        eq(categories.isActive, true)
+      ))
+      .orderBy(categories.sortOrder, categories.name);
+  }
+
+  async getCategoryById(id: number): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category;
+  }
+
+  async createCategory(categoryData: InsertCategory): Promise<Category> {
+    const [newCategory] = await db.insert(categories).values(categoryData).returning();
+    return newCategory;
+  }
+
+  async updateCategory(id: number, categoryData: Partial<InsertCategory>): Promise<Category> {
+    const [updatedCategory] = await db.update(categories)
+      .set({ 
+        ...categoryData,
+        updatedAt: new Date()
+      })
+      .where(eq(categories.id, id))
+      .returning();
+    
+    if (!updatedCategory) {
+      throw new Error("Category not found");
+    }
+    
+    return updatedCategory;
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
+  }
 }
 
 // Use the database storage implementation

@@ -248,6 +248,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch farmer" });
     }
   });
+
+  // Categories and Subcategories API
+  app.get(`${apiPrefix}/categories`, async (req, res) => {
+    try {
+      const categories = await storage.getAllCategories();
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
+  app.get(`${apiPrefix}/categories/main`, async (req, res) => {
+    try {
+      const mainCategories = await storage.getMainCategories();
+      res.json(mainCategories);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch main categories" });
+    }
+  });
+
+  app.get(`${apiPrefix}/categories/:parentId/subcategories`, async (req, res) => {
+    try {
+      const parentId = parseInt(req.params.parentId);
+      if (isNaN(parentId)) {
+        return res.status(400).json({ message: "Invalid parent category ID" });
+      }
+      
+      const subcategories = await storage.getSubcategoriesByParent(parentId);
+      res.json(subcategories);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch subcategories" });
+    }
+  });
+
+  app.get(`${apiPrefix}/categories/:id`, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid category ID" });
+      }
+      
+      const category = await storage.getCategoryById(id);
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      
+      res.json(category);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch category" });
+    }
+  });
   
   // Product reviews endpoints
   app.get(`${apiPrefix}/products/:id/reviews`, async (req, res) => {
