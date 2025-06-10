@@ -801,6 +801,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Payment recorded successfully:', payment);
       
+      // Send order notification email to admin
+      try {
+        const orderItems = await storage.getOrderItemsByOrderId(order.id);
+        const orderItemsWithProducts = await Promise.all(
+          orderItems.map(async (item) => {
+            const product = await storage.getProductById(item.productId);
+            return {
+              ...item,
+              product: product
+            };
+          })
+        );
+
+        await emailService.sendOrderNotificationToAdmin({
+          order,
+          orderItems: orderItemsWithProducts,
+          customerEmail: user.email,
+          customerName: user.name,
+          totalAmount: amount / 100
+        });
+        
+        console.log('Order notification email sent to admin successfully');
+      } catch (emailError) {
+        console.error('Failed to send order notification email:', emailError);
+        // Don't fail the order creation if email fails
+      }
+      
       // Clear the cart after successful order creation
       console.log('Clearing cart for sessionId:', sessionId);
       await storage.clearCart(sessionId);
@@ -829,6 +856,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: errorMessage,
         details: error instanceof Error ? error.message : "Unknown error occurred"
       });
+    }
+  });
+
+  // Password Reset Routes
+  
+  // Forgot password - Send reset email
+  app.post(`${apiPrefix}/auth/forgot-password`, async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if email exists for security
+        return res.json({ message: "If your email is registered, you will receive a password reset link shortly." });
+      }
+      
+      // Generate reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+      
+      // Save reset token to user
+      await storage.updateUserResetToken(user.id, resetToken, resetTokenExpiry);
+      
+      // Send reset email
+      await emailService.sendPasswordResetEmail(user, resetToken);
+      
+      res.json({ message: "If your email is registered, you will receive a password reset link shortly." });
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ message: "Failed to process password reset request" });
+    }
+  });
+  
+  // Reset password with token
+  app.post(`${apiPrefix}/auth/reset-password`, async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      
+      if (!token || !newPassword) {
+        return res.status(400).json({ message: "Token and new password are required" });
+      }
+      
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      }
+      
+      // Find user with valid reset token
+      const user = await storage.getUserByResetToken(token);
+      if (!user) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+      
+      // Check if token is expired
+      if (!user.resetTokenExpiry || new Date() > user.resetTokenExpiry) {
+        return res.status(400).json({ message: "Reset token has expired" });
+      }
+      
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      
+      // Update user password and clear reset token
+      await storage.updateUserPassword(user.id, hashedPassword);
+      await storage.clearUserResetToken(user.id);
+      
+      // Send confirmation email
+      try {
+        await emailService.sendPasswordResetConfirmation(user);
+      } catch (emailError) {
+        console.error('Failed to send password reset confirmation email:', emailError);
+        // Don't fail the password reset if email fails
+      }
+      
+      res.json({ message: "Password successfully reset" });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ message: "Failed to reset password" });
     }
   });
   
