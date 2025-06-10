@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, ChevronRight, FolderOpen, Folder } from "lucide-react";
+import { Plus, Edit, Trash2, ChevronRight, ChevronDown, FolderOpen, Folder } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AdminLayout from "@/components/admin/AdminLayout";
 
@@ -44,32 +44,33 @@ export default function CategoryManagement() {
       const token = localStorage.getItem('adminToken');
       if (!token) return;
 
-      const response = await fetch('/api/admin/categories/all', {
+      const response = await fetch('/api/categories', {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Cache-Control': 'no-cache'
+          'Authorization': `Bearer ${token}`
         }
       });
 
       if (response.ok) {
         const allCategories = await response.json();
+        
+        // Separate main categories and subcategories
         const mainCategories = allCategories.filter((cat: Category) => !cat.parentId);
-        const subCats: { [key: number]: Category[] } = {};
+        const subcategoriesMap: { [key: number]: Category[] } = {};
         
         allCategories.forEach((cat: Category) => {
           if (cat.parentId) {
-            if (!subCats[cat.parentId]) {
-              subCats[cat.parentId] = [];
+            if (!subcategoriesMap[cat.parentId]) {
+              subcategoriesMap[cat.parentId] = [];
             }
-            subCats[cat.parentId].push(cat);
+            subcategoriesMap[cat.parentId].push(cat);
           }
         });
-
+        
         setCategories(mainCategories);
-        setSubcategories(subCats);
+        setSubcategories(subcategoriesMap);
       }
     } catch (error) {
-      console.error('Failed to fetch categories:', error);
+      console.error('Error fetching categories:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch categories',
@@ -80,21 +81,21 @@ export default function CategoryManagement() {
     }
   };
 
-  // Create a new category
+  // Create new category
   const createCategory = async () => {
+    if (!categoryName.trim()) return;
+
     try {
       const token = localStorage.getItem('adminToken');
-      if (!token) return;
-
-      const response = await fetch('/api/admin/categories', {
+      const response = await fetch('/api/categories', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          name: categoryName,
-          description: categoryDescription
+          name: categoryName.trim(),
+          description: categoryDescription.trim() || undefined
         })
       });
 
@@ -120,21 +121,22 @@ export default function CategoryManagement() {
     }
   };
 
-  // Create a new subcategory
+  // Create new subcategory
   const createSubcategory = async () => {
+    if (!subcategoryName.trim() || !selectedCategory) return;
+
     try {
       const token = localStorage.getItem('adminToken');
-      if (!token || !selectedCategory) return;
-
-      const response = await fetch(`/api/admin/categories/${selectedCategory.id}/subcategories`, {
+      const response = await fetch('/api/categories', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          name: subcategoryName,
-          description: subcategoryDescription
+          name: subcategoryName.trim(),
+          description: subcategoryDescription.trim() || undefined,
+          parentId: selectedCategory.id
         })
       });
 
@@ -143,6 +145,7 @@ export default function CategoryManagement() {
         setShowCreateSubcategoryDialog(false);
         setSubcategoryName("");
         setSubcategoryDescription("");
+        setSelectedCategory(null);
         toast({
           title: 'Success',
           description: 'Subcategory created successfully',
@@ -160,34 +163,30 @@ export default function CategoryManagement() {
     }
   };
 
-  // Update a category
+  // Update category
   const updateCategory = async () => {
+    if (!categoryName.trim() || !editingCategory) return;
+
     try {
       const token = localStorage.getItem('adminToken');
-      if (!token || !editingCategory) return;
-
-      const endpoint = editingCategory.parentId 
-        ? `/api/admin/subcategories/${editingCategory.id}`
-        : `/api/admin/categories/${editingCategory.id}`;
-
-      const response = await fetch(endpoint, {
+      const response = await fetch(`/api/categories/${editingCategory.id}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          name: categoryName,
-          description: categoryDescription
+          name: categoryName.trim(),
+          description: categoryDescription.trim() || undefined
         })
       });
 
       if (response.ok) {
         await fetchCategories();
         setShowEditDialog(false);
-        setEditingCategory(null);
         setCategoryName("");
         setCategoryDescription("");
+        setEditingCategory(null);
         toast({
           title: 'Success',
           description: `${editingCategory.parentId ? 'Subcategory' : 'Category'} updated successfully`,
@@ -205,17 +204,11 @@ export default function CategoryManagement() {
     }
   };
 
-  // Delete a category or subcategory
+  // Delete category
   const deleteCategory = async (category: Category) => {
     try {
       const token = localStorage.getItem('adminToken');
-      if (!token) return;
-
-      const endpoint = category.parentId 
-        ? `/api/admin/subcategories/${category.id}`
-        : `/api/admin/categories/${category.id}`;
-
-      const response = await fetch(endpoint, {
+      const response = await fetch(`/api/categories/${category.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -289,20 +282,120 @@ export default function CategoryManagement() {
     <AdminLayout>
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-forest">Category Management</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage product categories and subcategories
-          </p>
+          <div>
+            <h1 className="text-3xl font-bold text-forest">Category Management</h1>
+            <p className="text-muted-foreground mt-2">
+              Manage product categories and subcategories
+            </p>
+          </div>
+          <Button onClick={() => setShowCreateDialog(true)} className="bg-primary hover:bg-primary/90">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Category
+          </Button>
         </div>
-        
+
+        {/* Categories List */}
+        <div className="space-y-4">
+          {categories.map((category) => (
+            <Card key={category.id}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleCategoryExpansion(category.id)}
+                      disabled={!subcategories[category.id]?.length}
+                    >
+                      {expandedCategories.has(category.id) ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <div>
+                      <h3 className="text-lg font-semibold">{category.name}</h3>
+                      {category.description && (
+                        <p className="text-sm text-muted-foreground">{category.description}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Slug: {category.slug} | Created: {new Date(category.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openCreateSubcategoryDialog(category)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Subcategory
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditDialog(category)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteCategory(category)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Subcategories */}
+                {expandedCategories.has(category.id) && subcategories[category.id] && (
+                  <div className="mt-4 ml-8 space-y-2">
+                    {subcategories[category.id].map((subcategory) => (
+                      <Card key={subcategory.id} className="bg-muted/50">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-medium">{subcategory.name}</h4>
+                              {subcategory.description && (
+                                <p className="text-sm text-muted-foreground">{subcategory.description}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Slug: {subcategory.slug} | Created: {new Date(subcategory.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openEditDialog(subcategory)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteCategory(subcategory)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Create Category Dialog */}
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary-dark">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Category
-            </Button>
-          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Category</DialogTitle>
@@ -326,277 +419,81 @@ export default function CategoryManagement() {
                   placeholder="Enter category description"
                 />
               </div>
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCreateDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={createCategory}
-                  disabled={!categoryName.trim()}
-                >
-                  Create Category
-                </Button>
-              </div>
+              <Button
+                onClick={createCategory}
+                disabled={!categoryName.trim()}
+              >
+                Create Category
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
-      </div>
 
-      <div className="grid gap-6">
-        {categories.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-xl font-semibold text-muted-foreground mb-2">No Categories Found</p>
-              <p className="text-muted-foreground text-center mb-4">
-                Create your first category to organize your products
-              </p>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Category
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          categories.map((category) => (
-            <motion.div
-              key={category.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleCategoryExpansion(category.id)}
-                        className="p-1"
-                      >
-                        <ChevronRight 
-                          className={`h-4 w-4 transition-transform ${
-                            expandedCategories.has(category.id) ? 'rotate-90' : ''
-                          }`} 
-                        />
-                      </Button>
-                      <Folder className="h-5 w-5 text-primary" />
-                      <div>
-                        <CardTitle className="text-lg">{category.name}</CardTitle>
-                        {category.description && (
-                          <p className="text-sm text-muted-foreground">{category.description}</p>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary">
-                        {subcategories[category.id]?.length || 0} subcategories
-                      </Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openCreateSubcategoryDialog(category)}
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        Add Subcategory
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEditDialog(category)}
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Category</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete "{category.name}"? This action cannot be undone.
-                              {subcategories[category.id]?.length > 0 && (
-                                <span className="block mt-2 text-orange-600">
-                                  This category has {subcategories[category.id].length} subcategories that will also be deleted.
-                                </span>
-                              )}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteCategory(category)}
-                              className="bg-destructive hover:bg-destructive/90"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <AnimatePresence>
-                  {expandedCategories.has(category.id) && subcategories[category.id] && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
-                    >
-                      <CardContent className="pt-0">
-                        <div className="ml-8 space-y-2">
-                          {subcategories[category.id].map((subcategory) => (
-                            <div
-                              key={subcategory.id}
-                              className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                                <div>
-                                  <p className="font-medium">{subcategory.name}</p>
-                                  {subcategory.description && (
-                                    <p className="text-xs text-muted-foreground">
-                                      {subcategory.description}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openEditDialog(subcategory)}
-                                >
-                                  <Edit className="w-3 h-3" />
-                                </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="sm">
-                                      <Trash2 className="w-3 h-3" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Delete Subcategory</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Are you sure you want to delete "{subcategory.name}"? This action cannot be undone.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => deleteCategory(subcategory)}
-                                        className="bg-destructive hover:bg-destructive/90"
-                                      >
-                                        Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </Card>
-            </motion.div>
-          ))
-        )}
-      </div>
-
-      {/* Edit Category Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              Edit {editingCategory?.parentId ? 'Subcategory' : 'Category'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="edit-category-name">Name</Label>
-              <Input
-                id="edit-category-name"
-                value={categoryName}
-                onChange={(e) => setCategoryName(e.target.value)}
-                placeholder="Enter name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-category-description">Description (Optional)</Label>
-              <Input
-                id="edit-category-description"
-                value={categoryDescription}
-                onChange={(e) => setCategoryDescription(e.target.value)}
-                placeholder="Enter description"
-              />
-            </div>
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowEditDialog(false)}
-              >
-                Cancel
-              </Button>
+        {/* Edit Category Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                Edit {editingCategory?.parentId ? 'Subcategory' : 'Category'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-category-name">Name</Label>
+                <Input
+                  id="edit-category-name"
+                  value={categoryName}
+                  onChange={(e) => setCategoryName(e.target.value)}
+                  placeholder="Enter category name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-category-description">Description (Optional)</Label>
+                <Input
+                  id="edit-category-description"
+                  value={categoryDescription}
+                  onChange={(e) => setCategoryDescription(e.target.value)}
+                  placeholder="Enter category description"
+                />
+              </div>
               <Button
                 onClick={updateCategory}
                 disabled={!categoryName.trim()}
               >
-                Update
+                Update {editingCategory?.parentId ? 'Subcategory' : 'Category'}
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      {/* Create Subcategory Dialog */}
-      <Dialog open={showCreateSubcategoryDialog} onOpenChange={setShowCreateSubcategoryDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              Add Subcategory to "{selectedCategory?.name}"
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="subcategory-name">Subcategory Name</Label>
-              <Input
-                id="subcategory-name"
-                value={subcategoryName}
-                onChange={(e) => setSubcategoryName(e.target.value)}
-                placeholder="Enter subcategory name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="subcategory-description">Description (Optional)</Label>
-              <Input
-                id="subcategory-description"
-                value={subcategoryDescription}
-                onChange={(e) => setSubcategoryDescription(e.target.value)}
-                placeholder="Enter subcategory description"
-              />
-            </div>
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowCreateSubcategoryDialog(false)}
-              >
-                Cancel
-              </Button>
+        {/* Create Subcategory Dialog */}
+        <Dialog open={showCreateSubcategoryDialog} onOpenChange={setShowCreateSubcategoryDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Subcategory</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Adding subcategory to: {selectedCategory?.name}
+              </p>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="subcategory-name">Subcategory Name</Label>
+                <Input
+                  id="subcategory-name"
+                  value={subcategoryName}
+                  onChange={(e) => setSubcategoryName(e.target.value)}
+                  placeholder="Enter subcategory name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="subcategory-description">Description (Optional)</Label>
+                <Input
+                  id="subcategory-description"
+                  value={subcategoryDescription}
+                  onChange={(e) => setSubcategoryDescription(e.target.value)}
+                  placeholder="Enter subcategory description"
+                />
+              </div>
               <Button
                 onClick={createSubcategory}
                 disabled={!subcategoryName.trim()}
@@ -604,9 +501,8 @@ export default function CategoryManagement() {
                 Create Subcategory
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
