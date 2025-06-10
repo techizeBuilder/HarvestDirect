@@ -122,8 +122,55 @@ export default function AllProducts() {
       }
     }
   }, [searchParam]);
+
+  // Fetch main categories
+  const fetchMainCategories = async () => {
+    try {
+      const response = await fetch('/api/categories/main');
+      if (response.ok) {
+        const data = await response.json();
+        setMainCategories(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch main categories:', error);
+    }
+  };
+
+  // Fetch subcategories for a specific parent category
+  const fetchSubcategories = async (parentId: number) => {
+    try {
+      const response = await fetch(`/api/categories/${parentId}/subcategories`);
+      if (response.ok) {
+        const data = await response.json();
+        setSubcategories(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch subcategories:', error);
+      setSubcategories([]);
+    }
+  };
+
+  // Handle category change to load subcategories
+  const handleCategoryChange = (categoryName: string | null) => {
+    setSelectedCategory(categoryName);
+    setSelectedSubcategory(null); // Reset subcategory when category changes
+    
+    if (categoryName && categoryName !== 'all') {
+      const selectedCat = mainCategories.find(cat => cat.name === categoryName);
+      if (selectedCat) {
+        fetchSubcategories(selectedCat.id);
+      }
+    } else {
+      setSubcategories([]);
+    }
+  };
+
+  // Load categories on component mount
+  useEffect(() => {
+    fetchMainCategories();
+  }, []);
   
-  // Categories for filter
+  // Categories for filter (fallback for backward compatibility)
   const categories = [
     { id: "all", name: "All Products", value: null },
     { id: "coffee-tea", name: "Coffee & Tea", value: "Coffee & Tea" },
@@ -143,9 +190,7 @@ export default function AllProducts() {
     setSearchQuery(value);
   }, 300);
 
-  const handleCategoryChange = (category: string | null) => {
-    setSelectedCategory(category);
-  };
+
 
   const handlePriceRangeChange = (newRange: [number, number]) => {
     setPriceRange(newRange);
@@ -155,6 +200,8 @@ export default function AllProducts() {
   const resetFilters = () => {
     setSearchQuery("");
     setSelectedCategory(null);
+    setSelectedSubcategory(null);
+    setSubcategories([]);
     setPriceRange([0, 20]);
     
     // Reset input field
@@ -245,23 +292,71 @@ export default function AllProducts() {
                   <div className="mb-8">
                     <h3 className="text-foreground font-medium mb-3">Categories</h3>
                     <div className="space-y-2">
-                      {categories.map((category) => (
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "w-full justify-start font-normal",
+                          selectedCategory === null
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-foreground hover:bg-muted"
+                        )}
+                        onClick={() => handleCategoryChange(null)}
+                      >
+                        All Products
+                      </Button>
+                      {mainCategories.map((category) => (
                         <Button
                           key={category.id}
                           variant="ghost"
                           className={cn(
                             "w-full justify-start font-normal",
-                            selectedCategory === category.value
+                            selectedCategory === category.name
                               ? "bg-primary/10 text-primary font-medium"
                               : "text-foreground hover:bg-muted"
                           )}
-                          onClick={() => setSelectedCategory(category.value)}
+                          onClick={() => handleCategoryChange(category.name)}
                         >
                           {category.name}
                         </Button>
                       ))}
                     </div>
                   </div>
+
+                  {/* Subcategories */}
+                  {subcategories.length > 0 && (
+                    <div className="mb-8">
+                      <h3 className="text-foreground font-medium mb-3">Subcategories</h3>
+                      <div className="space-y-2">
+                        <Button
+                          variant="ghost"
+                          className={cn(
+                            "w-full justify-start font-normal",
+                            selectedSubcategory === null
+                              ? "bg-secondary/10 text-secondary font-medium"
+                              : "text-foreground hover:bg-muted"
+                          )}
+                          onClick={() => setSelectedSubcategory(null)}
+                        >
+                          All {selectedCategory}
+                        </Button>
+                        {subcategories.map((subcategory) => (
+                          <Button
+                            key={subcategory.id}
+                            variant="ghost"
+                            className={cn(
+                              "w-full justify-start font-normal pl-6",
+                              selectedSubcategory === subcategory.name
+                                ? "bg-secondary/10 text-secondary font-medium"
+                                : "text-foreground hover:bg-muted"
+                            )}
+                            onClick={() => setSelectedSubcategory(subcategory.name)}
+                          >
+                            {subcategory.name}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Price Range */}
                   <div>
