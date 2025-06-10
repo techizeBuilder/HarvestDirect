@@ -36,6 +36,7 @@ import AdminSettings from "@/pages/admin/settings";
 import AdminNewsletter from "@/pages/admin/newsletter";
 import AdminMessagesWithLayout from "@/pages/admin/messages";
 import AdminTeamMembers from "@/pages/admin/team-members";
+import AdminCategoryManagement from "@/pages/admin/category-management";
 
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
@@ -65,6 +66,7 @@ function App() {
               <Route path="/admin/messages" component={AdminMessagesWithLayout} />
               <Route path="/admin/inventory" component={AdminInventory} />
               <Route path="/admin/discounts" component={AdminDiscounts} />
+              <Route path="/admin/category-management" component={AdminCategoryManagement} />
 
               <Route path="/admin/settings" component={AdminSettings} />
               

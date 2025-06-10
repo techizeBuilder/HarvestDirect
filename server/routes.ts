@@ -1595,6 +1595,205 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== CATEGORY MANAGEMENT ROUTES =====
+  
+  // Get all categories (main categories only)
+  app.get('/api/admin/categories', authenticate, async (req, res) => {
+    try {
+      const categories = await storage.getMainCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error('Get categories error:', error);
+      res.status(500).json({ message: 'Failed to fetch categories' });
+    }
+  });
+
+  // Get all categories with subcategories
+  app.get('/api/admin/categories/all', authenticate, async (req, res) => {
+    try {
+      const categories = await storage.getAllCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error('Get all categories error:', error);
+      res.status(500).json({ message: 'Failed to fetch categories' });
+    }
+  });
+
+  // Create a new category
+  app.post('/api/admin/categories', authenticate, async (req, res) => {
+    try {
+      const categoryData = req.body;
+      
+      // Validate required fields
+      if (!categoryData.name) {
+        return res.status(400).json({ message: 'Category name is required' });
+      }
+
+      const newCategory = await storage.createCategory(categoryData);
+      res.status(201).json(newCategory);
+    } catch (error) {
+      console.error('Create category error:', error);
+      res.status(500).json({ message: 'Failed to create category' });
+    }
+  });
+
+  // Update a category
+  app.put('/api/admin/categories/:id', authenticate, async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+      const updateData = req.body;
+
+      if (isNaN(categoryId)) {
+        return res.status(400).json({ message: 'Invalid category ID' });
+      }
+
+      const updatedCategory = await storage.updateCategory(categoryId, updateData);
+      res.json(updatedCategory);
+    } catch (error) {
+      console.error('Update category error:', error);
+      res.status(500).json({ message: 'Failed to update category' });
+    }
+  });
+
+  // Delete a category
+  app.delete('/api/admin/categories/:id', authenticate, async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+
+      if (isNaN(categoryId)) {
+        return res.status(400).json({ message: 'Invalid category ID' });
+      }
+
+      // Check if category has products
+      const allProducts = await storage.getAllEnhancedProducts();
+      const category = await storage.getCategoryById(categoryId);
+      
+      if (!category) {
+        return res.status(404).json({ message: 'Category not found' });
+      }
+
+      const productsUsingCategory = allProducts.filter(product => 
+        product.category === category.name
+      );
+
+      if (productsUsingCategory.length > 0) {
+        return res.status(400).json({ 
+          message: `Cannot delete category. ${productsUsingCategory.length} products are using this category.`,
+          productsCount: productsUsingCategory.length
+        });
+      }
+
+      await storage.deleteCategory(categoryId);
+      res.json({ message: 'Category deleted successfully' });
+    } catch (error) {
+      console.error('Delete category error:', error);
+      res.status(500).json({ message: 'Failed to delete category' });
+    }
+  });
+
+  // Get subcategories for a specific category
+  app.get('/api/admin/categories/:id/subcategories', authenticate, async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+
+      if (isNaN(categoryId)) {
+        return res.status(400).json({ message: 'Invalid category ID' });
+      }
+
+      const subcategories = await storage.getSubcategoriesByParent(categoryId);
+      res.json(subcategories);
+    } catch (error) {
+      console.error('Get subcategories error:', error);
+      res.status(500).json({ message: 'Failed to fetch subcategories' });
+    }
+  });
+
+  // Create a new subcategory
+  app.post('/api/admin/categories/:id/subcategories', authenticate, async (req, res) => {
+    try {
+      const parentId = parseInt(req.params.id);
+      const subcategoryData = req.body;
+
+      if (isNaN(parentId)) {
+        return res.status(400).json({ message: 'Invalid parent category ID' });
+      }
+
+      if (!subcategoryData.name) {
+        return res.status(400).json({ message: 'Subcategory name is required' });
+      }
+
+      // Verify parent category exists
+      const parentCategory = await storage.getCategoryById(parentId);
+      if (!parentCategory) {
+        return res.status(404).json({ message: 'Parent category not found' });
+      }
+
+      const newSubcategory = await storage.createCategory({
+        ...subcategoryData,
+        parentId: parentId
+      });
+
+      res.status(201).json(newSubcategory);
+    } catch (error) {
+      console.error('Create subcategory error:', error);
+      res.status(500).json({ message: 'Failed to create subcategory' });
+    }
+  });
+
+  // Update a subcategory
+  app.put('/api/admin/subcategories/:id', authenticate, async (req, res) => {
+    try {
+      const subcategoryId = parseInt(req.params.id);
+      const updateData = req.body;
+
+      if (isNaN(subcategoryId)) {
+        return res.status(400).json({ message: 'Invalid subcategory ID' });
+      }
+
+      const updatedSubcategory = await storage.updateCategory(subcategoryId, updateData);
+      res.json(updatedSubcategory);
+    } catch (error) {
+      console.error('Update subcategory error:', error);
+      res.status(500).json({ message: 'Failed to update subcategory' });
+    }
+  });
+
+  // Delete a subcategory
+  app.delete('/api/admin/subcategories/:id', authenticate, async (req, res) => {
+    try {
+      const subcategoryId = parseInt(req.params.id);
+
+      if (isNaN(subcategoryId)) {
+        return res.status(400).json({ message: 'Invalid subcategory ID' });
+      }
+
+      // Check if subcategory has products
+      const allProducts = await storage.getAllEnhancedProducts();
+      const subcategory = await storage.getCategoryById(subcategoryId);
+      
+      if (!subcategory) {
+        return res.status(404).json({ message: 'Subcategory not found' });
+      }
+
+      const productsUsingSubcategory = allProducts.filter(product => 
+        product.subcategory === subcategory.name
+      );
+
+      if (productsUsingSubcategory.length > 0) {
+        return res.status(400).json({ 
+          message: `Cannot delete subcategory. ${productsUsingSubcategory.length} products are using this subcategory.`,
+          productsCount: productsUsingSubcategory.length
+        });
+      }
+
+      await storage.deleteCategory(subcategoryId);
+      res.json({ message: 'Subcategory deleted successfully' });
+    } catch (error) {
+      console.error('Delete subcategory error:', error);
+      res.status(500).json({ message: 'Failed to delete subcategory' });
+    }
+  });
+
   // Database Export API Routes
   app.get('/api/admin/database/export', async (req, res) => {
     try {
