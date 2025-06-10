@@ -37,17 +37,34 @@ let razorpay: Razorpay;
 // Email configuration
 let transporter: nodemailer.Transporter;
 
-// Auth middleware - Use existing user with orders for demonstration
+// Auth middleware - Proper JWT verification
 const authenticate = async (req: Request, res: Response, next: NextFunction) => {
-  // Use the existing user that has orders in the database
-  const user = await storage.getUserById(4);
-  
-  if (!user) {
-    return res.status(401).json({ message: 'User not found' });
-  }
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
 
-  (req as any).user = user;
-  next();
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
+    
+    const user = await storage.getUserById(decoded.userId);
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid user' });
+    }
+
+    console.log('Authenticated user:', {
+      id: user.id,
+      email: user.email,
+      name: user.name
+    });
+
+    (req as any).user = user;
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return res.status(401).json({ message: 'Authentication failed' });
+  }
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -814,11 +831,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })
         );
 
+        // Debug: Log actual user data being sent in email
+        console.log('Sending email with user data:', {
+          userId: user.id,
+          customerEmail: user.email,
+          customerName: user.name,
+          orderId: order.id
+        });
+
         await emailService.sendOrderNotificationToAdmin({
           order,
           orderItems: orderItemsWithProducts,
           customerEmail: user.email,
-          customerName: user.name,
+          customerName: user.name || 'Customer',
           totalAmount: amount / 100
         });
         
