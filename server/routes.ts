@@ -1597,6 +1597,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== CATEGORY MANAGEMENT ROUTES =====
   
+  // Helper function to generate slug from name
+  const generateSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .trim()
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
+  };
+  
   // Get all categories (main categories only)
   app.get('/api/admin/categories', authenticate, async (req, res) => {
     try {
@@ -1629,6 +1639,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Category name is required' });
       }
 
+      // Generate slug if not provided
+      if (!categoryData.slug) {
+        categoryData.slug = generateSlug(categoryData.name);
+      }
+
       const newCategory = await storage.createCategory(categoryData);
       res.status(201).json(newCategory);
     } catch (error) {
@@ -1645,6 +1660,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (isNaN(categoryId)) {
         return res.status(400).json({ message: 'Invalid category ID' });
+      }
+
+      // Generate slug if name is being updated and slug is not provided
+      if (updateData.name && !updateData.slug) {
+        updateData.slug = generateSlug(updateData.name);
       }
 
       const updatedCategory = await storage.updateCategory(categoryId, updateData);
@@ -1728,6 +1748,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Parent category not found' });
       }
 
+      // Generate slug if not provided
+      if (!subcategoryData.slug) {
+        subcategoryData.slug = generateSlug(subcategoryData.name);
+      }
+
       const newSubcategory = await storage.createCategory({
         ...subcategoryData,
         parentId: parentId
@@ -1748,6 +1773,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (isNaN(subcategoryId)) {
         return res.status(400).json({ message: 'Invalid subcategory ID' });
+      }
+
+      // Generate slug if name is being updated and slug is not provided
+      if (updateData.name && !updateData.slug) {
+        updateData.slug = generateSlug(updateData.name);
       }
 
       const updatedSubcategory = await storage.updateCategory(subcategoryId, updateData);
