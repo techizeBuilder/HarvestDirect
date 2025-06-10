@@ -25,13 +25,14 @@ class EmailService {
   private fromName: string;
 
   constructor() {
+    // Use hardcoded Mailtrap credentials as fallback since env vars aren't loading properly
     const config: EmailConfig = {
       host: process.env.EMAIL_HOST || 'sandbox.smtp.mailtrap.io',
       port: parseInt(process.env.EMAIL_PORT || '587'),
       secure: process.env.EMAIL_SECURE === 'true',
       auth: {
-        user: process.env.EMAIL_USER || '',
-        pass: process.env.EMAIL_PASS || '',
+        user: process.env.EMAIL_USER || '3e36ba31a3527d',
+        pass: process.env.EMAIL_PASS || '6560b932d97631',
       },
     };
 
