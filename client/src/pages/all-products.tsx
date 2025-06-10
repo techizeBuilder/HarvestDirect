@@ -84,7 +84,7 @@ export default function AllProducts() {
 
   // Get products with pagination
   const { data: productsResponse, isLoading, error } = useQuery<PaginatedProductsResponse>({ 
-    queryKey: ['/api/products', currentPage, searchQuery, selectedCategory, priceRange, sortBy, sortOrder],
+    queryKey: ['/api/products', currentPage, searchQuery, selectedCategory, selectedSubcategory, priceRange, sortBy, sortOrder],
     queryFn: async () => {
       const queryString = buildQueryParams();
       const response = await fetch(`/api/products?${queryString}`);
