@@ -31,8 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Load user data from localStorage on initial load
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token');
-    const storedUser = localStorage.getItem('auth_user');
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
     
     if (storedToken && storedUser) {
       setToken(storedToken);
@@ -66,8 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Login response:', data);
       
       // Save auth data to localStorage
-      localStorage.setItem('auth_token', data.token);
-      localStorage.setItem('auth_user', JSON.stringify(data.user));
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       
       // Update state
       setToken(data.token);
@@ -143,8 +143,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     // Clear auth data from localStorage
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     
     // Update state
     setToken(null);
@@ -184,7 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Update user in localStorage and state
       const updatedUser = { ...user, name };
-      localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+      localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
       
       toast({
