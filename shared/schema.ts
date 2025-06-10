@@ -12,6 +12,28 @@ export const ProductCategory = {
 
 export type ProductCategoryType = typeof ProductCategory[keyof typeof ProductCategory];
 
+// Categories table for managing categories and subcategories
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  parentId: integer("parent_id"), // null for main categories, references id for subcategories
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type Category = typeof categories.$inferSelect;
+
 // User Role Enum
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
 
@@ -27,6 +49,7 @@ export const products = pgTable("products", {
   price: doublePrecision("price").notNull(),
   discountPrice: doublePrecision("discount_price"),
   category: text("category").notNull(),
+  subcategory: text("subcategory"), // Optional subcategory
   sku: text("sku"),
   imageUrl: text("image_url").notNull(),
   imageUrls: text("image_urls").array(),

@@ -19,9 +19,10 @@ import {
   Discount, InsertDiscount,
   DiscountUsage, InsertDiscountUsage,
   SiteSetting, InsertSiteSetting,
+  Category, InsertCategory,
   products, farmers, carts, cartItems, testimonials, newsletterSubscriptions, productReviews,
   users, payments, subscriptions, subscriptionStatusEnum, contactMessages, orders, orderItems, teamMembers,
-  discounts, discountUsage, siteSettings
+  discounts, discountUsage, siteSettings, categories, insertCategorySchema
 } from '@shared/schema';
 import { productData } from './productData';
 import { farmerData } from './farmerData';
@@ -124,6 +125,15 @@ export interface IStorage {
   validateDiscountById(id: number, userId?: number, cartTotal?: number): Promise<{ valid: boolean; discount?: Discount; error?: string }>;
   applyDiscount(discountId: number, userId?: number, sessionId?: string, orderId?: number): Promise<DiscountUsage>;
   getDiscountUsage(discountId: number, userId?: number): Promise<number>;
+
+  // Categories and Subcategories
+  getAllCategories(): Promise<Category[]>;
+  getMainCategories(): Promise<Category[]>;
+  getSubcategoriesByParent(parentId: number): Promise<Category[]>;
+  getCategoryById(id: number): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category>;
+  deleteCategory(id: number): Promise<void>;
 
   // Site Settings Methods
   getSiteSetting(key: string): Promise<SiteSetting | undefined>;
