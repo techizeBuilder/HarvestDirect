@@ -459,23 +459,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Validate user data
       const userData = insertUserSchema.parse(req.body);
-      
+
       // Hash the password
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(userData.password, salt);
-      
+
+      // Generate reset token
+
       // Create user with hashed password and mark as already verified
       const user = await storage.createUser({
         ...userData,
         password: hashedPassword,
-        emailVerified: true
+        emailVerified: true,
       });
-      
+
+      const resetToken = crypto.randomBytes(32).toString("hex");
+      const resetTokenExpiry = new Date(Date.now() + 3600000);
+
+      // Save reset token to user
+      await storage.createUserToken(user.id, resetToken, resetTokenExpiry);
       // Return success message without exposing password
       const { password, ...userWithoutPassword } = user;
-      res.status(201).json({ 
+      await emailService.registerEmail(user, resetToken);
+
+      res.status(201).json({
         message: "Registration successful. You can now log in.",
-        user: userWithoutPassword
+        user: userWithoutPassword,
       });
     } catch (error) {
       if (error instanceof Error) {
@@ -485,7 +494,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
-  
   // Verify email
   app.get(`${apiPrefix}/auth/verify/:token`, async (req, res) => {
     try {

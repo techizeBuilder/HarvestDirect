@@ -1,88 +1,67 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { initializeDatabase } from "./initDb";
-
+import express from "express";
+import cors from "cors";
+import { registerRoutes } from "./routes.js";
+import { initializeDatabase } from "./initDb.js";
+import morgan from "morgan";
+import dotenv from "dotenv";
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+const PORT = process.env.PORT || 5000;
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+dotenv.config();
+app.use(morgan("dev"));
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://farm-fresh-new-fronted02.vercel.app",
+  "https://farmfresh.techizebuilder.com",
+];
 
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
       }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    credentials: true,
+  })
+);
 
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
+// Middleware
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 
-      log(logLine);
-    }
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.json({
+    status: "OK",
+    message: "Harvest Direct Backend is running!",
+    timestamp: new Date().toISOString(),
   });
-
-  next();
 });
 
-(async () => {
-  // Test database connection first
-  const { testDatabaseConnection } = await import('./db');
-  const dbConnected = await testDatabaseConnection();
-  
-  if (dbConnected) {
+// Initialize database and start server
+async function startServer() {
+  try {
     // Initialize database with seed data
-    try {
-      await initializeDatabase();
-      log('Database initialized successfully with seed data');
-    } catch (error) {
-      log('Error initializing database: ' + error);
-      // Continue without database initialization if it fails
-    }
-  } else {
-    log('Warning: Database connection failed, continuing without database initialization');
+    await initializeDatabase();
+    console.log("Database initialized successfully with seed data");
+
+    // Register API routes
+    await registerRoutes(app);
+
+    // Start server
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Harvest Direct Backend server running on port ${PORT}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`🔌 API endpoints: http://localhost:${PORT}/api`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
   }
-  
-  const server = await registerRoutes(app);
+}
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
-
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
-})();
+startServer();

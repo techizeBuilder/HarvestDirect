@@ -389,3 +389,49 @@ export const exportOrders = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Failed to export orders', error: String(error) });
   }
 };
+
+// PUT update order tracking ID
+export const updateOrderTracking = async (req: Request, res: Response) => {
+  try {
+    const { orderId } = req.params;
+    const { trackingId } = req.body;
+    console.log("raaj",orderId, trackingId);
+    // Validate input
+    if (!trackingId || typeof trackingId !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Valid tracking ID is required",
+      });
+    }
+
+    // Update the order with Drizzle ORM
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({
+        trackingId,
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, parseInt(orderId)))
+      .returning();
+
+    if (!updatedOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      order: updatedOrder,
+      message: "Tracking ID updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating tracking ID:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update tracking ID",
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+};

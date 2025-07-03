@@ -3,7 +3,8 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 import { sql } from 'drizzle-orm';
 import ws from "ws";
 import * as schema from "@shared/schema";
-
+import dotenv from 'dotenv';
+dotenv.config();
 // Configure neon for WebSocket support
 neonConfig.webSocketConstructor = ws;
 

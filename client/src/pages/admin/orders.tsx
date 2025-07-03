@@ -1,12 +1,7 @@
-import { useState, useEffect } from 'react';
-import AdminLayout from '@/components/admin/AdminLayout';
-import AdminAuthWrapper from '@/components/admin/AdminAuthWrapper';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+import { useState, useEffect } from "react";
+import AdminLayout from "@/components/admin/AdminLayout";
+import AdminAuthWrapper from "@/components/admin/AdminAuthWrapper";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -15,9 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Search,
   Download,
@@ -28,10 +23,10 @@ import {
   Loader2,
   Printer,
   FileSpreadsheet,
-  ChevronDown
-} from 'lucide-react';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
+  ChevronDown,
+} from "lucide-react";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import {
   Select,
   SelectContent,
@@ -45,16 +40,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { PrintableDeliverySticker } from '@/components/admin/PrintableDeliverySticker';
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { PrintableDeliverySticker } from "@/components/admin/PrintableDeliverySticker";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Link } from "wouter";
+import { useAuth } from "@/context/AuthContext";
 
 // Order type definition for API response
 interface OrderData {
@@ -85,18 +84,40 @@ interface OrdersResponse {
 
 // Order status options with their corresponding badge colors
 const ORDER_STATUSES = [
-  { value: 'all', label: 'All Orders' },
-  { value: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'processing', label: 'Processing', color: 'bg-blue-100 text-blue-800' },
-  { value: 'shipped', label: 'Shipped', color: 'bg-indigo-100 text-indigo-800' },
-  { value: 'delivered', label: 'Delivered', color: 'bg-green-100 text-green-800' },
-  { value: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-800' },
+  { value: "all", label: "All Orders" },
+  {
+    value: "pending",
+    label: "Pending",
+    color: "bg-yellow-100 text-yellow-800",
+  },
+  {
+    value: "processing",
+    label: "Processing",
+    color: "bg-blue-100 text-blue-800",
+  },
+  {
+    value: "shipped",
+    label: "Shipped",
+    color: "bg-indigo-100 text-indigo-800",
+  },
+  {
+    value: "delivered",
+    label: "Delivered",
+    color: "bg-green-100 text-green-800",
+  },
+  { value: "cancelled", label: "Cancelled", color: "bg-red-100 text-red-800" },
 ];
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<OrderData[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  //trackingid
+  const [isTrackingIdModalOpen, setIsTrackingIdModalOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState(null);
+  const [newTrackingId, setNewTrackingId] = useState("");
+  //end tracking id
+  console.log(editingOrder, newTrackingId, "nidhi");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -104,34 +125,38 @@ export default function AdminOrders() {
   const [selectedOrder, setSelectedOrder] = useState<number | null>(null);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<any>(null);
   const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
-  const [printStickerOrder, setPrintStickerOrder] = useState<OrderData | null>(null);
+  const [printStickerOrder, setPrintStickerOrder] = useState<OrderData | null>(
+    null
+  );
   const ordersPerPage = 10;
   const { toast } = useToast();
-
   // Fetch detailed order information
   const fetchOrderDetails = async (orderId: number) => {
     setOrderDetailsLoading(true);
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem("adminToken");
       if (!token) {
-        throw new Error('Authentication required');
+        throw new Error("Authentication required");
       }
 
-      const response = await fetch(`/api/admin/orders/${orderId}/details`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/admin/orders/${orderId}/details`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch order details');
+        throw new Error("Failed to fetch order details");
       }
 
       const data = await response.json();
       setSelectedOrderDetails(data);
     } catch (error) {
-      console.error('Error fetching order details:', error);
+      console.error("Error fetching order details:", error);
       toast({
         title: "Error",
         description: "Failed to fetch order details",
@@ -149,50 +174,55 @@ export default function AdminOrders() {
   };
 
   // Fetch orders from API
-  const fetchOrders = async (page = 1, search = '', status = '') => {
+  const fetchOrders = async (page = 1, search = "", status = "") => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem("adminToken");
       if (!token) {
-        throw new Error('Authentication required');
+        throw new Error("Authentication required");
       }
-      
+
       const params = new URLSearchParams({
         page: page.toString(),
         limit: ordersPerPage.toString(),
-        sort: 'createdAt',
-        order: 'desc'
+        sort: "createdAt",
+        order: "desc",
       });
-      
+
       if (search) {
-        params.append('search', search);
+        params.append("search", search);
       }
-      if (status && status !== 'all') {
-        params.append('status', status);
+      if (status && status !== "all") {
+        params.append("status", status);
       }
-      
-      const response = await fetch(`/api/admin/orders?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/admin/orders?${params}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
-      
+      );
+
       if (!response.ok) {
-        throw new Error('Failed to fetch orders');
+        throw new Error("Failed to fetch orders");
       }
-      
+
       const data: OrdersResponse = await response.json();
       setOrders(data.orders);
+      console.log("Fetched orders:", data.orders);
       setTotalPages(data.pagination.totalPages);
       setCurrentPage(data.pagination.page);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : "An error occurred");
       toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to fetch orders',
-        variant: 'destructive',
+        title: "Error",
+        description:
+          err instanceof Error ? err.message : "Failed to fetch orders",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -216,36 +246,40 @@ export default function AdminOrders() {
 
   const handleUpdateStatus = async (orderId: number, newStatus: string) => {
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem("adminToken");
       if (!token) {
-        throw new Error('Authentication required');
+        throw new Error("Authentication required");
       }
-      
-      const response = await fetch(`/api/admin/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-      
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/admin/orders/${orderId}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+
       if (!response.ok) {
-        throw new Error('Failed to update order status');
+        throw new Error("Failed to update order status");
       }
-      
+
       // Refresh orders list
       fetchOrders(currentPage, searchTerm, statusFilter);
-      
+
       toast({
         title: "Order status updated",
         description: `Order ${orderId} has been updated to ${newStatus}.`,
       });
     } catch (err) {
       toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to update order status',
-        variant: 'destructive',
+        title: "Error",
+        description:
+          err instanceof Error ? err.message : "Failed to update order status",
+        variant: "destructive",
       });
     }
   };
@@ -255,19 +289,22 @@ export default function AdminOrders() {
 
   // Fetch all orders for export (without pagination)
   const fetchAllOrdersForExport = async () => {
-    const token = localStorage.getItem('adminToken');
+    const token = localStorage.getItem("adminToken");
     if (!token) {
-      throw new Error('Authentication required');
+      throw new Error("Authentication required");
     }
 
-    const response = await fetch('/api/admin/orders/export', {
-      headers: {
-        'Authorization': `Bearer ${token}`
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/admin/orders/export`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-    });
+    );
 
     if (!response.ok) {
-      throw new Error('Failed to fetch orders for export');
+      throw new Error("Failed to fetch orders for export");
     }
 
     return response.json();
@@ -277,32 +314,40 @@ export default function AdminOrders() {
     setIsExporting(true);
     try {
       const data = await fetchAllOrdersForExport();
-      
+
       // Prepare CSV data
       const csvData = data.orders.map((order: any) => ({
-        'Order ID': `ORD-${order.id}`,
-        'Customer Name': order.userName || 'Guest Customer',
-        'Customer Email': order.userEmail || 'No email',
-        'Order Date': new Date(order.createdAt).toLocaleDateString('en-IN'),
-        'Total Amount': `₹${order.total}`,
-        'Payment Method': order.paymentMethod || 'N/A',
-        'Status': order.status,
-        'Shipping Address': order.shippingAddress || 'N/A',
-        'Payment ID': order.paymentId || 'N/A',
-        'Items Count': order.items?.length || 0,
-        'Delivered Date': order.deliveredAt ? new Date(order.deliveredAt).toLocaleDateString('en-IN') : 'Not delivered',
-        'Cancellation Reason': order.cancellationReason || 'N/A'
+        "Order ID": `ORD-${order.id}`,
+        "Customer Name": order.userName || "Guest Customer",
+        "Customer Email": order.userEmail || "No email",
+        "Order Date": new Date(order.createdAt).toLocaleDateString("en-IN"),
+        "Total Amount": `₹${order.total}`,
+        "Payment Method": order.paymentMethod || "N/A",
+        Status: order.status,
+        "Shipping Address": order.shippingAddress || "N/A",
+        "Payment ID": order.paymentId || "N/A",
+        "Items Count": order.items?.length || 0,
+        "Delivered Date": order.deliveredAt
+          ? new Date(order.deliveredAt).toLocaleDateString("en-IN")
+          : "Not delivered",
+        "Cancellation Reason": order.cancellationReason || "N/A",
       }));
 
       // Convert to CSV
       const csvContent = [
-        Object.keys(csvData[0]).join(','),
-        ...csvData.map(row => Object.values(row).map(val => `"${val}"`).join(','))
-      ].join('\n');
+        Object.keys(csvData[0]).join(","),
+        ...csvData.map((row) =>
+          Object.values(row)
+            .map((val) => `"${val}"`)
+            .join(",")
+        ),
+      ].join("\n");
 
       // Download CSV
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const fileName = `orders_export_${new Date().toISOString().split('T')[0]}.csv`;
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const fileName = `orders_export_${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
       saveAs(blob, fileName);
 
       toast({
@@ -311,9 +356,10 @@ export default function AdminOrders() {
       });
     } catch (err) {
       toast({
-        title: 'Export Error',
-        description: err instanceof Error ? err.message : 'Failed to export orders',
-        variant: 'destructive',
+        title: "Export Error",
+        description:
+          err instanceof Error ? err.message : "Failed to export orders",
+        variant: "destructive",
       });
     } finally {
       setIsExporting(false);
@@ -325,31 +371,33 @@ export default function AdminOrders() {
     setIsExporting(true);
     try {
       const data = await fetchAllOrdersForExport();
-      
+
       // Create workbook with multiple sheets
       const workbook = XLSX.utils.book_new();
 
       // Main orders sheet
       const ordersData = data.orders.map((order: any) => ({
-        'Order ID': `ORD-${order.id}`,
-        'Customer Name': order.userName || 'Guest Customer',
-        'Customer Email': order.userEmail || 'No email',
-        'Order Date': new Date(order.createdAt).toLocaleDateString('en-IN'),
-        'Total Amount': order.total,
-        'Payment Method': order.paymentMethod || 'N/A',
-        'Status': order.status,
-        'Shipping Address': order.shippingAddress || 'N/A',
-        'Billing Address': order.billingAddress || 'Same as shipping',
-        'Payment ID': order.paymentId || 'N/A',
-        'Items Count': order.items?.length || 0,
-        'Delivered Date': order.deliveredAt ? new Date(order.deliveredAt).toLocaleDateString('en-IN') : 'Not delivered',
-        'Cancellation Reason': order.cancellationReason || 'N/A',
-        'Created At': new Date(order.createdAt).toLocaleString('en-IN'),
-        'Updated At': new Date(order.updatedAt).toLocaleString('en-IN')
+        "Order ID": `ORD-${order.id}`,
+        "Customer Name": order.userName || "Guest Customer",
+        "Customer Email": order.userEmail || "No email",
+        "Order Date": new Date(order.createdAt).toLocaleDateString("en-IN"),
+        "Total Amount": order.total,
+        "Payment Method": order.paymentMethod || "N/A",
+        Status: order.status,
+        "Shipping Address": order.shippingAddress || "N/A",
+        "Billing Address": order.billingAddress || "Same as shipping",
+        "Payment ID": order.paymentId || "N/A",
+        "Items Count": order.items?.length || 0,
+        "Delivered Date": order.deliveredAt
+          ? new Date(order.deliveredAt).toLocaleDateString("en-IN")
+          : "Not delivered",
+        "Cancellation Reason": order.cancellationReason || "N/A",
+        "Created At": new Date(order.createdAt).toLocaleString("en-IN"),
+        "Updated At": new Date(order.updatedAt).toLocaleString("en-IN"),
       }));
 
       const ordersSheet = XLSX.utils.json_to_sheet(ordersData);
-      XLSX.utils.book_append_sheet(workbook, ordersSheet, 'Orders');
+      XLSX.utils.book_append_sheet(workbook, ordersSheet, "Orders");
 
       // Order items details sheet
       const itemsData: any[] = [];
@@ -357,16 +405,18 @@ export default function AdminOrders() {
         if (order.items && order.items.length > 0) {
           order.items.forEach((item: any) => {
             itemsData.push({
-              'Order ID': `ORD-${order.id}`,
-              'Product Name': item.product?.name || 'Unknown Product',
-              'Product SKU': item.product?.sku || 'N/A',
-              'Category': item.product?.category || 'N/A',
-              'Quantity': item.quantity,
-              'Unit Price': item.price,
-              'Total Price': item.price * item.quantity,
-              'Farmer': item.product?.farmer?.name || 'N/A',
-              'Order Status': order.status,
-              'Order Date': new Date(order.createdAt).toLocaleDateString('en-IN')
+              "Order ID": `ORD-${order.id}`,
+              "Product Name": item.product?.name || "Unknown Product",
+              "Product SKU": item.product?.sku || "N/A",
+              Category: item.product?.category || "N/A",
+              Quantity: item.quantity,
+              "Unit Price": item.price,
+              "Total Price": item.price * item.quantity,
+              Farmer: item.product?.farmer?.name || "N/A",
+              "Order Status": order.status,
+              "Order Date": new Date(order.createdAt).toLocaleDateString(
+                "en-IN"
+              ),
             });
           });
         }
@@ -374,7 +424,7 @@ export default function AdminOrders() {
 
       if (itemsData.length > 0) {
         const itemsSheet = XLSX.utils.json_to_sheet(itemsData);
-        XLSX.utils.book_append_sheet(workbook, itemsSheet, 'Order Items');
+        XLSX.utils.book_append_sheet(workbook, itemsSheet, "Order Items");
       }
 
       // Summary sheet
@@ -383,29 +433,45 @@ export default function AdminOrders() {
         return acc;
       }, {});
 
-      const totalRevenue = data.orders.reduce((sum: number, order: any) => sum + order.total, 0);
+      const totalRevenue = data.orders.reduce(
+        (sum: number, order: any) => sum + order.total,
+        0
+      );
       const averageOrderValue = totalRevenue / data.orders.length;
 
       const summaryData = [
-        { Metric: 'Total Orders', Value: data.orders.length },
-        { Metric: 'Total Revenue', Value: `₹${totalRevenue.toFixed(2)}` },
-        { Metric: 'Average Order Value', Value: `₹${averageOrderValue.toFixed(2)}` },
-        { Metric: 'Export Date', Value: new Date().toLocaleDateString('en-IN') },
-        { Metric: '', Value: '' },
-        { Metric: 'Status Breakdown', Value: '' },
+        { Metric: "Total Orders", Value: data.orders.length },
+        { Metric: "Total Revenue", Value: `₹${totalRevenue.toFixed(2)}` },
+        {
+          Metric: "Average Order Value",
+          Value: `₹${averageOrderValue.toFixed(2)}`,
+        },
+        {
+          Metric: "Export Date",
+          Value: new Date().toLocaleDateString("en-IN"),
+        },
+        { Metric: "", Value: "" },
+        { Metric: "Status Breakdown", Value: "" },
         ...Object.entries(statusCounts).map(([status, count]) => ({
           Metric: `${status.charAt(0).toUpperCase() + status.slice(1)} Orders`,
-          Value: count
-        }))
+          Value: count,
+        })),
       ];
 
       const summarySheet = XLSX.utils.json_to_sheet(summaryData);
-      XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+      XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
 
       // Generate Excel file
-      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const fileName = `orders_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+      const blob = new Blob([excelBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const fileName = `orders_export_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
       saveAs(blob, fileName);
 
       toast({
@@ -414,9 +480,10 @@ export default function AdminOrders() {
       });
     } catch (err) {
       toast({
-        title: 'Export Error',
-        description: err instanceof Error ? err.message : 'Failed to export orders',
-        variant: 'destructive',
+        title: "Export Error",
+        description:
+          err instanceof Error ? err.message : "Failed to export orders",
+        variant: "destructive",
       });
     } finally {
       setIsExporting(false);
@@ -425,8 +492,8 @@ export default function AdminOrders() {
   };
 
   const getStatusBadgeClass = (status: string) => {
-    const statusOption = ORDER_STATUSES.find(s => s.value === status);
-    return statusOption?.color || 'bg-gray-100 text-gray-800';
+    const statusOption = ORDER_STATUSES.find((s) => s.value === status);
+    return statusOption?.color || "bg-gray-100 text-gray-800";
   };
 
   // Format date helper
@@ -445,6 +512,56 @@ export default function AdminOrders() {
     setCurrentPage(page);
   };
 
+  //tracking id
+  const handleTrackingIdClick = (order) => {
+    setEditingOrder(order); // Store the whole order object
+    setNewTrackingId(order.trackingId || "");
+    setIsTrackingIdModalOpen(true);
+  };
+
+  const handleTrackingIdSave = async () => {
+    try {
+      if (!editingOrder) return; // Guard clause
+
+      const token = localStorage.getItem("adminToken");
+      if (!token) {
+        throw new Error("Authentication required");
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/admin/orders/${
+          editingOrder.id
+        }/update-tracking`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ trackingId: newTrackingId }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update tracking ID");
+      }
+
+      const data = await response.json();
+      fetchOrders();
+      setIsTrackingIdModalOpen(false);
+
+      // Optionally update local state or refresh data
+      return data;
+    } catch (error) {
+      console.error("Failed to update tracking ID:", error);
+      // You might want to show an error toast here
+    }
+  };
+
+  const handleTrackingIdCancel = () => {
+    setIsTrackingIdModalOpen(false);
+  };
+
   return (
     <AdminAuthWrapper>
       <AdminLayout>
@@ -454,7 +571,10 @@ export default function AdminOrders() {
               <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
               <p className="text-muted-foreground">Manage customer orders</p>
             </div>
-            <DropdownMenu open={showExportMenu} onOpenChange={setShowExportMenu}>
+            <DropdownMenu
+              open={showExportMenu}
+              onOpenChange={setShowExportMenu}
+            >
               <DropdownMenuTrigger asChild>
                 <Button disabled={isExporting}>
                   {isExporting ? (
@@ -462,16 +582,22 @@ export default function AdminOrders() {
                   ) : (
                     <Download className="h-4 w-4 mr-2" />
                   )}
-                  {isExporting ? 'Exporting...' : 'Export Orders'}
+                  {isExporting ? "Exporting..." : "Export Orders"}
                   <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={handleExportCSV} disabled={isExporting}>
+                <DropdownMenuItem
+                  onClick={handleExportCSV}
+                  disabled={isExporting}
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Export as CSV
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportExcel} disabled={isExporting}>
+                <DropdownMenuItem
+                  onClick={handleExportExcel}
+                  disabled={isExporting}
+                >
                   <FileSpreadsheet className="h-4 w-4 mr-2" />
                   Export as Excel
                 </DropdownMenuItem>
@@ -493,10 +619,7 @@ export default function AdminOrders() {
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select 
-                    value={statusFilter} 
-                    onValueChange={setStatusFilter}
-                  >
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full sm:w-40">
                       <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
@@ -526,13 +649,22 @@ export default function AdminOrders() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Order ID</TableHead>
-                          <TableHead>Customer</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Total</TableHead>
-                          <TableHead>Payment Method</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Actions</TableHead>
+                          <TableHead className="text-nowrap">
+                            Order ID
+                          </TableHead>
+                          <TableHead className="text-nowrap">
+                            Customer
+                          </TableHead>
+                          <TableHead className="text-nowrap">Date</TableHead>
+                          <TableHead className="text-nowrap">
+                            Tracking ID
+                          </TableHead>
+                          <TableHead className="text-nowrap">Total</TableHead>
+                          <TableHead className="text-nowrap">
+                            Payment Method
+                          </TableHead>
+                          <TableHead className="text-nowrap">Status</TableHead>
+                          <TableHead className="text-nowrap">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -545,38 +677,60 @@ export default function AdminOrders() {
                         ) : (
                           orders.map((order) => (
                             <TableRow key={order.id}>
-                              <TableCell className="font-medium">ORD-{order.id}</TableCell>
-                              <TableCell>
+                              <TableCell className="font-medium text-nowrap">
+                                ORD-{order.id}
+                              </TableCell>
+                              <TableCell className="text-nowrap">
                                 <div>
-                                  <div>{order.userName || 'Guest Customer'}</div>
+                                  <div>
+                                    {order.userName || "Guest Customer"}
+                                  </div>
                                   <div className="text-sm text-muted-foreground">
-                                    {order.userEmail || 'No email'}
+                                    {order.userEmail || "No email"}
                                   </div>
                                 </div>
                               </TableCell>
-                              <TableCell>{formatDate(order.createdAt)}</TableCell>
-                              <TableCell>{formatCurrency(order.total)}</TableCell>
-                              <TableCell className="capitalize">{order.paymentMethod}</TableCell>
-                              <TableCell>
-                                <Badge 
+                              <TableCell className="text-nowrap">
+                                {formatDate(order.createdAt)}
+                              </TableCell>
+                              <TableCell className="text-nowrap">
+                                <Link
+                                  href=""
+                                  className="underline"
+                                  onClick={() => handleTrackingIdClick(order)}
+                                >
+                                  {order?.trackingId || "HGJ567G"}
+                                </Link>
+                              </TableCell>
+                              <TableCell className="text-nowrap">
+                                {formatCurrency(order.total)}
+                              </TableCell>
+                              <TableCell className="text-nowrap capitalize">
+                                {order.paymentMethod}
+                              </TableCell>
+                              <TableCell className="text-nowrap">
+                                <Badge
                                   className={getStatusBadgeClass(order.status)}
                                   variant="secondary"
                                 >
-                                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                  {order.status.charAt(0).toUpperCase() +
+                                    order.status.slice(1)}
                                 </Badge>
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="text-nowrap">
                                 <div className="flex space-x-2">
-                                  <Button 
-                                    variant="ghost" 
+                                  <Button
+                                    variant="ghost"
                                     size="icon"
-                                    onClick={() => handleViewOrderDetails(order.id)}
+                                    onClick={() =>
+                                      handleViewOrderDetails(order.id)
+                                    }
                                     title="View Order Details"
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
-                                  <Button 
-                                    variant="ghost" 
+                                  <Button
+                                    variant="ghost"
                                     size="icon"
                                     onClick={() => setPrintStickerOrder(order)}
                                     title="Print Delivery Sticker"
@@ -591,11 +745,20 @@ export default function AdminOrders() {
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                      {ORDER_STATUSES.filter(status => status.value !== 'all').map((status) => (
-                                        <DropdownMenuItem 
+                                      {ORDER_STATUSES.filter(
+                                        (status) => status.value !== "all"
+                                      ).map((status) => (
+                                        <DropdownMenuItem
                                           key={status.value}
-                                          onClick={() => handleUpdateStatus(order.id, status.value)}
-                                          disabled={order.status === status.value}
+                                          onClick={() =>
+                                            handleUpdateStatus(
+                                              order.id,
+                                              status.value
+                                            )
+                                          }
+                                          disabled={
+                                            order.status === status.value
+                                          }
                                         >
                                           {status.label}
                                         </DropdownMenuItem>
@@ -615,9 +778,9 @@ export default function AdminOrders() {
                   {totalPages > 1 && (
                     <div className="flex justify-center mt-6">
                       <div className="flex items-center space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handlePageChange(currentPage - 1)}
                           disabled={currentPage === 1}
                         >
@@ -626,9 +789,9 @@ export default function AdminOrders() {
                         <span className="text-sm text-muted-foreground">
                           Page {currentPage} of {totalPages}
                         </span>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handlePageChange(currentPage + 1)}
                           disabled={currentPage === totalPages}
                         >
@@ -643,15 +806,18 @@ export default function AdminOrders() {
           </Card>
 
           {/* Order Details Modal */}
-          <Dialog open={selectedOrder !== null} onOpenChange={() => {
-            setSelectedOrder(null);
-            setSelectedOrderDetails(null);
-          }}>
+          <Dialog
+            open={selectedOrder !== null}
+            onOpenChange={() => {
+              setSelectedOrder(null);
+              setSelectedOrderDetails(null);
+            }}
+          >
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Order Details #{selectedOrder}</DialogTitle>
               </DialogHeader>
-              
+
               {orderDetailsLoading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin" />
@@ -662,36 +828,55 @@ export default function AdminOrders() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Order Status</CardTitle>
+                        <CardTitle className="text-sm font-medium">
+                          Order Status
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <Badge variant={selectedOrderDetails.status === 'delivered' ? 'default' : 'secondary'}>
-                          {selectedOrderDetails.status?.charAt(0).toUpperCase() + selectedOrderDetails.status?.slice(1)}
+                        <Badge
+                          variant={
+                            selectedOrderDetails.status === "delivered"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {selectedOrderDetails.status
+                            ?.charAt(0)
+                            .toUpperCase() +
+                            selectedOrderDetails.status?.slice(1)}
                         </Badge>
                       </CardContent>
                     </Card>
-                    
+
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Order Total</CardTitle>
+                        <CardTitle className="text-sm font-medium">
+                          Order Total
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">₹{selectedOrderDetails.total}</div>
+                        <div className="text-2xl font-bold">
+                          ₹{selectedOrderDetails.total}
+                        </div>
                       </CardContent>
                     </Card>
-                    
+
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Order Date</CardTitle>
+                        <CardTitle className="text-sm font-medium">
+                          Order Date
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="text-sm">
-                          {new Date(selectedOrderDetails.createdAt).toLocaleDateString('en-IN', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
+                          {new Date(
+                            selectedOrderDetails.createdAt
+                          ).toLocaleDateString("en-IN", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
                           })}
                         </div>
                       </CardContent>
@@ -705,21 +890,30 @@ export default function AdminOrders() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-sm font-medium">Customer Name</Label>
+                        <Label className="text-sm font-medium">
+                          Customer Name
+                        </Label>
                         <p className="text-sm text-muted-foreground">
-                          {selectedOrderDetails.user?.name || selectedOrderDetails.userName || 'Guest Customer'}
+                          {selectedOrderDetails.user?.name ||
+                            selectedOrderDetails.userName ||
+                            "Guest Customer"}
                         </p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium">Email</Label>
                         <p className="text-sm text-muted-foreground">
-                          {selectedOrderDetails.user?.email || selectedOrderDetails.userEmail || 'No email provided'}
+                          {selectedOrderDetails.user?.email ||
+                            selectedOrderDetails.userEmail ||
+                            "No email provided"}
                         </p>
                       </div>
                       <div className="md:col-span-2">
-                        <Label className="text-sm font-medium">Shipping Address</Label>
+                        <Label className="text-sm font-medium">
+                          Shipping Address
+                        </Label>
                         <p className="text-sm text-muted-foreground">
-                          {selectedOrderDetails.shippingAddress || 'No address provided'}
+                          {selectedOrderDetails.shippingAddress ||
+                            "No address provided"}
                         </p>
                       </div>
                     </CardContent>
@@ -732,29 +926,40 @@ export default function AdminOrders() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-sm font-medium">Payment Method</Label>
+                        <Label className="text-sm font-medium">
+                          Payment Method
+                        </Label>
                         <p className="text-sm text-muted-foreground">
-                          {selectedOrderDetails.paymentMethod || 'Not specified'}
+                          {selectedOrderDetails.paymentMethod ||
+                            "Not specified"}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium">Payment ID</Label>
+                        <Label className="text-sm font-medium">
+                          Payment ID
+                        </Label>
                         <p className="text-sm text-muted-foreground font-mono">
-                          {selectedOrderDetails.paymentId || 'Not available'}
+                          {selectedOrderDetails.paymentId || "Not available"}
                         </p>
                       </div>
                       {selectedOrderDetails.payment && (
                         <>
                           <div>
-                            <Label className="text-sm font-medium">Payment Status</Label>
+                            <Label className="text-sm font-medium">
+                              Payment Status
+                            </Label>
                             <p className="text-sm text-muted-foreground">
-                              {selectedOrderDetails.payment.status || 'Unknown'}
+                              {selectedOrderDetails.payment.status || "Unknown"}
                             </p>
                           </div>
                           <div>
-                            <Label className="text-sm font-medium">Amount Paid</Label>
+                            <Label className="text-sm font-medium">
+                              Amount Paid
+                            </Label>
                             <p className="text-sm text-muted-foreground">
-                              ₹{selectedOrderDetails.payment.amount || selectedOrderDetails.total}
+                              ₹
+                              {selectedOrderDetails.payment.amount ||
+                                selectedOrderDetails.total}
                             </p>
                           </div>
                         </>
@@ -768,39 +973,49 @@ export default function AdminOrders() {
                       <CardTitle>Order Items</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {selectedOrderDetails.items && selectedOrderDetails.items.length > 0 ? (
+                      {selectedOrderDetails.items &&
+                      selectedOrderDetails.items.length > 0 ? (
                         <div className="space-y-4">
-                          {selectedOrderDetails.items.map((item: any, index: number) => (
-                            <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                              <div className="flex items-center space-x-4">
-                                {item.product?.imageUrl && (
-                                  <img
-                                    src={item.product.imageUrl}
-                                    alt={item.product.name}
-                                    className="w-16 h-16 rounded object-cover"
-                                  />
-                                )}
-                                <div>
-                                  <h4 className="font-medium">{item.product?.name || 'Product Name'}</h4>
+                          {selectedOrderDetails.items.map(
+                            (item: any, index: number) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between p-4 border rounded-lg"
+                              >
+                                <div className="flex items-center space-x-4">
+                                  {item.product?.imageUrl && (
+                                    <img
+                                      src={item.product.imageUrl}
+                                      alt={item.product.name}
+                                      className="w-16 h-16 rounded object-cover"
+                                    />
+                                  )}
+                                  <div>
+                                    <h4 className="font-medium">
+                                      {item.product?.name || "Product Name"}
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      SKU: {item.product?.sku || "N/A"}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      Quantity: {item.quantity}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-medium">₹{item.price}</p>
                                   <p className="text-sm text-muted-foreground">
-                                    SKU: {item.product?.sku || 'N/A'}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    Quantity: {item.quantity}
+                                    Total: ₹{item.price * item.quantity}
                                   </p>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <p className="font-medium">₹{item.price}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  Total: ₹{item.price * item.quantity}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
+                            )
+                          )}
                         </div>
                       ) : (
-                        <p className="text-muted-foreground">No items found for this order</p>
+                        <p className="text-muted-foreground">
+                          No items found for this order
+                        </p>
                       )}
                     </CardContent>
                   </Card>
@@ -812,13 +1027,45 @@ export default function AdminOrders() {
               )}
             </DialogContent>
           </Dialog>
-
+          <Dialog
+            open={isTrackingIdModalOpen}
+            onOpenChange={setIsTrackingIdModalOpen}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Update Tracking ID</DialogTitle>
+                <DialogDescription>
+                  Update the tracking ID for order ORD-{editingOrder?.id}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="trackingId" className="text-right">
+                    Tracking ID
+                  </Label>
+                  <Input
+                    id="trackingId"
+                    value={newTrackingId}
+                    onChange={(e) => setNewTrackingId(e.target.value)}
+                    className="col-span-3"
+                    placeholder="Enter tracking ID"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={handleTrackingIdCancel}>
+                  Cancel
+                </Button>
+                <Button onClick={() => handleTrackingIdSave()}>Save</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           {/* Print Delivery Sticker Modal */}
           {printStickerOrder && (
             <PrintableDeliverySticker
               orderId={printStickerOrder.id}
-              customerName={printStickerOrder.userName || 'Guest Customer'}
-              customerEmail={printStickerOrder.userEmail || 'No email provided'}
+              customerName={printStickerOrder.userName || "Guest Customer"}
+              customerEmail={printStickerOrder.userEmail || "No email provided"}
               shippingAddress={printStickerOrder.shippingAddress}
               orderTotal={printStickerOrder.total}
               orderDate={printStickerOrder.createdAt}
